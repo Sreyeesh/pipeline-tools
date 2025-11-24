@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 authors = [{ name = "Pipeline Tools", email = "pipeline@example.com" }]
 license = { text = "MIT" }
-dependencies = ["typer>=0.9,<1.0"]
+dependencies = ["typer>=0.9,<1.0", "rich>=13.7,<14.0"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -19,4 +19,4 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [project.scripts]
-pipeline-tools = "pipeline_tools.cli:main"
+pipeline-tools = "pipeline_tools.cli:run"

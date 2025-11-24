@@ -1,5 +1,7 @@
 IMAGE ?= pipeline-tools
 PYTHON ?= python3
+ANSIBLE_PLAYBOOK ?= ansible-playbook
+INSTALLER ?= pipx
 
 # Auto-detect a sensible creative root; override with PROJECTS_ROOT or PIPELINE_TOOLS_ROOT.
 PROJECTS_ROOT ?= $(shell if [ -n "$(PIPELINE_TOOLS_ROOT)" ]; then printf "%s" "$(PIPELINE_TOOLS_ROOT)"; elif [ -d /mnt/c/Projects ]; then printf "%s" "/mnt/c/Projects"; else printf "%s" "$$HOME/Projects"; fi)
@@ -9,7 +11,7 @@ DB_VOLUME ?= pipeline-tools-db
 RUN := docker run --rm -v "$(PROJECTS_ROOT)":/mnt/c/Projects -v $(DB_VOLUME):/root/.pipeline_tools $(IMAGE)
 RUN_INTERACTIVE := docker run --rm -it -v "$(PROJECTS_ROOT)":/mnt/c/Projects -v $(DB_VOLUME):/root/.pipeline_tools $(IMAGE)
 
-.PHONY: help build test test-docker pt pt-i pt-create pt-create-i doctor examples compose compose-list compose-test compose-shell list
+.PHONY: help build test test-docker pt pt-i pt-create pt-create-i doctor examples compose compose-list compose-test compose-shell list ansible-install ansible-pip
 
 help:
 	@echo "Targets:"
@@ -26,6 +28,8 @@ help:
 	@echo "  compose-shell  - open a shell in the container with mounts"
 	@echo "  compose        - alias for compose-list"
 	@echo "  list           - alias for compose-list"
+	@echo "  ansible-install- install the CLI locally via Ansible (INSTALLER=pipx|pip, default pipx)"
+	@echo "  ansible-pip    - shortcut for ansible-install with INSTALLER=pip"
 	@echo ""
 	@echo "Variables: IMAGE (default: pipeline-tools), PROJECTS_ROOT (default: /mnt/c/Projects or $$HOME/Projects), DB_VOLUME (default: pipeline-tools-db)"
 
@@ -80,3 +84,9 @@ doctor:
 
 examples:
 	$(RUN) --examples
+
+ansible-install:
+	$(ANSIBLE_PLAYBOOK) -i localhost, -c local ansible/pipeline-tools.yml -e pipeline_tools_installer=$(INSTALLER)
+
+ansible-pip:
+	$(MAKE) ansible-install INSTALLER=pip

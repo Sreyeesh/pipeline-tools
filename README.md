@@ -1,28 +1,97 @@
 # Pipeline Tools
 
-A tiny filesystem-only CLI for creating project folder trees from templates. Run everything via Docker/compose with the Makefile so no local Python setup is needed.
+Artist-friendly CLI for creating and managing pipeline folder trees (shows, assets, shots, tasks). The Typer UI now ships with a prettier, colorized home screen so end users can discover commands without touching Docker or Makefiles.
 
-## Quick Start (containerized)
+## End-user quick start (no Docker)
+
+```sh
+# Install locally (pipx recommended)
+pipx install .
+# or
+pip install .
+
+# Launch the CLI
+pipeline-tools
+
+# Add --help to any command
+pipeline-tools create --help
+```
+
+What the home screen looks like:
+
+```
+$ pipeline-tools
+Pipeline Tools · artist-friendly pipeline CLI
+Common commands
+  pipeline-tools create -c PKS -n "Poku Short 30s"
+  pipeline-tools create --interactive
+  pipeline-tools shows list
+  pipeline-tools assets add -c PKS -t CH -n Poku
+  pipeline-tools shots add PKS_SH010 "First pass layout"
+  pipeline-tools doctor
+Commands
+  create               Create project folder trees from templates.
+  doctor               Run environment checks.
+  admin                Admin/config commands (config_show, config_set, doctor).
+  shows                Show-level commands (create/list/use/info/etc.).
+  assets               Asset-level commands (add/list/info/status/etc.).
+  shots                Shot-level commands (add/list/info/status/etc.).
+  tasks                Task commands for assets/shots.
+  versions             Version tracking commands.
+  character-thumbnails Generate thumbnail sheets for characters.
+  examples             Show common commands.
+```
+
+## Common commands (copy/paste)
+
+```sh
+pipeline-tools create -c DRW -n "City Sketches" --interactive
+pipeline-tools create -c ANM -n "ShortFilm01" -t animation_short
+pipeline-tools shows list
+pipeline-tools assets add -c PKS -t CH -n Hero
+pipeline-tools shots add PKS_SH010 "Layout pass"
+pipeline-tools tasks add PKS_SH010 Layout
+pipeline-tools versions new PKS_SH010 anim
+pipeline-tools doctor
+```
+
+## Ansible install (pipx or pip)
+
+From the repo root (WSL/Linux):
+
+```sh
+# Install Ansible if needed (Debian/Ubuntu)
+sudo apt-get update && sudo apt-get install -y ansible
+
+# Install with pipx (default)
+ansible-playbook -i localhost, -c local ansible/pipeline-tools.yml
+
+# Or install with pip --user
+ansible-playbook -i localhost, -c local ansible/pipeline-tools.yml -e pipeline_tools_installer=pip
+```
+
+After pipx/pip --user installs, ensure `~/.local/bin` is on your PATH.
+
+If apt can install pipx (Debian/Ubuntu), the playbook will use `python3-pipx`; otherwise it falls back to a user-level pip install.
+
+## Templates
+
+- `animation_short` (default): film/animation short pipeline folders.
+- `game_dev_small`: lean game dev layout (design docs, art, tech, builds, QA, release).
+- `drawing_single`: lightweight setup for individual drawings (refs, sketches, finals).
+
+## Developer workflow (Docker/Makefile)
+
+For contributors who prefer containerized tooling:
 
 ```sh
 # Build the image (override IMAGE=your-tag if desired)
 make build
 
-# Discover commands
+# List commands via docker compose
 make compose    # alias: make compose-list
 
-# Guided create (prompts)
-# (attaches a TTY via docker run -it)
-make pt-create-i SHOW_CODE=DRW NAME="City Sketches"
-
-# Quick create
-make pt-create SHOW_CODE=ANM NAME="ShortFilm01" TEMPLATE=animation_short
-
-# Health check
-make doctor
-
-# Anything else (arguments appended to python -m pipeline_tools.cli)
-# If ARGS contains --interactive, the Makefile allocates a TTY automatically.
+# Run the CLI inside the container
 make pt ARGS="create --interactive"
 
 # Run tests in Docker
@@ -34,76 +103,7 @@ make compose-shell
 
 Mount overrides: `PROJECTS_ROOT=/path/to/projects DB_VOLUME=pipeline-tools-db`
 
-Per-command help (from inside the container entrypoint): `pipeline-tools create --help`, `pipeline-tools shows --help`, etc.
-
-## Templates
-
-- `animation_short` (default): film/animation short pipeline folders.
-- `game_dev_small`: lean game dev layout (design docs, art, tech, builds, QA, release).
-- `drawing_single`: lightweight setup for individual drawings (refs, sketches, finals).
-
-## Other Tools via Makefile
-
-Use `make pt ARGS="..."` to pass args to the CLI (copy/paste ready):
-
-```sh
-# Character thumbnails
-make pt ARGS="character_thumbnails -c PKS -n 'City Sketches' --character courierA -l prepro"
-
-# Shows
-make pt ARGS="shows create -c PKS -n 'City Sketches'"
-make pt ARGS="shows list"
-
-# Assets
-make pt ARGS="assets add -t CH -n Hero"
-
-# Shots
-make pt ARGS="shots add SH010 'Description'"
-
-# Tasks
-make pt ARGS="tasks add PKS_SH010 Layout"
-
-# Versions
-make pt ARGS="versions new PKS_SH010 anim"
-
-# Admin
-make pt ARGS="admin doctor"
-make pt ARGS='admin config_set creative_root /mnt/c/Projects'
-```
-
-## Common Commands (copy/paste)
-
-```sh
-# List available commands
-make compose
-
-# Dry-run a create
-make pt ARGS='create -c DRW -n "City Sketches" --dry-run'
-
-# Guided create (interactive TTY)
-make pt-create-i SHOW_CODE=DRW NAME="City Sketches"
-
-# Show templates
-make pt ARGS="shows templates"
-
-# Create a show and set current
-make pt ARGS='shows create -c DRW -n "City Sketches"'
-
-# Add an asset
-make pt ARGS='assets add -t CH -n Hero'
-
-# Add a shot
-make pt ARGS='shots add SH010 "Layout pass"'
-
-# Run doctor
-make doctor
-```
-
-## Docker Notes
-
-- The Makefile wraps `docker run`/`docker compose` with mounts to `/mnt/c/Projects` and `/root/.pipeline_tools` (SQLite DB). Override with `PROJECTS_ROOT` and `DB_VOLUME`.
-- The container entrypoint is the unified CLI (`python -m pipeline_tools.cli`), so `make pt ...` and `docker compose run --rm pipeline-tools ...` append arguments to that CLI.
-- The Dockerfile uses a multi-stage build: installs deps and runs tests in a builder stage, then copies a slim virtualenv into the runtime image.
+The container entrypoint is the unified CLI (`python -m pipeline_tools.cli`), so `make pt ...` and `docker compose run --rm pipeline-tools ...` append arguments to that CLI.
 
 ## Config
 

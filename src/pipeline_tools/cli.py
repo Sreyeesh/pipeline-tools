@@ -5,10 +5,11 @@ Commands are thin wrappers around the tool modules under pipeline_tools.tools.
 """
 from __future__ import annotations
 
-from textwrap import dedent
 from typing import List
 
 import typer
+from rich.console import Console
+from rich.table import Table
 
 from pipeline_tools.tools.admin import main as admin_main
 from pipeline_tools.tools.assets import main as assets_main
@@ -22,40 +23,61 @@ from pipeline_tools.tools.versions import main as versions_main
 
 app = typer.Typer(add_completion=False, help="Artist-friendly pipeline tools launcher.")
 
-EXAMPLES = dedent(
-    """
-    Common commands:
-      pipeline-tools create -c PKS -n "Poku Short 30s"
-      pipeline-tools create --interactive
-      pipeline-tools shows list
-      pipeline-tools assets add -c PKS -t CH -n Poku
-      pipeline-tools shots add PKS_SH010 "First pass layout"
-      pipeline-tools doctor
-    """
-).strip()
+console = Console()
+
+COMMANDS = [
+    ("create", "Create project folder trees from templates."),
+    ("doctor", "Run environment checks."),
+    ("admin", "Admin/config commands (config_show, config_set, doctor)."),
+    ("shows", "Show-level commands (create/list/use/info/etc.)."),
+    ("assets", "Asset-level commands (add/list/info/status/etc.)."),
+    ("shots", "Shot-level commands (add/list/info/status/etc.)."),
+    ("tasks", "Task commands for assets/shots."),
+    ("versions", "Version tracking commands."),
+    ("character-thumbnails", "Generate thumbnail sheets for characters."),
+    ("examples", "Show common commands."),
+]
+
+EXAMPLE_COMMANDS = [
+    'pipeline-tools create -c PKS -n "Poku Short 30s"',
+    "pipeline-tools create --interactive",
+    "pipeline-tools shows list",
+    "pipeline-tools assets add -c PKS -t CH -n Poku",
+    'pipeline-tools shots add PKS_SH010 "First pass layout"',
+    "pipeline-tools doctor",
+]
+
+
+def _render_header() -> None:
+    console.print("[bold cyan]Pipeline Tools[/bold cyan] [dim]· artist-friendly pipeline CLI[/dim]")
+    console.print("Run a command below or add [bold]--help[/bold] to any command for details.\n")
+
+
+def _render_examples() -> None:
+    console.print("[bold]Common commands[/bold]")
+    for example in EXAMPLE_COMMANDS:
+        console.print(f"  [cyan]{example}[/cyan]")
+    console.print()
+
+
+def _render_command_table() -> None:
+    table = Table(show_header=False, box=None, padding=(0, 1))
+    table.add_column("Command", style="bold green")
+    table.add_column("What it does")
+    for name, help_text in COMMANDS:
+        table.add_row(name, help_text)
+    console.print(table)
 
 
 def _echo_examples() -> None:
-    typer.echo(EXAMPLES)
-    typer.echo("\nAvailable commands:")
-    _echo_command_list()
+    _render_header()
+    _render_examples()
+    console.print("[bold]Commands[/bold]")
+    _render_command_table()
 
 
 def _echo_command_list() -> None:
-    commands = [
-        ("create", "Create project folder trees from templates."),
-        ("doctor", "Run environment checks."),
-        ("admin", "Admin/config commands (config_show, config_set, doctor)."),
-        ("shows", "Show-level commands (create/list/use/info/etc.)."),
-        ("assets", "Asset-level commands (add/list/info/status/etc.)."),
-        ("shots", "Shot-level commands (add/list/info/status/etc.)."),
-        ("tasks", "Task commands for assets/shots."),
-        ("versions", "Version tracking commands."),
-        ("character-thumbnails", "Generate thumbnail sheets for characters."),
-        ("examples", "Show common commands."),
-    ]
-    for name, help_text in commands:
-        typer.echo(f"  {name:<20} {help_text}")
+    _render_command_table()
 
 
 def _passthrough(ctx: typer.Context, runner) -> None:
@@ -164,4 +186,9 @@ def character_thumbnails(ctx: typer.Context) -> None:
 
 
 if __name__ == "__main__":
+    app()
+
+
+def run() -> None:
+    """Console script entry point."""
     app()
