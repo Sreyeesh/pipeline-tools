@@ -5,11 +5,7 @@ For artists (just these):
 - Build once: `make build`
 - Guided create (recommended): `make pt-create-i SHOW_CODE=PKS NAME="Poku Short 30s"`
 - If something breaks: `make doctor` (copy the output to a TD)
-- Your folders appear under a detected root:
-  - WSL: `/mnt/c/Projects`
-  - Windows: `C:/Projects`
-  - macOS/Linux: `~/Projects`
-  - Override with `PROJECTS_ROOT=/path` or env `PIPELINE_TOOLS_ROOT`.
+- Your folders appear under `/mnt/c/Projects` by default (set `PROJECTS_ROOT` to change).
 
 Quick start (Makefile first):
 
@@ -18,7 +14,7 @@ Quick start (Makefile first):
 - Quick create: `make pt-create SHOW_CODE=PKS NAME="Poku Short 30s" TEMPLATE=game_dev_small`
 - Health check: `make doctor`
 - Anything else via launcher: `make pt ARGS="create --interactive"` (passes args to `pipeline_tools.cli`)
-- Customize mounts/volumes: `PROJECTS_ROOT=/path/to/projects DB_VOLUME=pipeline-tools-db` (Makefile auto-detects a default per OS)
+- Customize mounts/volumes: `PROJECTS_ROOT=/path/to/projects DB_VOLUME=pipeline-tools-db`
 
 Templates:
 
@@ -44,5 +40,4 @@ Docker notes:
 Config:
 
 - Override DB path: `PIPELINE_TOOLS_DB=/path/to/db.sqlite3`.
-- Override creative root (bypass detection): `PIPELINE_TOOLS_ROOT=/path/to/projects` (Makefile also respects `PROJECTS_ROOT`).
 - Asset status options: design, model, rig, surfacing, done.
