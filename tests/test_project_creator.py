@@ -22,6 +22,14 @@ def test_make_show_root_uses_creative_root(monkeypatch, tmp_path: Path) -> None:
     assert result == tmp_path / "AN_PKS_PokuShort30s"
 
 
+def test_make_show_root_uses_template_prefix(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(paths, "CREATIVE_ROOT", tmp_path)
+
+    result = paths.make_show_root("pks", "Game Name", template_key="game_dev_small")
+
+    assert result == tmp_path / "GD_PKS_GameName"
+
+
 def test_create_folders_makes_structure(tmp_path: Path) -> None:
     rel_paths = ["a", "b/c", "d/e/f"]
 

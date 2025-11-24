@@ -2,16 +2,10 @@ import argparse
 import sys
 from pathlib import Path
 
+from pipeline_tools.core.cli import FriendlyArgumentParser
 from pipeline_tools.core.paths import make_show_root
 from pipeline_tools.core.fs_utils import create_folders
 from .templates import TEMPLATES
-
-
-class FriendlyArgumentParser(argparse.ArgumentParser):
-    def error(self, message: str) -> None:
-        """Print cleaner errors that point users to help."""
-        self.print_usage(sys.stderr)
-        self.exit(2, f"Error: {message}\nUse -h/--help for details.\n")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -120,7 +114,7 @@ def main(argv: list[str] | None = None) -> None:
 
     rel_paths = TEMPLATES[template_key]
 
-    show_root: Path = make_show_root(show_code, project_name)
+    show_root: Path = make_show_root(show_code, project_name, template_key=template_key)
 
     if show_root.exists():
         print(

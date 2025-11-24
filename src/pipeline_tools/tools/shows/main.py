@@ -4,16 +4,11 @@ from pathlib import Path
 from typing import Optional
 
 from pipeline_tools.core import db
+from pipeline_tools.core.cli import FriendlyArgumentParser
 from pipeline_tools.core.fs_utils import create_folders
 from pipeline_tools.core.paths import make_show_root
 from pipeline_tools.tools.project_creator.templates import TEMPLATES
 from datetime import datetime
-
-
-class FriendlyArgumentParser(argparse.ArgumentParser):
-    def error(self, message: str) -> None:
-        self.print_usage(sys.stderr)
-        self.exit(2, f"Error: {message}\nUse -h/--help for details.\n")
 
 
 def _get_show_or_exit(show_code: str, data: dict) -> dict:
@@ -100,7 +95,7 @@ def cmd_create(args: argparse.Namespace) -> None:
         print(f"Show '{show_code}' already exists in the DB.")
         sys.exit(1)
 
-    show_root: Path = make_show_root(show_code, args.name)
+    show_root: Path = make_show_root(show_code, args.name, template_key=template_key)
     if show_root.exists():
         print(
             f"Show folder already exists: {show_root}\n"

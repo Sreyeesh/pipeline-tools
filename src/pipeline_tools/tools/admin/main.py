@@ -4,14 +4,9 @@ import sys
 from pathlib import Path
 
 from pipeline_tools.core import db
+from pipeline_tools.core.cli import FriendlyArgumentParser
 from pipeline_tools.core.paths import CREATIVE_ROOT, get_creative_root
 from pipeline_tools.tools.project_creator.templates import TEMPLATES
-
-
-class FriendlyArgumentParser(argparse.ArgumentParser):
-    def error(self, message: str) -> None:
-        self.print_usage(sys.stderr)
-        self.exit(2, f"Error: {message}\nUse -h/--help for details.\n")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

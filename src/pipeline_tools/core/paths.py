@@ -33,6 +33,11 @@ _CREATIVE_ROOT_DEFAULT = _default_creative_root()
 
 # Backward-compatible global; value is still used as a fallback.
 CREATIVE_ROOT = _CREATIVE_ROOT_DEFAULT
+_PREFIX_BY_TEMPLATE = {
+    "animation_short": "AN",
+    "game_dev_small": "GD",
+    "drawing_single": "DR",
+}
 
 
 def get_creative_root() -> Path:
@@ -55,16 +60,23 @@ def get_creative_root() -> Path:
     return _CREATIVE_ROOT_DEFAULT
 
 
-def make_show_root(show_code: str, project_name: str, creative_root: Path | None = None) -> Path:
+def make_show_root(
+    show_code: str,
+    project_name: str,
+    template_key: Optional[str] = None,
+    creative_root: Path | None = None,
+) -> Path:
     """
     Build a show root folder name like:
     AN_PKS_PokuShort30s  under the resolved creative root.
 
     - show_code: short code like "PKS"
     - project_name: e.g. "Poku Short 30s"
+    - template_key: optional template key to derive a prefix (defaults to animation prefix)
     - creative_root: optional override Path
     """
     safe_name = project_name.replace(" ", "")
-    folder_name = f"AN_{show_code.upper()}_{safe_name}"
+    prefix = _PREFIX_BY_TEMPLATE.get(template_key or "animation_short", "AN")
+    folder_name = f"{prefix}_{show_code.upper()}_{safe_name}"
     root = Path(creative_root) if creative_root else get_creative_root()
     return root / folder_name

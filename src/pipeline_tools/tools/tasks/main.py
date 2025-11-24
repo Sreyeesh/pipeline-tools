@@ -4,12 +4,7 @@ from datetime import datetime
 
 from pipeline_tools import TASK_STATUS_VALUES
 from pipeline_tools.core import db
-
-
-class FriendlyArgumentParser(argparse.ArgumentParser):
-    def error(self, message: str) -> None:
-        self.print_usage(sys.stderr)
-        self.exit(2, f"Error: {message}\nUse -h/--help for details.\n")
+from pipeline_tools.core.cli import FriendlyArgumentParser
 
 
 def parse_args() -> argparse.Namespace:

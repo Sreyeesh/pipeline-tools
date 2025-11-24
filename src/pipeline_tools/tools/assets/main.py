@@ -7,17 +7,12 @@ from datetime import datetime
 
 from pipeline_tools import DB_STATUS_VALUES
 from pipeline_tools.core import db
+from pipeline_tools.core.cli import FriendlyArgumentParser
 from pipeline_tools.core.fs_utils import create_folders
 from pipeline_tools.core.paths import make_show_root
 
 ASSET_TYPE_DIRS = {"CH": "characters", "ENV": "environments", "PR": "props"}
 DEFAULT_STATUS = "design"
-
-
-class FriendlyArgumentParser(argparse.ArgumentParser):
-    def error(self, message: str) -> None:
-        self.print_usage(sys.stderr)
-        self.exit(2, f"Error: {message}\nUse -h/--help for details.\n")
 
 
 def _resolve_show_code(args_show: Optional[str], data: dict) -> str:

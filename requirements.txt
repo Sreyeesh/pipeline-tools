@@ -1,0 +1,6 @@
+pip>=23.0
+setuptools>=64
+wheel>=0.38
+
+# Runtime code uses the standard library plus typer for the CLI.
+typer>=0.9,<1.0

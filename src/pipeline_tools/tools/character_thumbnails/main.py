@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 from pipeline_tools.core import paths
+from pipeline_tools.core.cli import FriendlyArgumentParser
 from pipeline_tools.core.fs_utils import create_folders
 
 LOCATIONS = {
@@ -10,12 +11,6 @@ LOCATIONS = {
     "prepro": Path("02_PREPRO/designs/characters"),
 }
 DEFAULT_LOCATION = "assets"
-
-
-class FriendlyArgumentParser(argparse.ArgumentParser):
-    def error(self, message: str) -> None:
-        self.print_usage(sys.stderr)
-        self.exit(2, f"Error: {message}\nUse -h/--help for details.\n")
 
 
 def parse_args() -> argparse.Namespace:

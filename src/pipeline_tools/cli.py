@@ -1,101 +1,167 @@
 """
-Primary entrypoint for artist-friendly commands.
+Typer-based CLI dispatcher for pipeline tools.
 
-Shortcuts into existing tool modules with a single command.
+Commands are thin wrappers around the tool modules under pipeline_tools.tools.
 """
 from __future__ import annotations
 
-import argparse
-import sys
 from textwrap import dedent
+from typing import List
+
+import typer
 
 from pipeline_tools.tools.admin import main as admin_main
+from pipeline_tools.tools.assets import main as assets_main
+from pipeline_tools.tools.character_thumbnails import main as character_thumbnails_main
 from pipeline_tools.tools.project_creator import main as project_creator_main
+from pipeline_tools.tools.shots import main as shots_main
+from pipeline_tools.tools.shows import main as shows_main
+from pipeline_tools.tools.tasks import main as tasks_main
+from pipeline_tools.tools.versions import main as versions_main
 
 
-class FriendlyArgumentParser(argparse.ArgumentParser):
-    def error(self, message: str) -> None:
-        self.print_usage(sys.stderr)
-        self.exit(2, f"Error: {message}\nUse -h/--help for details.\n")
-
+app = typer.Typer(add_completion=False, help="Artist-friendly pipeline tools launcher.")
 
 EXAMPLES = dedent(
     """
     Common commands:
       pipeline-tools create -c PKS -n "Poku Short 30s"
       pipeline-tools create --interactive
-      pipeline-tools create -c PKS -n "Poku Short 30s" -t animation_short --dry-run
+      pipeline-tools shows list
+      pipeline-tools assets add -c PKS -t CH -n Poku
+      pipeline-tools shots add PKS_SH010 "First pass layout"
       pipeline-tools doctor
-      pipeline-tools doctor && pipeline-tools create --interactive
     """
 ).strip()
 
 
-def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = FriendlyArgumentParser(description="Pipeline tools launcher.")
-    parser.add_argument(
-        "--examples",
-        action="store_true",
-        help="Print common commands and exit.",
-    )
-
-    sub = parser.add_subparsers(dest="command", required=False)
-
-    create = sub.add_parser("create", help="Create a project folder tree (wrapper over project_creator).")
-    create.add_argument("-c", "--show-code", help="Show code, e.g. PKS.")
-    create.add_argument("-n", "--name", help='Project name, e.g. "Poku Short 30s".')
-    create.add_argument("-t", "--template", help="Template key (see templates list).")
-    create.add_argument("-i", "--interactive", action="store_true", help="Prompt for missing values.")
-    create.add_argument("--dry-run", action="store_true", help="Preview without creating.")
-    create.add_argument("-y", "--yes", action="store_true", help="Skip confirmation prompts.")
-
-    sub.add_parser("doctor", help="Run environment checks.")
-    sub.add_parser("examples", help="Show common commands.")
-
-    return parser.parse_args(argv)
+def _echo_examples() -> None:
+    typer.echo(EXAMPLES)
+    typer.echo("\nAvailable commands:")
+    _echo_command_list()
 
 
-def run_examples() -> None:
-    print(EXAMPLES)
+def _echo_command_list() -> None:
+    commands = [
+        ("create", "Create project folder trees from templates."),
+        ("doctor", "Run environment checks."),
+        ("admin", "Admin/config commands (config_show, config_set, doctor)."),
+        ("shows", "Show-level commands (create/list/use/info/etc.)."),
+        ("assets", "Asset-level commands (add/list/info/status/etc.)."),
+        ("shots", "Shot-level commands (add/list/info/status/etc.)."),
+        ("tasks", "Task commands for assets/shots."),
+        ("versions", "Version tracking commands."),
+        ("character-thumbnails", "Generate thumbnail sheets for characters."),
+        ("examples", "Show common commands."),
+    ]
+    for name, help_text in commands:
+        typer.echo(f"  {name:<20} {help_text}")
 
 
-def run_create(args: argparse.Namespace) -> None:
-    argv: list[str] = []
-    if args.show_code:
-        argv.extend(["-c", args.show_code])
-    if args.name:
-        argv.extend(["-n", args.name])
-    if args.template:
-        argv.extend(["-t", args.template])
-    if args.interactive:
+def _passthrough(ctx: typer.Context, runner) -> None:
+    """Pass remaining args through to an existing argparse-based module."""
+    runner(list(ctx.args))
+
+
+@app.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,
+    examples: bool = typer.Option(False, "--examples", help="Show common commands and exit."),
+    list_commands: bool = typer.Option(False, "--list", "--commands", help="List available commands."),
+) -> None:
+    if examples:
+        _echo_examples()
+        raise typer.Exit()
+    if list_commands:
+        _echo_command_list()
+        raise typer.Exit()
+    if ctx.invoked_subcommand is None:
+        _echo_examples()
+        raise typer.Exit()
+
+
+@app.command()
+def examples() -> None:
+    """Show common commands and available modules."""
+    _echo_examples()
+
+
+@app.command()
+def create(
+    show_code: str = typer.Option(None, "-c", "--show-code", help="Show code, e.g. PKS."),
+    name: str = typer.Option(None, "-n", "--name", help='Project name, e.g. "Poku Short 30s".'),
+    template: str = typer.Option(None, "-t", "--template", help="Template key (see templates list)."),
+    interactive: bool = typer.Option(False, "-i", "--interactive", help="Prompt for missing values."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview without creating."),
+    yes: bool = typer.Option(False, "-y", "--yes", help="Skip confirmation prompts."),
+) -> None:
+    """Create a project folder tree from a template."""
+    argv: List[str] = []
+    if show_code:
+        argv.extend(["-c", show_code])
+    if name:
+        argv.extend(["-n", name])
+    if template:
+        argv.extend(["-t", template])
+    if interactive:
         argv.append("--interactive")
-    if args.dry_run:
+    if dry_run:
         argv.append("--dry-run")
-    if args.yes:
+    if yes:
         argv.append("--yes")
     project_creator_main.main(argv)
 
 
-def run_doctor() -> None:
-    admin_main.main(["admin", "doctor"])
+@app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+def doctor(ctx: typer.Context) -> None:
+    """Run environment checks."""
+    admin_main.main(["doctor", *list(ctx.args)])
 
 
-def main(argv: list[str] | None = None) -> None:
-    args = parse_args(argv)
+@app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+def admin(ctx: typer.Context) -> None:
+    """Admin/config commands (config_show, config_set, doctor)."""
+    _passthrough(ctx, admin_main.main)
 
-    if args.examples or args.command == "examples":
-        run_examples()
-        return
-    if args.command == "create":
-        run_create(args)
-        return
-    if args.command == "doctor":
-        run_doctor()
-        return
 
-    # No subcommand defaults to examples to keep things friendly.
-    run_examples()
+@app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+def shows(ctx: typer.Context) -> None:
+    """Show-level commands (create/list/use/info/etc.)."""
+    _passthrough(ctx, shows_main.main)
+
+
+@app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+def assets(ctx: typer.Context) -> None:
+    """Asset-level commands (add/list/info/status/etc.)."""
+    _passthrough(ctx, assets_main.main)
+
+
+@app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+def shots(ctx: typer.Context) -> None:
+    """Shot-level commands (add/list/info/status/etc.)."""
+    _passthrough(ctx, shots_main.main)
+
+
+@app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+def tasks(ctx: typer.Context) -> None:
+    """Task commands for assets/shots."""
+    _passthrough(ctx, tasks_main.main)
+
+
+@app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+def versions(ctx: typer.Context) -> None:
+    """Version tracking commands."""
+    _passthrough(ctx, versions_main.main)
+
+
+@app.command(
+    "character-thumbnails",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def character_thumbnails(ctx: typer.Context) -> None:
+    """Generate thumbnail sheets for characters."""
+    _passthrough(ctx, character_thumbnails_main.main)
 
 
 if __name__ == "__main__":
-    main()
+    app()
