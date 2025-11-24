@@ -10,6 +10,20 @@ Basic usage (from repo root, with the venv active or after `pip install -e .`):
 python -m pipeline_tools.tools.project_creator.main -c PKS -n "Poku Short 30s"
 ```
 
+Artist-friendly entrypoint (installs a `pipeline-tools` command):
+
+- Interactive guided creation: `pipeline-tools create --interactive`
+- Quick create: `pipeline-tools create -c PKS -n "Poku Short 30s"`
+- Preview only: `pipeline-tools create -c PKS -n "Poku Short 30s" --dry-run`
+- Health check: `pipeline-tools doctor` (verifies mounts/permissions/db path)
+- Examples anytime: `pipeline-tools examples` or `pipeline-tools --examples`
+
+Templates available:
+
+- `animation_short` (default): film/animation short pipeline folders.
+- `game_dev_small`: lean game dev layout (design docs, art, tech, builds, QA, release).
+- `drawing_single`: lightweight setup for individual drawings (refs, sketches, finals).
+
 Override the template with `-t <template_key>` (default: `animation_short`).
 
 Add a character thumbnails folder (defaults to Assets location):
@@ -67,3 +81,19 @@ Notes:
 
 - The DB path can be overridden with `PIPELINE_TOOLS_DB=/path/to/db.sqlite3`.
 - Asset status options: design, model, rig, surfacing, done.
+
+Docker usage:
+
+- Build the image: `docker build -t pipeline-tools .`
+- Create a project (default entrypoint): `docker run --rm -v /path/to/projects:/mnt/c/Projects -v pipeline-tools-db:/root/.pipeline_tools pipeline-tools -c PKS -n "Poku Short 30s"`
+- Run other modules by overriding the command: `docker run --rm -v /path/to/projects:/mnt/c/Projects -v pipeline-tools-db:/root/.pipeline_tools pipeline-tools pipeline_tools.tools.shows.main list`
+- The container expects a writable `/mnt/c/Projects` mount for folder creation and `/root/.pipeline_tools` (or `PIPELINE_TOOLS_DB`) for the SQLite DB.
+
+Short Docker commands via Makefile:
+
+- Build: `make build` (override `IMAGE=name` if desired)
+- Generic wrapper: `make pt ARGS="create --interactive"`
+- Quick create: `make pt-create SHOW_CODE=PKS NAME="Poku Short 30s" TEMPLATE=game_dev_small`
+- Interactive create: `make pt-create-i SHOW_CODE=PKS NAME="Poku Short 30s"`
+- Doctor: `make doctor`
+- Customize mounts with `PROJECTS_ROOT=/path/to/projects` and DB volume with `DB_VOLUME=name` (defaults: `/mnt/c/Projects`, `pipeline-tools-db`).

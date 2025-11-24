@@ -21,7 +21,36 @@ ANIMATION_SHORT_TEMPLATE: List[str] = [
     "z_TEMP",
 ]
 
+GAME_DEV_SMALL_TEMPLATE: List[str] = [
+    "01_PRODUCTION/design_docs",
+    "01_PRODUCTION/gdd",
+    "02_ART/concepts",
+    "02_ART/characters",
+    "02_ART/environments",
+    "02_ART/ui",
+    "02_ART/exports",
+    "03_TECH/prototypes",
+    "03_TECH/source",
+    "03_TECH/builds",
+    "04_AUDIO/sfx",
+    "04_AUDIO/music",
+    "05_QA/test_plans",
+    "05_QA/bug_reports",
+    "06_RELEASE/builds",
+    "06_RELEASE/marketing",
+    "z_TEMP",
+]
+
+DRAWING_TEMPLATE: List[str] = [
+    "01_REFERENCE",
+    "02_SKETCHES",
+    "03_FINAL",
+    "03_FINAL/export",
+    "z_TEMP",
+]
+
 TEMPLATES: Dict[str, List[str]] = {
     "animation_short": ANIMATION_SHORT_TEMPLATE,
-    # later: "unreal_game_small": [...],
+    "game_dev_small": GAME_DEV_SMALL_TEMPLATE,
+    "drawing_single": DRAWING_TEMPLATE,
 }

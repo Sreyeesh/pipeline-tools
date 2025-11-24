@@ -1,0 +1,35 @@
+# Version control
+.git
+.github
+
+# Python cache / build
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.tox/
+.cache/
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local env/config/logs
+.env
+.env.*
+*.log
+.tmp/

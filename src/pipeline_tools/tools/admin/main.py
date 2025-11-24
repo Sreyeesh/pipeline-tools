@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -13,7 +14,7 @@ class FriendlyArgumentParser(argparse.ArgumentParser):
         self.exit(2, f"Error: {message}\nUse -h/--help for details.\n")
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = FriendlyArgumentParser(description="Admin commands: config_show, config_set, doctor.")
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -24,7 +25,7 @@ def parse_args() -> argparse.Namespace:
 
     sub.add_parser("doctor", help="Run a basic health check.")
 
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def cmd_config_show() -> None:
@@ -46,6 +47,7 @@ def cmd_config_set(args: argparse.Namespace) -> None:
 def cmd_doctor() -> None:
     ok = True
     db_path = db.get_db_path()
+    db_dir = db_path.parent
     try:
         data = db.load_db()
         db.save_db(data)
@@ -55,10 +57,21 @@ def cmd_doctor() -> None:
     if not CREATIVE_ROOT.exists():
         print(f"Creative root missing: {CREATIVE_ROOT}")
         ok = False
+    if not db_dir.exists():
+        print(f"DB parent folder missing and will be created: {db_dir}")
+    elif not os.access(db_dir, os.W_OK):
+        print(f"DB parent folder not writable: {db_dir}")
+        ok = False
     if db_path.exists():
         print(f"DB OK at {db_path}")
     else:
         print(f"DB will be created at {db_path}")
+    if CREATIVE_ROOT.exists():
+        writable = os.access(CREATIVE_ROOT, os.W_OK)
+        print(f"Creative root: {CREATIVE_ROOT} (writeable={bool(writable)})")
+        if not writable:
+            ok = False
+    print(f"PIPELINE_TOOLS_DB: {os.environ.get('PIPELINE_TOOLS_DB', '(default)')}")
     print("Templates:", ", ".join(sorted(TEMPLATES.keys())))
     if ok:
         print("Doctor: OK")
@@ -66,8 +79,8 @@ def cmd_doctor() -> None:
         sys.exit(1)
 
 
-def main() -> None:
-    args = parse_args()
+def main(argv: list[str] | None = None) -> None:
+    args = parse_args(argv)
     if args.command == "config_show":
         cmd_config_show()
     elif args.command == "config_set":
