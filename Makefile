@@ -1,5 +1,18 @@
 IMAGE ?= pipeline-tools
-PROJECTS_ROOT ?= /mnt/c/Projects
+# Auto-detect a sensible default creative root; override as needed.
+PROJECTS_ROOT ?= $(shell python - <<'PY' | tr -d '\n'
+import os, pathlib, platform
+env = os.environ.get("PIPELINE_TOOLS_ROOT")
+if env:
+    print(env)
+elif "microsoft" in platform.uname().release.lower():
+    print("/mnt/c/Projects")
+elif os.name == "nt":
+    print("C:/Projects")
+else:
+    print(pathlib.Path.home() / "Projects")
+PY
+)
 DB_VOLUME ?= pipeline-tools-db
 
 # Base docker run command with mounts; CMD is passed after.

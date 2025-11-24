@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 from pipeline_tools.core import db
-from pipeline_tools.core.paths import CREATIVE_ROOT
+from pipeline_tools.core.paths import CREATIVE_ROOT, get_creative_root
 from pipeline_tools.tools.project_creator.templates import TEMPLATES
 
 
@@ -32,7 +32,8 @@ def cmd_config_show() -> None:
     data = db.load_db()
     cfg = data.get("config", {})
     print(f"DB path: {db.get_db_path()}")
-    print(f"Creative root (code): {CREATIVE_ROOT}")
+    print(f"Creative root (resolved): {get_creative_root()}")
+    print(f"Creative root (default/fallback): {CREATIVE_ROOT}")
     for k, v in cfg.items():
         print(f"{k}: {v}")
 
@@ -48,6 +49,7 @@ def cmd_doctor() -> None:
     ok = True
     db_path = db.get_db_path()
     db_dir = db_path.parent
+    resolved_root = get_creative_root()
     try:
         data = db.load_db()
         db.save_db(data)
@@ -66,12 +68,16 @@ def cmd_doctor() -> None:
         print(f"DB OK at {db_path}")
     else:
         print(f"DB will be created at {db_path}")
-    if CREATIVE_ROOT.exists():
-        writable = os.access(CREATIVE_ROOT, os.W_OK)
-        print(f"Creative root: {CREATIVE_ROOT} (writeable={bool(writable)})")
+    if resolved_root.exists():
+        writable = os.access(resolved_root, os.W_OK)
+        print(f"Creative root: {resolved_root} (writeable={bool(writable)})")
         if not writable:
             ok = False
+    else:
+        print(f"Creative root missing: {resolved_root}")
+        ok = False
     print(f"PIPELINE_TOOLS_DB: {os.environ.get('PIPELINE_TOOLS_DB', '(default)')}")
+    print(f"PIPELINE_TOOLS_ROOT: {os.environ.get('PIPELINE_TOOLS_ROOT', '(default)')}")
     print("Templates:", ", ".join(sorted(TEMPLATES.keys())))
     if ok:
         print("Doctor: OK")
