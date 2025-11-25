@@ -12,7 +12,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = FriendlyArgumentParser(
         description=(
             "Create project folder structures from templates.\n"
-            "Example: -c PKS -n \"Demo Short 30s\" -t animation_short"
+            "Example: -c DMO -n \"Demo Short 30s\" -t animation_short"
         )
     )
     parser.add_argument(
@@ -28,7 +28,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--show-code",
         "-c",
         required=False,
-        help="Short show code (e.g. PKS). Used in the root folder name.",
+        help="Short show code (e.g. DMO). Used in the root folder name.",
     )
     parser.add_argument(
         "--name",
@@ -99,7 +99,7 @@ def main(argv: list[str] | None = None) -> None:
     project_name = args.name
 
     if args.interactive:
-        show_code = show_code or _prompt("Show code (e.g. PKS)")
+        show_code = show_code or _prompt("Show code (e.g. DMO)")
         project_name = project_name or _prompt('Project name (e.g. "Demo Short 30s")')
         template_key = _pick_template(template_key)
     else:

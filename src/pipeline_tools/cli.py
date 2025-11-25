@@ -36,11 +36,11 @@ COMMANDS = [
 ]
 
 EXAMPLE_COMMANDS = [
-    'pipeline-tools create -c PKS -n "Demo Short 30s"',
+    'pipeline-tools create -c DMO -n "Demo Short 30s"',
     "pipeline-tools create --interactive",
     "pipeline-tools shows list",
-    "pipeline-tools assets add -c PKS -t CH -n Hero",
-    'pipeline-tools shots add PKS_SH010 "First pass layout"',
+    "pipeline-tools assets add -c DMO -t CH -n Hero",
+    'pipeline-tools shots add DMO_SH010 "First pass layout"',
     "pipeline-tools doctor",
 ]
 
@@ -136,7 +136,7 @@ def examples() -> None:
 
 @app.command()
 def create(
-    show_code: str = typer.Option(None, "-c", "--show-code", help="Show code, e.g. PKS."),
+    show_code: str = typer.Option(None, "-c", "--show-code", help="Show code, e.g. DMO."),
     name: str = typer.Option(None, "-n", "--name", help='Project name, e.g. "Demo Short 30s".'),
     template: str = typer.Option(None, "-t", "--template", help="Template key (see templates list)."),
     interactive: bool = typer.Option(False, "-i", "--interactive", help="Prompt for missing values."),

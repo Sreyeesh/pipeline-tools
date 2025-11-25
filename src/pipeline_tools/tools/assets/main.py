@@ -65,10 +65,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     c_list.add_argument("--status", choices=sorted(DB_STATUS_VALUES), help="Filter by status.")
 
     c_info = sub.add_parser("info", help="Show details for one asset.")
-    c_info.add_argument("asset_id", help="Asset ID, e.g. PKS_CH_Hero")
+    c_info.add_argument("asset_id", help="Asset ID, e.g. DMO_CH_Hero")
 
     c_status = sub.add_parser("status", help="Update asset status.")
-    c_status.add_argument("asset_id", help="Asset ID, e.g. PKS_CH_Hero")
+    c_status.add_argument("asset_id", help="Asset ID, e.g. DMO_CH_Hero")
     c_status.add_argument("status", choices=sorted(DB_STATUS_VALUES), help="New status.")
 
     c_delete = sub.add_parser("delete", help="Delete an asset from DB (keeps folders).")

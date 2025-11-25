@@ -17,17 +17,17 @@ from pipeline_tools.tools.versions import main as version_main
 def test_make_show_root_uses_creative_root(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(paths, "CREATIVE_ROOT", tmp_path)
 
-    result = paths.make_show_root("pks", "Demo Short 30s")
+    result = paths.make_show_root("dmo", "Demo Short 30s")
 
-    assert result == tmp_path / "AN_PKS_DemoShort30s"
+    assert result == tmp_path / "AN_DMO_DemoShort30s"
 
 
 def test_make_show_root_uses_template_prefix(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(paths, "CREATIVE_ROOT", tmp_path)
 
-    result = paths.make_show_root("pks", "Game Name", template_key="game_dev_small")
+    result = paths.make_show_root("dmo", "Game Name", template_key="game_dev_small")
 
-    assert result == tmp_path / "GD_PKS_GameName"
+    assert result == tmp_path / "GD_DMO_GameName"
 
 
 def test_create_folders_makes_structure(tmp_path: Path) -> None:
@@ -46,12 +46,12 @@ def test_cli_happy_path_creates_template(monkeypatch, tmp_path: Path, capsys) ->
         pc_main, "make_show_root", paths.make_show_root
     )  # ensure it picks up patched CREATIVE_ROOT
 
-    argv = ["project_creator", "-c", "PKS", "-n", "Demo Short 30s"]
+    argv = ["project_creator", "-c", "DMO", "-n", "Demo Short 30s"]
     monkeypatch.setattr(pc_main.sys, "argv", argv)
 
     pc_main.main()
     out = capsys.readouterr().out
-    show_root = tmp_path / "AN_PKS_DemoShort30s"
+    show_root = tmp_path / "AN_DMO_DemoShort30s"
 
     assert "Creating project at" in out
     assert show_root.exists()
@@ -66,7 +66,7 @@ def test_character_thumbnails_default_assets(monkeypatch, tmp_path: Path, capsys
     argv = [
         "character_thumbnails",
         "-c",
-        "PKS",
+        "DMO",
         "-n",
         "Demo Short 30s",
         "--character",
@@ -77,7 +77,7 @@ def test_character_thumbnails_default_assets(monkeypatch, tmp_path: Path, capsys
     ct_main.main()
     out = capsys.readouterr().out
 
-    target = tmp_path / "AN_PKS_DemoShort30s/03_ASSETS/characters/courierA/thumbnails"
+    target = tmp_path / "AN_DMO_DemoShort30s/03_ASSETS/characters/courierA/thumbnails"
 
     assert "Creating character thumbnails folder" in out
     assert target.is_dir()
@@ -90,7 +90,7 @@ def test_character_thumbnails_prepro(monkeypatch, tmp_path: Path) -> None:
     argv = [
         "character_thumbnails",
         "-c",
-        "PKS",
+        "DMO",
         "-n",
         "Demo Short 30s",
         "--character",
@@ -102,7 +102,7 @@ def test_character_thumbnails_prepro(monkeypatch, tmp_path: Path) -> None:
 
     ct_main.main()
 
-    target = tmp_path / "AN_PKS_DemoShort30s/02_PREPRO/designs/characters/courierB/thumbnails"
+    target = tmp_path / "AN_DMO_DemoShort30s/02_PREPRO/designs/characters/courierB/thumbnails"
     assert target.is_dir()
 
 
@@ -111,15 +111,15 @@ def test_show_create_registers_in_db(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setenv("PIPELINE_TOOLS_DB", str(db_path))
     monkeypatch.setattr(paths, "CREATIVE_ROOT", tmp_path)
 
-    argv = ["shows", "create", "-c", "PKS", "-n", "Demo Short 30s"]
+    argv = ["shows", "create", "-c", "DMO", "-n", "Demo Short 30s"]
     monkeypatch.setattr(show_main.sys, "argv", argv)
 
     show_main.main()
 
     data = db.load_db(db_path)
-    assert data["shows"]["PKS"]["name"] == "Demo Short 30s"
-    assert data["current_show"] == "PKS"
-    assert (tmp_path / "AN_PKS_DemoShort30s").exists()
+    assert data["shows"]["DMO"]["name"] == "Demo Short 30s"
+    assert data["current_show"] == "DMO"
+    assert (tmp_path / "AN_DMO_DemoShort30s").exists()
 
 
 def test_asset_add_creates_folder_and_db(monkeypatch, tmp_path: Path) -> None:
@@ -128,7 +128,7 @@ def test_asset_add_creates_folder_and_db(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(paths, "CREATIVE_ROOT", tmp_path)
 
     # Create show first
-    monkeypatch.setattr(show_main.sys, "argv", ["shows", "create", "-c", "PKS", "-n", "Demo Short 30s"])
+    monkeypatch.setattr(show_main.sys, "argv", ["shows", "create", "-c", "DMO", "-n", "Demo Short 30s"])
     show_main.main()
 
     # Add asset
@@ -136,19 +136,19 @@ def test_asset_add_creates_folder_and_db(monkeypatch, tmp_path: Path) -> None:
     asset_main.main()
 
     data = db.load_db(db_path)
-    asset = data["assets"]["PKS_CH_Hero"]
+    asset = data["assets"]["DMO_CH_Hero"]
     assert asset["status"] == "design"
 
-    target = tmp_path / "AN_PKS_DemoShort30s/03_ASSETS/characters/Hero"
+    target = tmp_path / "AN_DMO_DemoShort30s/03_ASSETS/characters/Hero"
     assert target.is_dir()
     assert (target / "workfiles").is_dir()
     assert (target / "renders").is_dir()
 
     # Update status
-    monkeypatch.setattr(asset_main.sys, "argv", ["assets", "status", "PKS_CH_Hero", "done"])
+    monkeypatch.setattr(asset_main.sys, "argv", ["assets", "status", "DMO_CH_Hero", "done"])
     asset_main.main()
     data = db.load_db(db_path)
-    assert data["assets"]["PKS_CH_Hero"]["status"] == "done"
+    assert data["assets"]["DMO_CH_Hero"]["status"] == "done"
 
 
 def test_asset_tag_and_find(monkeypatch, tmp_path: Path, capsys) -> None:
@@ -156,18 +156,18 @@ def test_asset_tag_and_find(monkeypatch, tmp_path: Path, capsys) -> None:
     monkeypatch.setenv("PIPELINE_TOOLS_DB", str(db_path))
     monkeypatch.setattr(paths, "CREATIVE_ROOT", tmp_path)
     # Create show and asset
-    monkeypatch.setattr(show_main.sys, "argv", ["shows", "create", "-c", "PKS", "-n", "Demo Short 30s"])
+    monkeypatch.setattr(show_main.sys, "argv", ["shows", "create", "-c", "DMO", "-n", "Demo Short 30s"])
     show_main.main()
     monkeypatch.setattr(asset_main.sys, "argv", ["assets", "add", "-t", "CH", "-n", "Hero"])
     asset_main.main()
 
-    monkeypatch.setattr(asset_main.sys, "argv", ["assets", "tag", "PKS_CH_Hero", "hero"])
+    monkeypatch.setattr(asset_main.sys, "argv", ["assets", "tag", "DMO_CH_Hero", "hero"])
     asset_main.main()
 
     monkeypatch.setattr(asset_main.sys, "argv", ["assets", "find", "--tag", "hero"])
     asset_main.main()
     out = capsys.readouterr().out
-    assert "PKS_CH_Hero" in out
+    assert "DMO_CH_Hero" in out
 
 
 def test_shot_and_version_and_task(monkeypatch, tmp_path: Path, capsys) -> None:
@@ -175,22 +175,22 @@ def test_shot_and_version_and_task(monkeypatch, tmp_path: Path, capsys) -> None:
     monkeypatch.setenv("PIPELINE_TOOLS_DB", str(db_path))
     monkeypatch.setattr(paths, "CREATIVE_ROOT", tmp_path)
 
-    monkeypatch.setattr(show_main.sys, "argv", ["shows", "create", "-c", "PKS", "-n", "Demo Short 30s"])
+    monkeypatch.setattr(show_main.sys, "argv", ["shows", "create", "-c", "DMO", "-n", "Demo Short 30s"])
     show_main.main()
 
     monkeypatch.setattr(shot_main.sys, "argv", ["shots", "add", "SH010", "Test shot"])
     shot_main.main()
 
-    monkeypatch.setattr(task_main.sys, "argv", ["tasks", "add", "PKS_SH010", "Layout"])
+    monkeypatch.setattr(task_main.sys, "argv", ["tasks", "add", "DMO_SH010", "Layout"])
     task_main.main()
-    monkeypatch.setattr(task_main.sys, "argv", ["tasks", "status", "PKS_SH010", "Layout", "in_progress"])
+    monkeypatch.setattr(task_main.sys, "argv", ["tasks", "status", "DMO_SH010", "Layout", "in_progress"])
     task_main.main()
     out = capsys.readouterr().out
     assert "in_progress" in out
 
-    monkeypatch.setattr(version_main.sys, "argv", ["versions", "new", "PKS_SH010", "anim"])
+    monkeypatch.setattr(version_main.sys, "argv", ["versions", "new", "DMO_SH010", "anim"])
     version_main.main()
-    monkeypatch.setattr(version_main.sys, "argv", ["versions", "latest", "--shot", "PKS_SH010", "--kind", "anim"])
+    monkeypatch.setattr(version_main.sys, "argv", ["versions", "latest", "--shot", "DMO_SH010", "--kind", "anim"])
     version_main.main()
     out = capsys.readouterr().out
-    assert "PKS_SH010_anim_v001" in out
+    assert "DMO_SH010_anim_v001" in out

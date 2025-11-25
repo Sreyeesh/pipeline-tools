@@ -34,11 +34,11 @@ def test_create_passes_args_to_project_creator(monkeypatch) -> None:
 
     result = runner.invoke(
         cli.app,
-        ["create", "-c", "PKS", "-n", "Test Project", "--dry-run", "-y"],
+        ["create", "-c", "DMO", "-n", "Test Project", "--dry-run", "-y"],
     )
 
     assert result.exit_code == 0
-    assert captured == ["-c", "PKS", "-n", "Test Project", "--dry-run", "--yes"]
+    assert captured == ["-c", "DMO", "-n", "Test Project", "--dry-run", "--yes"]
 
 
 def test_doctor_includes_admin_prefix(monkeypatch) -> None:

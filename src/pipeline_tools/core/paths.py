@@ -68,9 +68,9 @@ def make_show_root(
 ) -> Path:
     """
     Build a show root folder name like:
-    AN_PKS_DemoShort30s  under the resolved creative root.
+    AN_DMO_DemoShort30s  under the resolved creative root.
 
-    - show_code: short code like "PKS"
+    - show_code: short code like "DMO"
     - project_name: e.g. "Demo Short 30s"
     - template_key: optional template key to derive a prefix (defaults to animation prefix)
     - creative_root: optional override Path

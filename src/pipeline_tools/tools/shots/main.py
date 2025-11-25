@@ -54,7 +54,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     c_list.add_argument("--status", choices=sorted(SHOT_STATUS_VALUES), help="Filter by status.")
 
     c_info = sub.add_parser("info", help="Shot details.")
-    c_info.add_argument("shot_id", help="Shot ID, e.g. PKS_SH020")
+    c_info.add_argument("shot_id", help="Shot ID, e.g. DMO_SH020")
 
     c_status = sub.add_parser("status", help="Update shot status.")
     c_status.add_argument("shot_id", help="Shot ID.")
