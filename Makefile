@@ -146,23 +146,7 @@ pypi-release:
 
 set-version:
 	@if [ -z "$(VERSION)" ]; then echo "VERSION not set; pass VERSION=x.y.z"; exit 1; fi
-	python3 - <<'PY'
-import pathlib
-import sys
-
-p = pathlib.Path("pyproject.toml")
-text = p.read_text().splitlines()
-out = []
-set_flag = False
-for line in text:
-    if line.strip().startswith("version"):
-        out.append(f'version = "{sys.argv[1]}"')
-        set_flag = True
-    else:
-        out.append(line)
-if not set_flag:
-    print("version key not found in pyproject.toml", file=sys.stderr)
-    sys.exit(1)
-p.write_text("\n".join(out) + "\n")
-print(f"Set version to {sys.argv[1]} in {p}")
-PY "${VERSION}"
+	python3 -c "import pathlib,sys; p=pathlib.Path('pyproject.toml'); lines=p.read_text().splitlines(); out=[]; found=False; \
+  [out.append(f'version = \"{sys.argv[1]}\"') if ln.strip().startswith('version') else out.append(ln) or None for ln in lines or [None]]; \
+  found=any(ln.strip().startswith('version') for ln in lines); \
+  (sys.exit('version key not found in pyproject.toml') if not found else p.write_text('\\n'.join(out)+'\\n'))" "${VERSION}"
