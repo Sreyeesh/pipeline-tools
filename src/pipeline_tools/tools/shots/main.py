@@ -40,7 +40,7 @@ def _shot_path(show_root: Path, code: str) -> Path:
     return show_root / "04_SHOTS" / code.upper()
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = FriendlyArgumentParser(description="Shot commands: add, list, info, status, delete, generate.")
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -71,7 +71,7 @@ def parse_args() -> argparse.Namespace:
         "--step", type=int, default=10, help="Step between shot numbers (default 10)."
     )
 
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def cmd_add(args: argparse.Namespace) -> None:
@@ -196,8 +196,8 @@ def cmd_generate_range(args: argparse.Namespace) -> None:
     print(f"Created {len(created)} shots.")
 
 
-def main() -> None:
-    args = parse_args()
+def main(argv: list[str] | None = None) -> None:
+    args = parse_args(argv)
     if args.command == "add":
         cmd_add(args)
     elif args.command == "list":

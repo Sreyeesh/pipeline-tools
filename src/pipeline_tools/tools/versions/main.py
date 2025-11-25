@@ -6,7 +6,7 @@ from pipeline_tools.core import db
 from pipeline_tools.core.cli import FriendlyArgumentParser
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = FriendlyArgumentParser(description="Version commands.")
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -27,7 +27,7 @@ def parse_args() -> argparse.Namespace:
     c_tag.add_argument("version_id", help="Version ID.")
     c_tag.add_argument("tag", help="Tag to add.")
 
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def _resolve_target(asset: str | None, shot: str | None) -> str:
@@ -133,8 +133,8 @@ def cmd_tag(args: argparse.Namespace) -> None:
     print(f"Tagged {args.version_id} with '{args.tag}'.")
 
 
-def main() -> None:
-    args = parse_args()
+def main(argv: list[str] | None = None) -> None:
+    args = parse_args(argv)
     if args.command == "new":
         cmd_new(args)
     elif args.command == "list":

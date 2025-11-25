@@ -7,7 +7,7 @@ from pipeline_tools.core import db
 from pipeline_tools.core.cli import FriendlyArgumentParser
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = FriendlyArgumentParser(description="Task commands for assets/shots.")
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -23,7 +23,7 @@ def parse_args() -> argparse.Namespace:
     c_status.add_argument("task_name", help="Task name.")
     c_status.add_argument("status", choices=sorted(TASK_STATUS_VALUES), help="Task status.")
 
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def _ensure_target_exists(target_id: str, data: dict) -> None:
@@ -72,8 +72,8 @@ def cmd_status(args: argparse.Namespace) -> None:
     sys.exit(1)
 
 
-def main() -> None:
-    args = parse_args()
+def main(argv: list[str] | None = None) -> None:
+    args = parse_args(argv)
     if args.command == "add":
         cmd_add(args)
     elif args.command == "list":
