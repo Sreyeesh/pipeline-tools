@@ -95,6 +95,7 @@ source .venv/bin/activate
   ```
 - Cut a release: bump `version` in `pyproject.toml`, tag it (`git tag vX.Y.Z && git push origin vX.Y.Z`), and GitHub Actions will run tests/build and publish the wheel/tarball to the tag’s release.
 - Ansible release helper (main branch only): `ansible-playbook -i localhost, -c local ansible/release.yml -e repo=<your-org>/pipeline-tools -e version=vX.Y.Z` (requires `GITHUB_TOKEN` env and `community.general` collection).
+- PyPI publish: tag a release and GitHub Actions will build and upload to PyPI using `PYPI_API_TOKEN` secret. Manual fallback: `make pypi-release PYPI_TOKEN=...`.
 - Install latest main locally (pipx) via Ansible: `make release-local` (must be on `main`; uses `ansible/pipeline-tools.yml`).
 
 ### Local env loading (direnv)
