@@ -1,0 +1,2 @@
+# Copy to .envrc and replace the placeholder token. Keep your real token out of git.
+export GITHUB_TOKEN="ghp_your_token_here"

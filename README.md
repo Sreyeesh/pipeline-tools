@@ -74,6 +74,39 @@ After pipx/pip --user installs, ensure `~/.local/bin` is on your PATH.
 
 If apt can install pipx (Debian/Ubuntu), the playbook will use `python3-pipx`; otherwise it falls back to a user-level pip install.
 
+### Dev bootstrap playbook
+
+For contributors, you can spin up a local venv and install dev deps:
+
+```sh
+ansible-playbook -i localhost, -c local ansible/dev.yml
+source .venv/bin/activate
+```
+
+## GitHub release installs (no PyPI)
+
+- Install from the latest GitHub release asset with pipx (recommended for users):
+  ```sh
+  pipx install https://github.com/<your-org>/pipeline-tools/releases/download/vX.Y.Z/pipeline_tools-X.Y.Z-py3-none-any.whl
+  ```
+  Or via pip (user site):
+  ```sh
+  pip install --user https://github.com/<your-org>/pipeline-tools/releases/download/vX.Y.Z/pipeline_tools-X.Y.Z-py3-none-any.whl
+  ```
+- Cut a release: bump `version` in `pyproject.toml`, tag it (`git tag vX.Y.Z && git push origin vX.Y.Z`), and GitHub Actions will run tests/build and publish the wheel/tarball to the tag’s release.
+- Ansible release helper (main branch only): `ansible-playbook -i localhost, -c local ansible/release.yml -e repo=<your-org>/pipeline-tools -e version=vX.Y.Z` (requires `GITHUB_TOKEN` env and `community.general` collection).
+- Install latest main locally (pipx) via Ansible: `make release-local` (must be on `main`; uses `ansible/pipeline-tools.yml`).
+
+### Local env loading (direnv)
+
+- Copy `.envrc.example` to `.envrc` and set your token:
+  ```sh
+  cp .envrc.example .envrc
+  echo 'export GITHUB_TOKEN="ghp_your_token_here"' > .envrc
+  direnv allow
+  ```
+  With direnv installed and hooked into your shell, `GITHUB_TOKEN` will auto-load when you `cd` into the repo, so release playbooks and scripts work without manual `export`.
+
 ## Templates
 
 - `animation_short` (default): film/animation short pipeline folders.
@@ -105,7 +138,19 @@ Mount overrides: `PROJECTS_ROOT=/path/to/projects DB_VOLUME=pipeline-tools-db`
 
 The container entrypoint is the unified CLI (`python -m pipeline_tools.cli`), so `make pt ...` and `docker compose run --rm pipeline-tools ...` append arguments to that CLI.
 
+### Conventional commits
+
+- Enforce locally: `make install-hooks` installs a commit-msg hook that blocks non-conventional messages (allowed types: build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test).
+- CI enforcement: commit messages are linted on push/PR via GitHub Actions (`.github/workflows/commitlint.yml`).
+
 ## Config
 
 - Override DB path: `PIPELINE_TOOLS_DB=/path/to/db.sqlite3`.
 - Asset status options: design, model, rig, surfacing, done.
+
+## Observability and diagnostics
+
+- Logs: `--log-format json` for structured output; `--log-level DEBUG|INFO|WARNING|ERROR` to tune verbosity.
+- Request tracing: pass `--request-id abc123` or set `PIPELINE_TOOLS_REQUEST_ID`.
+- Metrics: set `--metrics-endpoint statsd://host:8125` or `PIPELINE_TOOLS_METRICS` to emit StatsD counters/timings (doctor emits `doctor.run` and `doctor.duration_ms`).
+- Health check: `pipeline-tools doctor --json` for machine-readable checks (db path, creative root, env, templates). Exits non-zero on failure.

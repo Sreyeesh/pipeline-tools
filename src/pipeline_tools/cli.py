@@ -1,8 +1,3 @@
-"""
-Typer-based CLI dispatcher for pipeline tools.
-
-Commands are thin wrappers around the tool modules under pipeline_tools.tools.
-"""
 from __future__ import annotations
 
 from typing import List
@@ -11,6 +6,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from pipeline_tools.core import observability
 from pipeline_tools.tools.admin import main as admin_main
 from pipeline_tools.tools.assets import main as assets_main
 from pipeline_tools.tools.character_thumbnails import main as character_thumbnails_main
@@ -80,9 +76,16 @@ def _echo_command_list() -> None:
     _render_command_table()
 
 
-def _passthrough(ctx: typer.Context, runner) -> None:
-    """Pass remaining args through to an existing argparse-based module."""
-    runner(list(ctx.args))
+def _passthrough(ctx: typer.Context, runner, command_name: str) -> None:
+    """Pass remaining args through to an existing argparse-based module with logging."""
+    args = list(ctx.args)
+    observability.log_event("command_start", command=command_name, cli_args=args)
+    try:
+        runner(args)
+    except Exception as exc:  # pragma: no cover - thin glue layer
+        observability.log_exception("command_error", exc, command=command_name)
+        raise
+    observability.log_event("command_complete", command=command_name, cli_args=args)
 
 
 @app.callback(invoke_without_command=True)
@@ -90,7 +93,25 @@ def main(
     ctx: typer.Context,
     examples: bool = typer.Option(False, "--examples", help="Show common commands and exit."),
     list_commands: bool = typer.Option(False, "--list", "--commands", help="List available commands."),
+    log_level: str = typer.Option("INFO", "--log-level", help="Log level (DEBUG, INFO, WARNING, ERROR)."),
+    log_format: str = typer.Option(
+        "console", "--log-format", help="Log format: console or json for structured logs."
+    ),
+    request_id: str = typer.Option(None, "--request-id", help="Override request ID for tracing/logs."),
+    metrics_endpoint: str = typer.Option(
+        None,
+        "--metrics-endpoint",
+        help="Optional StatsD endpoint (e.g. statsd://localhost:8125) for metrics.",
+    ),
 ) -> None:
+    observability.init_observability(
+        log_level=log_level,
+        log_format=log_format,
+        request_id=request_id,
+        metrics_endpoint=metrics_endpoint,
+        service="pipeline-tools",
+    )
+    observability.log_event("cli_entry", invoked_subcommand=ctx.invoked_subcommand)
     if examples:
         _echo_examples()
         raise typer.Exit()
@@ -137,43 +158,45 @@ def create(
 @app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def doctor(ctx: typer.Context) -> None:
     """Run environment checks."""
+    observability.log_event("command_start", command="doctor", cli_args=list(ctx.args))
     admin_main.main(["doctor", *list(ctx.args)])
+    observability.log_event("command_complete", command="doctor", cli_args=list(ctx.args))
 
 
 @app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def admin(ctx: typer.Context) -> None:
     """Admin/config commands (config_show, config_set, doctor)."""
-    _passthrough(ctx, admin_main.main)
+    _passthrough(ctx, admin_main.main, "admin")
 
 
 @app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def shows(ctx: typer.Context) -> None:
     """Show-level commands (create/list/use/info/etc.)."""
-    _passthrough(ctx, shows_main.main)
+    _passthrough(ctx, shows_main.main, "shows")
 
 
 @app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def assets(ctx: typer.Context) -> None:
     """Asset-level commands (add/list/info/status/etc.)."""
-    _passthrough(ctx, assets_main.main)
+    _passthrough(ctx, assets_main.main, "assets")
 
 
 @app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def shots(ctx: typer.Context) -> None:
     """Shot-level commands (add/list/info/status/etc.)."""
-    _passthrough(ctx, shots_main.main)
+    _passthrough(ctx, shots_main.main, "shots")
 
 
 @app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def tasks(ctx: typer.Context) -> None:
     """Task commands for assets/shots."""
-    _passthrough(ctx, tasks_main.main)
+    _passthrough(ctx, tasks_main.main, "tasks")
 
 
 @app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def versions(ctx: typer.Context) -> None:
     """Version tracking commands."""
-    _passthrough(ctx, versions_main.main)
+    _passthrough(ctx, versions_main.main, "versions")
 
 
 @app.command(
@@ -182,7 +205,7 @@ def versions(ctx: typer.Context) -> None:
 )
 def character_thumbnails(ctx: typer.Context) -> None:
     """Generate thumbnail sheets for characters."""
-    _passthrough(ctx, character_thumbnails_main.main)
+    _passthrough(ctx, character_thumbnails_main.main, "character-thumbnails")
 
 
 if __name__ == "__main__":

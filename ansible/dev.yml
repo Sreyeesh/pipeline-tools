@@ -1,0 +1,44 @@
+---
+- name: Developer setup for pipeline-tools
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+
+  vars:
+    repo_root: "{{ playbook_dir | dirname }}"
+    venv_path: "{{ repo_root }}/.venv"
+
+  tasks:
+    - name: Ensure base packages (Debian/Ubuntu)
+      become: true
+      apt:
+        name:
+          - python3-venv
+          - python3-pip
+          - build-essential
+        state: present
+        update_cache: true
+      when: ansible_os_family == "Debian"
+
+    - name: Create virtualenv for development
+      ansible.builtin.command: >
+        python3 -m venv "{{ venv_path }}"
+      args:
+        creates: "{{ venv_path }}/bin/activate"
+
+    - name: Install dev requirements
+      ansible.builtin.command: >
+        "{{ venv_path }}/bin/pip" install -r requirements-dev.txt
+      args:
+        chdir: "{{ repo_root }}"
+
+    - name: Write sample .env for observability
+      ansible.builtin.copy:
+        dest: "{{ repo_root }}/.env"
+        content: |
+          # Observability defaults for local runs
+          PIPELINE_TOOLS_METRICS=
+          PIPELINE_TOOLS_REQUEST_ID=
+          PIPELINE_TOOLS_DB=
+          PIPELINE_TOOLS_ROOT=
+      when: ansible_os_family != "Windows"
