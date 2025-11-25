@@ -57,7 +57,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     c_add = sub.add_parser("add", help="Create an asset and its folder.")
     c_add.add_argument("--show-code", "-c", help="Show code (defaults to current).")
     c_add.add_argument("--type", "-t", required=True, choices=sorted(ASSET_TYPE_DIRS.keys()), help="Asset type: CH/ENV/PR.")
-    c_add.add_argument("--name", "-n", required=True, help="Asset name, e.g. Poku.")
+    c_add.add_argument("--name", "-n", required=True, help="Asset name, e.g. Hero.")
 
     c_list = sub.add_parser("list", help="List assets for a show.")
     c_list.add_argument("--show-code", "-c", help="Show code (defaults to current).")
@@ -65,10 +65,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     c_list.add_argument("--status", choices=sorted(DB_STATUS_VALUES), help="Filter by status.")
 
     c_info = sub.add_parser("info", help="Show details for one asset.")
-    c_info.add_argument("asset_id", help="Asset ID, e.g. PKS_CH_Poku")
+    c_info.add_argument("asset_id", help="Asset ID, e.g. PKS_CH_Hero")
 
     c_status = sub.add_parser("status", help="Update asset status.")
-    c_status.add_argument("asset_id", help="Asset ID, e.g. PKS_CH_Poku")
+    c_status.add_argument("asset_id", help="Asset ID, e.g. PKS_CH_Hero")
     c_status.add_argument("status", choices=sorted(DB_STATUS_VALUES), help="New status.")
 
     c_delete = sub.add_parser("delete", help="Delete an asset from DB (keeps folders).")

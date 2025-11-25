@@ -17,7 +17,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = FriendlyArgumentParser(
         description=(
             "Create a character thumbnails folder inside a project.\n"
-            "Example: -c PKS -n \"Poku Short 30s\" --character courierA"
+            "Example: -c PKS -n \"Demo Short 30s\" --character courierA"
         )
     )
     parser.add_argument(
@@ -30,7 +30,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--name",
         "-n",
         required=True,
-        help='Project title (e.g. "Poku Short 30s"). Used in the root folder name.',
+        help='Project title (e.g. "Demo Short 30s"). Used in the root folder name.',
     )
     parser.add_argument(
         "--character",

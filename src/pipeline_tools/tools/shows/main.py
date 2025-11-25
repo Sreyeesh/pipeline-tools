@@ -37,7 +37,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
     c_create = sub.add_parser("create", help="Create a show folder and register it.")
     c_create.add_argument("-c", "--show-code", required=True, help="Show code, e.g. PKS")
-    c_create.add_argument("-n", "--name", required=True, help='Show name, e.g. "Poku Short 30s"')
+    c_create.add_argument("-n", "--name", required=True, help='Show name, e.g. "Demo Short 30s"')
     c_create.add_argument(
         "-t",
         "--template",

@@ -83,13 +83,13 @@ pt-i:
 	$(RUN_INTERACTIVE) $(ARGS)
 
 # Quick create; requires SHOW_CODE and NAME. Example:
-# make pt-create SHOW_CODE=PKS NAME="Poku Short 30s" TEMPLATE=game_dev_small
+# make pt-create SHOW_CODE=PKS NAME="Demo Short 30s" TEMPLATE=game_dev_small
 pt-create:
 	@if [ -z "$(SHOW_CODE)" ] || [ -z "$(NAME)" ]; then echo "Usage: make pt-create SHOW_CODE=PKS NAME=\"Project Name\" [TEMPLATE=animation_short]"; exit 1; fi
 	$(RUN) create -c $(SHOW_CODE) -n "$(NAME)" $(if $(TEMPLATE),-t $(TEMPLATE))
 
 # Interactive creation (prompts). Example:
-# make pt-create-i SHOW_CODE=PKS NAME="Poku Short 30s"
+# make pt-create-i SHOW_CODE=PKS NAME="Demo Short 30s"
 pt-create-i:
 	$(RUN_INTERACTIVE) create --interactive $(if $(SHOW_CODE),-c $(SHOW_CODE)) $(if $(NAME),-n "$(NAME)") $(if $(TEMPLATE),-t $(TEMPLATE))
 
