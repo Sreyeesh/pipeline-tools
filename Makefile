@@ -2,6 +2,9 @@ IMAGE ?= pipeline-tools
 PYTHON ?= python3
 ANSIBLE_PLAYBOOK ?= ansible-playbook
 INSTALLER ?= pipx
+VERSION ?= v0.1.0
+# Derive org/name from origin URL; override with REPO=org/name.
+REPO ?= $(shell git config --get remote.origin.url | sed -E 's#.*/([^/]+/[^/.]+)(\.git)?#\1#')
 
 # Auto-detect a sensible creative root; override with PROJECTS_ROOT or PIPELINE_TOOLS_ROOT.
 PROJECTS_ROOT ?= $(shell if [ -n "$(PIPELINE_TOOLS_ROOT)" ]; then printf "%s" "$(PIPELINE_TOOLS_ROOT)"; elif [ -d /mnt/c/Projects ]; then printf "%s" "/mnt/c/Projects"; else printf "%s" "$$HOME/Projects"; fi)
@@ -11,7 +14,7 @@ DB_VOLUME ?= pipeline-tools-db
 RUN := docker run --rm -v "$(PROJECTS_ROOT)":/mnt/c/Projects -v $(DB_VOLUME):/root/.pipeline_tools $(IMAGE)
 RUN_INTERACTIVE := docker run --rm -it -v "$(PROJECTS_ROOT)":/mnt/c/Projects -v $(DB_VOLUME):/root/.pipeline_tools $(IMAGE)
 
-.PHONY: help build test test-docker pt pt-i pt-create pt-create-i doctor examples compose compose-list compose-test compose-shell list ansible-install ansible-pip
+.PHONY: help build test test-docker pt pt-i pt-create pt-create-i doctor examples compose compose-list compose-test compose-shell list ansible-install ansible-pip ansible-dev doctor-json ansible-install-nosudo release-tag release-ansible install-hooks commit-check release-local
 
 help:
 	@echo "Targets:"
@@ -30,8 +33,17 @@ help:
 	@echo "  list           - alias for compose-list"
 	@echo "  ansible-install- install the CLI locally via Ansible (INSTALLER=pipx|pip, default pipx)"
 	@echo "  ansible-pip    - shortcut for ansible-install with INSTALLER=pip"
+	@echo "  ansible-dev    - bootstrap local dev venv and dev deps"
+	@echo "  doctor-json    - run doctor with JSON output for automation"
+	@echo "  ansible-install-nosudo - install without managing system packages (set pipeline_tools_manage_system_packages=false)"
+	@echo "  release-tag    - tag current main with VERSION (default $(VERSION)) and push"
+	@echo "  release-ansible- run Ansible release playbook for VERSION (default $(VERSION))"
+	@echo "  release-local  - install current main locally via Ansible (pipx)"
+	@echo "  install-hooks  - install commit-msg hook to enforce conventional commits"
+	@echo "  commit-check   - lint commit messages in BASE..HEAD (defaults origin/main..HEAD)"
 	@echo ""
 	@echo "Variables: IMAGE (default: pipeline-tools), PROJECTS_ROOT (default: /mnt/c/Projects or $$HOME/Projects), DB_VOLUME (default: pipeline-tools-db)"
+	@echo "           VERSION (default: $(VERSION)), REPO (default: $(REPO))"
 
 build:
 	docker build -t $(IMAGE) .
@@ -82,6 +94,9 @@ pt-create-i:
 doctor:
 	$(RUN) doctor
 
+doctor-json:
+	$(RUN) doctor --json
+
 examples:
 	$(RUN) --examples
 
@@ -90,3 +105,32 @@ ansible-install:
 
 ansible-pip:
 	$(MAKE) ansible-install INSTALLER=pip
+
+ansible-dev:
+	$(ANSIBLE_PLAYBOOK) -i localhost, -c local ansible/dev.yml
+
+ansible-install-nosudo:
+	$(ANSIBLE_PLAYBOOK) -i localhost, -c local ansible/pipeline-tools.yml -e pipeline_tools_installer=$(INSTALLER) -e pipeline_tools_manage_system_packages=false
+
+release-tag:
+	@if [ "$$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then echo "Release tags must be created from main"; exit 1; fi
+	@if ! git diff --quiet; then echo "Working tree not clean; commit or stash first"; exit 1; fi
+	git tag $(VERSION)
+	git push origin $(VERSION)
+
+release-ansible:
+	$(ANSIBLE_PLAYBOOK) -i localhost, -c local ansible/release.yml -e repo=$(REPO) -e version=$(VERSION)
+
+release-local:
+	@if [ "$$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then echo "Release install should be run from main"; exit 1; fi
+	$(ANSIBLE_PLAYBOOK) -i localhost, -c local ansible/pipeline-tools.yml -e pipeline_tools_installer=$(INSTALLER)
+
+install-hooks:
+	@if [ ! -d .git/hooks ]; then echo ".git/hooks not found; run inside a git clone."; exit 1; fi
+	cp commitlint.py .git/hooks/commit-msg
+	chmod +x .git/hooks/commit-msg
+
+commit-check:
+	BASE=$${BASE:-$$(git merge-base origin/main HEAD 2>/dev/null || git rev-parse HEAD^)}; \
+	HEAD=$${HEAD:-$$(git rev-parse HEAD)}; \
+	python commitlint.py range $$BASE $$HEAD

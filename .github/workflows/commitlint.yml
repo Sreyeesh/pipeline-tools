@@ -1,0 +1,40 @@
+name: Commit Lint
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint-commits:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Determine commit range
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "BASE_SHA=${{ github.event.pull_request.base.sha }}" >> $GITHUB_ENV
+            echo "HEAD_SHA=${{ github.event.pull_request.head.sha }}" >> $GITHUB_ENV
+          else
+            echo "BASE_SHA=${{ github.event.before }}" >> $GITHUB_ENV
+            echo "HEAD_SHA=${{ github.sha }}" >> $GITHUB_ENV
+          fi
+
+      - name: Lint commit messages
+        run: |
+          BASE="${BASE_SHA}"
+          HEAD="${HEAD_SHA}"
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            BASE="$(git rev-parse "$HEAD^" || true)"
+          fi
+          echo "Checking commits from $BASE..$HEAD"
+          python commitlint.py range "$BASE" "$HEAD"

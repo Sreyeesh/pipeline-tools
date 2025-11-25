@@ -8,6 +8,33 @@
     pipeline_tools_src: "{{ playbook_dir | dirname }}"
     pipeline_tools_installer: pipx  # options: pipx, pip
     pipeline_tools_python: python3
+    pipeline_tools_manage_system_packages: true  # set false to skip apt tasks when sudo is unavailable
+    pipeline_tools_can_sudo: true
+
+  pre_tasks:
+    - name: Check sudo availability for system package installs
+      become: true
+      ansible.builtin.command: "true"
+      register: sudo_check
+      failed_when: false
+      changed_when: false
+      when: pipeline_tools_manage_system_packages
+
+    - name: Disable system package installs when sudo is not available
+      set_fact:
+        pipeline_tools_can_sudo: false
+      when:
+        - pipeline_tools_manage_system_packages
+        - sudo_check is defined
+        - sudo_check.rc is defined
+        - sudo_check.rc != 0
+
+    - name: Note when skipping system package installs
+      debug:
+        msg: "Skipping system package installs (set pipeline_tools_manage_system_packages=false or provide sudo with -K)."
+      when:
+        - not pipeline_tools_can_sudo
+        - pipeline_tools_manage_system_packages
 
   tasks:
     - name: Ensure Python packaging tools are present (Debian/Ubuntu)
@@ -18,7 +45,10 @@
           - python3-venv
         state: present
         update_cache: true
-      when: ansible_os_family == "Debian"
+      when:
+        - ansible_os_family == "Debian"
+        - pipeline_tools_manage_system_packages
+        - pipeline_tools_can_sudo
 
     - name: Ensure pipx is installed via apt (Debian/Ubuntu)
       become: true
@@ -31,6 +61,8 @@
       when:
         - ansible_os_family == "Debian"
         - pipeline_tools_installer == "pipx"
+        - pipeline_tools_manage_system_packages
+        - pipeline_tools_can_sudo
 
     - name: Ensure pipx is installed for the user
       ansible.builtin.command: >

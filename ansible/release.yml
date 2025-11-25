@@ -1,0 +1,63 @@
+---
+- name: Build and publish GitHub release assets (main branch only)
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    repo: "<your-org>/pipeline-tools"  # override with -e repo=org/name
+    version: ""                        # required: tag like v0.1.1
+
+  pre_tasks:
+    - name: Ensure version tag is provided
+      ansible.builtin.fail:
+        msg: "Set -e version=vX.Y.Z"
+      when: version == ""
+
+    - name: Verify current branch is main
+      ansible.builtin.command: git rev-parse --abbrev-ref HEAD
+      register: branch
+      changed_when: false
+    - name: Abort if not on main
+      ansible.builtin.fail:
+        msg: "Release must be run from main; current branch is {{ branch.stdout }}"
+      when: branch.stdout != "main"
+
+    - name: Update pip and install build deps
+      ansible.builtin.command: python -m pip install --upgrade pip
+    - name: Install dev/build deps
+      ansible.builtin.command: python -m pip install -r requirements-dev.txt build twine
+
+  tasks:
+    - name: Run tests
+      ansible.builtin.command: python -m pytest
+
+    - name: Build artifacts
+      ansible.builtin.command: python -m build
+
+    - name: Ensure release exists
+      community.general.github_release:
+        token: "{{ lookup('env', 'GITHUB_TOKEN') }}"
+        repo: "{{ repo }}"
+        tag: "{{ version }}"
+        draft: false
+        prerelease: false
+        name: "{{ version }}"
+
+    - name: Upload wheel
+      community.general.github_release_asset:
+        token: "{{ lookup('env', 'GITHUB_TOKEN') }}"
+        repo: "{{ repo }}"
+        tag: "{{ version }}"
+        src: "dist/pipeline_tools-*.whl"
+        name: "pipeline_tools-{{ version | regex_replace('^v','') }}-py3-none-any.whl"
+        overwrite: true
+
+    - name: Upload sdist
+      community.general.github_release_asset:
+        token: "{{ lookup('env', 'GITHUB_TOKEN') }}"
+        repo: "{{ repo }}"
+        tag: "{{ version }}"
+        src: "dist/pipeline-tools-*.tar.gz"
+        name: "pipeline-tools-{{ version | regex_replace('^v','') }}.tar.gz"
+        overwrite: true
