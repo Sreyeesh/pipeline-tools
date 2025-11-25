@@ -7,6 +7,9 @@
   vars:
     repo: "<your-org>/pipeline-tools"  # override with -e repo=org/name
     version: ""                        # required: tag like v0.1.1
+    api_root: "https://api.github.com/repos/{{ repo }}"
+    python_bin: "{{ ansible_playbook_python | default('python3') }}"
+    repo_root: "{{ playbook_dir | dirname }}"
 
   pre_tasks:
     - name: Ensure version tag is provided
@@ -24,40 +27,85 @@
       when: branch.stdout != "main"
 
     - name: Update pip and install build deps
-      ansible.builtin.command: python -m pip install --upgrade pip
+      ansible.builtin.command: "{{ python_bin }} -m pip install --upgrade pip"
+      args:
+        chdir: "{{ repo_root }}"
     - name: Install dev/build deps
-      ansible.builtin.command: python -m pip install -r requirements-dev.txt build twine
+      ansible.builtin.command: "{{ python_bin }} -m pip install -r requirements-dev.txt build twine"
+      args:
+        chdir: "{{ repo_root }}"
+
+    - name: Ensure dist directory is clean
+      ansible.builtin.file:
+        path: "{{ repo_root }}/dist"
+        state: absent
+      changed_when: false
 
   tasks:
     - name: Run tests
-      ansible.builtin.command: python -m pytest
+      ansible.builtin.command: "{{ python_bin }} -m pytest"
+      args:
+        chdir: "{{ repo_root }}"
 
     - name: Build artifacts
-      ansible.builtin.command: python -m build
+      ansible.builtin.command: "{{ python_bin }} -m build"
+      args:
+        chdir: "{{ repo_root }}"
 
-    - name: Ensure release exists
-      community.general.github_release:
-        token: "{{ lookup('env', 'GITHUB_TOKEN') }}"
-        repo: "{{ repo }}"
-        tag: "{{ version }}"
-        draft: false
-        prerelease: false
-        name: "{{ version }}"
+    - name: Look up existing release by tag
+      ansible.builtin.uri:
+        url: "{{ api_root }}/releases/tags/{{ version }}"
+        headers:
+          Authorization: "Bearer {{ lookup('env', 'GITHUB_TOKEN') }}"
+          Accept: "application/vnd.github+json"
+        return_content: true
+        status_code: [200, 404]
+      register: release_lookup
+
+    - name: Create release when missing
+      ansible.builtin.uri:
+        url: "{{ api_root }}/releases"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ lookup('env', 'GITHUB_TOKEN') }}"
+          Accept: "application/vnd.github+json"
+        body_format: json
+        body:
+          tag_name: "{{ version }}"
+          name: "{{ version }}"
+          draft: false
+          prerelease: false
+        status_code: 201
+        return_content: true
+      when: release_lookup.status == 404
+      register: release_create
+
+    - name: Set upload URL
+      ansible.builtin.set_fact:
+        upload_url: >-
+          {{
+            (release_lookup.json.upload_url if release_lookup.status == 200 else release_create.json.upload_url)
+            | regex_replace('\{\?name,label\}', '')
+          }}
 
     - name: Upload wheel
-      community.general.github_release_asset:
-        token: "{{ lookup('env', 'GITHUB_TOKEN') }}"
-        repo: "{{ repo }}"
-        tag: "{{ version }}"
-        src: "dist/pipeline_tools-*.whl"
-        name: "pipeline_tools-{{ version | regex_replace('^v','') }}-py3-none-any.whl"
-        overwrite: true
+      ansible.builtin.uri:
+        url: "{{ upload_url }}?name=pipeline_tools-{{ version | regex_replace('^v','') }}-py3-none-any.whl"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ lookup('env', 'GITHUB_TOKEN') }}"
+          Content-Type: "application/octet-stream"
+          Accept: "application/vnd.github+json"
+        src: "{{ repo_root }}/dist/pipeline_tools-{{ version | regex_replace('^v','') }}-py3-none-any.whl"
+        status_code: [201, 422]
 
     - name: Upload sdist
-      community.general.github_release_asset:
-        token: "{{ lookup('env', 'GITHUB_TOKEN') }}"
-        repo: "{{ repo }}"
-        tag: "{{ version }}"
-        src: "dist/pipeline-tools-*.tar.gz"
-        name: "pipeline-tools-{{ version | regex_replace('^v','') }}.tar.gz"
-        overwrite: true
+      ansible.builtin.uri:
+        url: "{{ upload_url }}?name=pipeline-tools-{{ version | regex_replace('^v','') }}.tar.gz"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ lookup('env', 'GITHUB_TOKEN') }}"
+          Content-Type: "application/octet-stream"
+          Accept: "application/vnd.github+json"
+        src: "{{ repo_root }}/dist/pipeline-tools-{{ version | regex_replace('^v','') }}.tar.gz"
+        status_code: [201, 422]
