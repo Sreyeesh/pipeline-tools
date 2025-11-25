@@ -6,6 +6,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from pipeline_tools import __version__
 from pipeline_tools.core import observability
 from pipeline_tools.tools.admin import main as admin_main
 from pipeline_tools.tools.assets import main as assets_main
@@ -93,6 +94,7 @@ def main(
     ctx: typer.Context,
     examples: bool = typer.Option(False, "--examples", help="Show common commands and exit."),
     list_commands: bool = typer.Option(False, "--list", "--commands", help="List available commands."),
+    version: bool = typer.Option(False, "--version", help="Show version and exit."),
     log_level: str = typer.Option("INFO", "--log-level", help="Log level (DEBUG, INFO, WARNING, ERROR)."),
     log_format: str = typer.Option(
         "console", "--log-format", help="Log format: console or json for structured logs."
@@ -104,6 +106,9 @@ def main(
         help="Optional StatsD endpoint (e.g. statsd://localhost:8125) for metrics.",
     ),
 ) -> None:
+    if version:
+        console.print(f"pipeline-tools {__version__}")
+        raise typer.Exit()
     observability.init_observability(
         log_level=log_level,
         log_format=log_format,

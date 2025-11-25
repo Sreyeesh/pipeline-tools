@@ -81,3 +81,10 @@ def test_hyphenated_command_for_character_thumbnails(monkeypatch) -> None:
 
     assert result.exit_code == 0
     assert captured == ["--foo"]
+
+
+def test_version_flag() -> None:
+    result = runner.invoke(cli.app, ["--version"])
+
+    assert result.exit_code == 0
+    assert "pipeline-tools" in result.stdout
