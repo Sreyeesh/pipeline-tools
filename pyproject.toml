@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pipeline-tools"
-version = "0.1.0"
+version = "0.1.3"
 description = "Small utilities for pipeline folder creation and helpers."
 readme = "README.md"
 requires-python = ">=3.8"
