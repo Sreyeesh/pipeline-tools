@@ -42,6 +42,7 @@ help:
 	@echo "  install-hooks  - install commit-msg hook to enforce conventional commits"
 	@echo "  commit-check   - lint commit messages in BASE..HEAD (defaults origin/main..HEAD)"
 	@echo "  pypi-release   - build and upload to PyPI (requires PYPI_TOKEN env)"
+	@echo "  set-version    - set version in pyproject.toml (VERSION=x.y.z)"
 	@echo ""
 	@echo "Variables: IMAGE (default: pipeline-tools), PROJECTS_ROOT (default: /mnt/c/Projects or $$HOME/Projects), DB_VOLUME (default: pipeline-tools-db)"
 	@echo "           VERSION (default: $(VERSION)), REPO (default: $(REPO))"
@@ -142,3 +143,26 @@ pypi-release:
 	rm -rf dist
 	python3 -m build
 	TWINE_USERNAME=__token__ TWINE_PASSWORD=$(PYPI_TOKEN) twine upload dist/*
+
+set-version:
+	@if [ -z "$(VERSION)" ]; then echo "VERSION not set; pass VERSION=x.y.z"; exit 1; fi
+	python3 - <<'PY'
+import pathlib
+import sys
+
+p = pathlib.Path("pyproject.toml")
+text = p.read_text().splitlines()
+out = []
+set_flag = False
+for line in text:
+    if line.strip().startswith("version"):
+        out.append(f'version = "{sys.argv[1]}"')
+        set_flag = True
+    else:
+        out.append(line)
+if not set_flag:
+    print("version key not found in pyproject.toml", file=sys.stderr)
+    sys.exit(1)
+p.write_text("\n".join(out) + "\n")
+print(f"Set version to {sys.argv[1]} in {p}")
+PY "${VERSION}"
