@@ -50,7 +50,7 @@ def _ensure_status(status: str) -> None:
         sys.exit(1)
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = FriendlyArgumentParser(description="Asset-level commands: add, list, info, status, find, tags.")
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -94,7 +94,7 @@ def parse_args() -> argparse.Namespace:
     c_recent = sub.add_parser("recent", help="List recently updated assets.")
     c_recent.add_argument("--limit", type=int, default=5, help="Number to show (default 5).")
 
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def cmd_add(args: argparse.Namespace) -> None:
@@ -279,8 +279,8 @@ def cmd_recent(args: argparse.Namespace) -> None:
         print(f"{asset['id']} | {asset.get('updated_at','')} | {asset['status']} | {asset['name']}")
 
 
-def main() -> None:
-    args = parse_args()
+def main(argv: list[str] | None = None) -> None:
+    args = parse_args(argv)
     if args.command == "add":
         cmd_add(args)
     elif args.command == "list":

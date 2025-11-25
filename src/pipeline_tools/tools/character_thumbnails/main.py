@@ -13,7 +13,7 @@ LOCATIONS = {
 DEFAULT_LOCATION = "assets"
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = FriendlyArgumentParser(
         description=(
             "Create a character thumbnails folder inside a project.\n"
@@ -47,11 +47,11 @@ def parse_args() -> argparse.Namespace:
             f"(default: {DEFAULT_LOCATION})."
         ),
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
-def main() -> None:
-    args = parse_args()
+def main(argv: list[str] | None = None) -> None:
+    args = parse_args(argv)
 
     show_root: Path = paths.make_show_root(args.show_code, args.name)
     rel_base = LOCATIONS[args.location]

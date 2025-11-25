@@ -29,7 +29,7 @@ def _resolve_show_code(args_show: Optional[str], data: dict) -> str:
     return current
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = FriendlyArgumentParser(
         description="Show-level commands: create, list, use, info."
     )
@@ -79,7 +79,7 @@ def parse_args() -> argparse.Namespace:
     c_summary = sub.add_parser("summary", help="Summary for one show.")
     c_summary.add_argument("-c", "--show-code", help="Show code (defaults to current).")
 
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def cmd_create(args: argparse.Namespace) -> None:
@@ -319,8 +319,8 @@ def cmd_summary(args: argparse.Namespace) -> None:
     print(f"Shots: {len(shots)} ({', '.join(f'{k}:{v}' for k,v in sorted(shot_status_counts.items())) or 'none'})")
 
 
-def main() -> None:
-    args = parse_args()
+def main(argv: list[str] | None = None) -> None:
+    args = parse_args(argv)
     if args.command == "create":
         cmd_create(args)
     elif args.command == "list":
