@@ -3,6 +3,7 @@ from typing import Dict, List
 # Folder structure for an animation short project
 ANIMATION_SHORT_TEMPLATE: List[str] = [
     "01_ADMIN",
+    "02_PREPRO/reference",
     "02_PREPRO/script",
     "02_PREPRO/boards",
     "02_PREPRO/designs/characters",
