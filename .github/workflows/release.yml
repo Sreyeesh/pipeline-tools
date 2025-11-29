@@ -34,6 +34,17 @@ jobs:
             exit 1
           fi
 
+      - name: Ensure release is on Monday
+        run: |
+          DAY_OF_WEEK=$(date -u +%u)
+          if [ "$DAY_OF_WEEK" != "1" ]; then
+            echo "Releases can only be published on Mondays (UTC)."
+            echo "Today is day $DAY_OF_WEEK of the week (1=Monday, 7=Sunday)."
+            echo "Please wait until Monday to create release tags."
+            exit 1
+          fi
+          echo "Today is Monday. Proceeding with release."
+
       - name: Install build and dev deps
         run: |
           python -m pip install --upgrade pip

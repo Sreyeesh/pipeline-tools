@@ -17,6 +17,16 @@
         msg: "Set -e version=vX.Y.Z"
       when: version == ""
 
+    - name: Check if today is Monday
+      ansible.builtin.command: date -u +%u
+      register: day_of_week
+      changed_when: false
+
+    - name: Abort if not Monday
+      ansible.builtin.fail:
+        msg: "Releases can only be published on Mondays (UTC). Today is day {{ day_of_week.stdout }} (1=Monday, 7=Sunday)."
+      when: day_of_week.stdout != "1"
+
     - name: Verify current branch is main
       ansible.builtin.command: git rev-parse --abbrev-ref HEAD
       register: branch
