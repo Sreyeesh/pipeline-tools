@@ -4,13 +4,17 @@ from typing import List
 
 import typer
 from rich.console import Console
+from rich.columns import Columns
+from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
 
 from pipeline_tools import __version__
 from pipeline_tools.core import observability
 from pipeline_tools.tools.admin import main as admin_main
 from pipeline_tools.tools.assets import main as assets_main
 from pipeline_tools.tools.character_thumbnails import main as character_thumbnails_main
+from pipeline_tools.tools.dcc_launcher.launcher import launch_dcc, get_dcc_executable, DCC_PATHS
 from pipeline_tools.tools.project_creator import main as project_creator_main
 from pipeline_tools.tools.shots import main as shots_main
 from pipeline_tools.tools.shows import main as shows_main
@@ -22,60 +26,119 @@ app = typer.Typer(add_completion=False, help="Artist-friendly pipeline tools lau
 
 console = Console()
 
-COMMANDS = [
-    ("create", "Create project folder trees from templates."),
-    ("doctor", "Run environment checks."),
-    ("admin", "Admin/config commands (config_show, config_set, doctor)."),
-    ("shows", "Show-level commands (create/list/use/info/etc.)."),
-    ("assets", "Asset-level commands (add/list/info/status/etc.)."),
-    ("shots", "Shot-level commands (add/list/info/status/etc.)."),
-    ("tasks", "Task commands for assets/shots."),
-    ("versions", "Version tracking commands."),
-    ("character-thumbnails", "Generate thumbnail sheets for characters."),
-    ("examples", "Show common commands."),
+MENU_SECTIONS = [
+    ("🚀 Getting Started", [
+        ("create", "Create new project", "Set up folders and structure for animation/VFX"),
+        ("doctor", "System check", "Verify your environment is configured correctly"),
+        ("open", "Launch apps", "Open Krita, Blender, and other creative tools"),
+    ]),
+    ("📂 Project Management", [
+        ("shows", "Shows", "Create and manage animation productions"),
+        ("assets", "Assets", "Characters, props, and environments"),
+        ("shots", "Shots", "Shot sequences and scene management"),
+    ]),
+    ("💼 Production", [
+        ("tasks", "Tasks", "Track and assign work items"),
+        ("versions", "Versions", "File version history and tracking"),
+        ("admin", "Settings", "Configure pipeline preferences"),
+    ]),
 ]
 
-EXAMPLE_COMMANDS = [
-    'pipeline-tools create -c DMO -n "Demo Short 30s"',
-    'pipeline-tools create -c PKU -n "Poku Discovery" --git-lfs',
-    "pipeline-tools create --interactive",
-    "pipeline-tools shows list",
-    "pipeline-tools assets add -c DMO -t CH -n Hero",
-    'pipeline-tools shots add DMO_SH010 "First pass layout"',
-    "pipeline-tools doctor",
+QUICK_START = [
+    ("🎬 New Project", 'create --interactive', "Guided project setup"),
+    ("🎨 Launch Krita", 'open krita', "Start painting/drawing"),
+    ("🔧 System Check", 'doctor', "Verify installation"),
 ]
 
 
 def _render_header() -> None:
-    console.print("[bold cyan]Pipeline Tools[/bold cyan] [dim]· artist-friendly pipeline CLI[/dim]")
-    console.print("Run a command below or add [bold]--help[/bold] to any command for details.\n")
+    """Render GUI-style header."""
+    console.print()
+    title = Text()
+    title.append("Pipeline Tools", style="bold cyan")
+    title.append(f" v{__version__}", style="dim")
 
+    subtitle = Text()
+    subtitle.append("Artist-friendly animation & VFX pipeline", style="dim")
 
-def _render_examples() -> None:
-    console.print("[bold]Common commands[/bold]")
-    for example in EXAMPLE_COMMANDS:
-        console.print(f"  [cyan]{example}[/cyan]")
+    panel = Panel(
+        subtitle,
+        title=title,
+        border_style="cyan",
+        padding=(0, 2),
+    )
+    console.print(panel)
     console.print()
 
 
-def _render_command_table() -> None:
-    table = Table(show_header=False, box=None, padding=(0, 1))
-    table.add_column("Command", style="bold green")
-    table.add_column("What it does")
-    for name, help_text in COMMANDS:
-        table.add_row(name, help_text)
-    console.print(table)
+def _render_quick_start() -> None:
+    """Render quick start section."""
+    console.print("[bold white]⚡ Quick Start[/bold white]")
+    console.print()
+
+    for label, cmd, description in QUICK_START:
+        console.print(f"  {label}")
+        console.print(f"    [cyan]$ pipeline-tools {cmd}[/cyan]  [dim]{description}[/dim]")
+        console.print()
+
+    console.print()
+
+
+def _render_menu() -> None:
+    """Render menu sections."""
+    for section_name, commands in MENU_SECTIONS:
+        console.print(f"[bold white]{section_name}[/bold white]")
+        console.print()
+
+        for cmd_name, label, description in commands:
+            console.print(f"  [cyan]pipeline-tools {cmd_name}[/cyan]")
+            console.print(f"    {label} — [dim]{description}[/dim]")
+            console.print()
+
+        console.print()
+
+
+def _render_examples() -> None:
+    """Render example usage section."""
+    console.print("[bold white]📖 Examples[/bold white]")
+    console.print()
+
+    examples = [
+        ("Create a new show", 'shows create -c PKU -n "My Show"'),
+        ("Add a character", 'assets add -c PKU -t CH -n Hero'),
+        ("Add a shot", 'shots add PKU_SH010 "Opening scene"'),
+        ("Launch Krita", 'open krita'),
+        ("Launch Blender in background", 'open blender -b'),
+        ("List your tasks", 'tasks list'),
+    ]
+
+    for task, cmd in examples:
+        console.print(f"  {task}")
+        console.print(f"    [cyan]$ pipeline-tools {cmd}[/cyan]")
+        console.print()
+
+    console.print()
+
+
+def _render_footer() -> None:
+    """Render footer with help tip."""
+    console.print("[dim]─[/dim]" * 60)
+    console.print()
+    console.print("[dim]Need more details? Add [cyan]--help[/cyan] to any command[/dim]")
+    console.print()
 
 
 def _echo_examples() -> None:
     _render_header()
+    _render_quick_start()
+    _render_menu()
     _render_examples()
-    console.print("[bold]Commands[/bold]")
-    _render_command_table()
+    _render_footer()
 
 
 def _echo_command_list() -> None:
-    _render_command_table()
+    _render_header()
+    _render_menu()
 
 
 def _passthrough(ctx: typer.Context, runner, command_name: str) -> None:
@@ -125,8 +188,9 @@ def main(
         _echo_command_list()
         raise typer.Exit()
     if ctx.invoked_subcommand is None:
-        _echo_examples()
-        raise typer.Exit()
+        # Launch interactive mode
+        from pipeline_tools.interactive import run_interactive
+        run_interactive()
 
 
 @app.command()
@@ -221,6 +285,108 @@ def versions(ctx: typer.Context) -> None:
 def character_thumbnails(ctx: typer.Context) -> None:
     """Generate thumbnail sheets for characters."""
     _passthrough(ctx, character_thumbnails_main.main, "character-thumbnails")
+
+
+@app.command()
+def open(
+    dcc_name: str = typer.Argument(..., help="DCC name (krita, blender, photoshop, etc.)"),
+    background: bool = typer.Option(False, "-b", "--background", help="Launch in background"),
+    list_dccs: bool = typer.Option(False, "-l", "--list", help="List supported DCCs"),
+) -> None:
+    """
+    Open a DCC application.
+
+    Examples:
+
+        pipeline-tools open krita
+
+        pipeline-tools open blender --background
+
+        pipeline-tools open krita -b
+    """
+    from pathlib import Path
+
+    if list_dccs:
+        console.print()
+        console.print("[bold cyan]📋 Supported DCCs[/bold cyan]")
+        console.print()
+
+        table = Table(show_header=False, box=None, padding=(0, 2))
+        table.add_column("Status", style="cyan", width=3)
+        table.add_column("DCC", style="bold", width=15)
+        table.add_column("Path", style="dim")
+
+        for dcc in sorted(DCC_PATHS.keys()):
+            exe = get_dcc_executable(dcc)
+            if exe:
+                table.add_row("✓", dcc.capitalize(), f"[green]{exe}[/green]")
+            else:
+                table.add_row("✗", dcc.capitalize(), "[dim]Not installed[/dim]")
+
+        console.print(table)
+        console.print()
+        return
+
+    # Check if DCC exists
+    executable = get_dcc_executable(dcc_name)
+    if not executable:
+        console.print()
+        console.print(f"[red bold]❌ {dcc_name.capitalize()} not found[/red bold]")
+        console.print()
+        console.print("[yellow]Tip:[/yellow] Run [cyan]pipeline-tools open --list[/cyan] to see available DCCs")
+        console.print()
+        raise typer.Exit(1)
+
+    # Launch
+    try:
+        console.print()
+        console.print(f"[bold cyan]🚀 Launching {dcc_name.capitalize()}[/bold cyan]")
+
+        # Show details in a nice table
+        details = Table(show_header=False, box=None, padding=(0, 1), show_edge=False)
+        details.add_column("Label", style="dim", width=12)
+        details.add_column("Value", style="")
+
+        details.add_row("Executable:", f"[dim]{executable}[/dim]")
+
+        console.print(details)
+        console.print()
+
+        process = launch_dcc(
+            dcc_name=dcc_name,
+            file_path=None,
+            project_root=None,
+            background=background
+        )
+
+        if background:
+            console.print(f"[green bold]✅ {dcc_name.capitalize()} launched[/green bold] [dim](PID: {process.pid})[/dim]")
+        else:
+            console.print(f"[green bold]✅ {dcc_name.capitalize()} is running[/green bold]")
+            console.print("[dim]Waiting for application to close...[/dim]")
+            process.wait()
+            console.print(f"[yellow]👋 {dcc_name.capitalize()} closed[/yellow]")
+
+        console.print()
+
+    except FileNotFoundError as e:
+        console.print()
+        console.print(f"[red bold]❌ File not found[/red bold]")
+        console.print(f"   [dim]{e}[/dim]")
+        console.print()
+        raise typer.Exit(1)
+    except ValueError as e:
+        console.print()
+        console.print(f"[red bold]❌ Invalid file path[/red bold]")
+        console.print(f"   [dim]{e}[/dim]")
+        console.print()
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print()
+        console.print(f"[red bold]❌ Error launching {dcc_name}[/red bold]")
+        console.print(f"   [dim]{e}[/dim]")
+        console.print()
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":
