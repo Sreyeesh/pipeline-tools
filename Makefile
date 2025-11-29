@@ -14,7 +14,7 @@ DB_VOLUME ?= pipeline-tools-db
 RUN := docker run --rm -v "$(PROJECTS_ROOT)":/mnt/c/Projects -v $(DB_VOLUME):/root/.pipeline_tools $(IMAGE)
 RUN_INTERACTIVE := docker run --rm -it -v "$(PROJECTS_ROOT)":/mnt/c/Projects -v $(DB_VOLUME):/root/.pipeline_tools $(IMAGE)
 
-.PHONY: help build test test-docker pt pt-i pt-create pt-create-i doctor examples compose compose-list compose-test compose-shell list ansible-install ansible-pip ansible-dev doctor-json ansible-install-nosudo release-tag release-ansible install-hooks commit-check release-local
+.PHONY: help build test test-docker pt pt-i pt-create pt-create-i doctor examples compose compose-list compose-test compose-shell list ansible-install ansible-pip ansible-dev doctor-json ansible-install-nosudo release-tag release-ansible install-hooks commit-check release-local check-monday deploy-local
 
 help:
 	@echo "Targets:"
@@ -43,9 +43,11 @@ help:
 	@echo "  commit-check   - lint commit messages in BASE..HEAD (defaults origin/main..HEAD)"
 	@echo "  pypi-release   - build and upload to PyPI (requires PYPI_TOKEN env)"
 	@echo "  set-version    - set version in pyproject.toml (VERSION=x.y.z)"
+	@echo "  check-monday   - check if today is Monday (for releases)"
+	@echo "  deploy-local   - deploy to local using Ansible (INSTALLER=pip|pipx, default pip)"
 	@echo ""
 	@echo "Variables: IMAGE (default: pipeline-tools), PROJECTS_ROOT (default: /mnt/c/Projects or $$HOME/Projects), DB_VOLUME (default: pipeline-tools-db)"
-	@echo "           VERSION (default: $(VERSION)), REPO (default: $(REPO))"
+	@echo "           VERSION (default: $(VERSION)), REPO (default: $(REPO)), INSTALLER (default: $(INSTALLER))"
 
 build:
 	docker build -t $(IMAGE) .
@@ -117,6 +119,7 @@ ansible-install-nosudo:
 release-tag:
 	@if [ "$$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then echo "Release tags must be created from main"; exit 1; fi
 	@if ! git diff --quiet; then echo "Working tree not clean; commit or stash first"; exit 1; fi
+	@if [ "$$(date -u +%u)" != "1" ]; then echo "Releases can only be published on Mondays (UTC). Today is day $$(date -u +%u) (1=Monday, 7=Sunday)."; exit 1; fi
 	git tag $(VERSION)
 	git push origin $(VERSION)
 
@@ -150,3 +153,16 @@ set-version:
   [out.append(f'version = \"{sys.argv[1]}\"') if ln.strip().startswith('version') else out.append(ln) or None for ln in lines or [None]]; \
   found=any(ln.strip().startswith('version') for ln in lines); \
   (sys.exit('version key not found in pyproject.toml') if not found else p.write_text('\\n'.join(out)+'\\n'))" "${VERSION}"
+
+check-monday:
+	@DAY=$$(date -u +%u); \
+	if [ "$$DAY" = "1" ]; then \
+		echo "✅ Today is Monday (UTC). You can publish releases."; \
+	else \
+		echo "❌ Today is NOT Monday (UTC). Day of week: $$DAY (1=Monday, 7=Sunday)"; \
+		echo "Releases can only be published on Mondays."; \
+		exit 1; \
+	fi
+
+deploy-local:
+	$(ANSIBLE_PLAYBOOK) ansible/pipeline-tools.yml -e pipeline_tools_installer=pip -e pipeline_tools_manage_system_packages=false
