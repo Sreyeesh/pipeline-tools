@@ -9,6 +9,7 @@ from pipeline_tools.core.git_utils import setup_git_repo, GitError, check_git_av
 from .templates import TEMPLATES
 from .gitignore_templates import GITIGNORE_TEMPLATES
 from .gitattributes_templates import GITATTRIBUTES_TEMPLATES
+from .starter_files import create_animation_starter_files
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -194,6 +195,24 @@ def main(argv: list[str] | None = None) -> None:
 
     print(f"Creating project at: {show_root}")
     create_folders(show_root, rel_paths)
+
+    # Create starter files for animation projects
+    if template_key in ['animation_short', 'animation_series']:
+        print("Creating starter files (PureRef, Krita)...")
+        created_files = create_animation_starter_files(
+            show_root,
+            show_code,
+            project_name,
+            template_key
+        )
+
+        # Report created files
+        if created_files['pureref']:
+            print(f"  Created {len(created_files['pureref'])} PureRef file(s)")
+        if created_files['krita']:
+            print(f"  Created {len(created_files['krita'])} Krita file(s)")
+        if created_files['blender']:
+            print(f"  Created {len(created_files['blender'])} Blender file(s)")
 
     # Write .gitignore if using git
     if use_git:
