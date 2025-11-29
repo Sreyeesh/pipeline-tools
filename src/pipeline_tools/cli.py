@@ -37,6 +37,7 @@ COMMANDS = [
 
 EXAMPLE_COMMANDS = [
     'pipeline-tools create -c DMO -n "Demo Short 30s"',
+    'pipeline-tools create -c PKU -n "Poku Discovery" --git-lfs',
     "pipeline-tools create --interactive",
     "pipeline-tools shows list",
     "pipeline-tools assets add -c DMO -t CH -n Hero",
@@ -142,6 +143,9 @@ def create(
     interactive: bool = typer.Option(False, "-i", "--interactive", help="Prompt for missing values."),
     dry_run: bool = typer.Option(False, "--dry-run", help="Preview without creating."),
     yes: bool = typer.Option(False, "-y", "--yes", help="Skip confirmation prompts."),
+    git: bool = typer.Option(False, "-g", "--git", help="Initialize a git repository."),
+    git_lfs: bool = typer.Option(False, "--git-lfs", help="Initialize Git LFS (implies --git)."),
+    git_branch: str = typer.Option("main", "--git-branch", help="Initial git branch name."),
 ) -> None:
     """Create a project folder tree from a template."""
     argv: List[str] = []
@@ -157,6 +161,12 @@ def create(
         argv.append("--dry-run")
     if yes:
         argv.append("--yes")
+    if git:
+        argv.append("--git")
+    if git_lfs:
+        argv.append("--git-lfs")
+    if git_branch != "main":
+        argv.extend(["--git-branch", git_branch])
     project_creator_main.main(argv)
 
 
