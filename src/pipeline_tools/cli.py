@@ -45,9 +45,9 @@ MENU_SECTIONS = [
 ]
 
 QUICK_START = [
-    ("🎬 New Project", 'create --interactive', "Guided project setup"),
-    ("🎨 Launch Krita", 'open krita', "Start painting/drawing"),
-    ("🔧 System Check", 'doctor', "Verify installation"),
+    ("🎬 Pick Project", 'Just type a number', "Select from menu or create new"),
+    ("🎨 Pick App", 'Type a number', "Choose Krita, Blender, etc."),
+    ("🚀 Start Creating", 'Press Enter', "App launches automatically"),
 ]
 
 
@@ -188,7 +188,7 @@ def main(
         _echo_command_list()
         raise typer.Exit()
     if ctx.invoked_subcommand is None:
-        # Launch interactive mode
+        # Launch interactive GUI-like mode by default
         from pipeline_tools.interactive import run_interactive
         run_interactive()
 
@@ -197,6 +197,13 @@ def main(
 def examples() -> None:
     """Show common commands and available modules."""
     _echo_examples()
+
+
+@app.command()
+def interactive() -> None:
+    """Launch interactive GUI-like mode (same as running pipeline-tools with no arguments)."""
+    from pipeline_tools.interactive import run_interactive
+    run_interactive()
 
 
 @app.command()
@@ -292,6 +299,9 @@ def open(
     dcc_name: str = typer.Argument(..., help="DCC name (krita, blender, photoshop, etc.)"),
     background: bool = typer.Option(False, "-b", "--background", help="Launch in background"),
     list_dccs: bool = typer.Option(False, "-l", "--list", help="List supported DCCs"),
+    list_projects: bool = typer.Option(False, "--list-projects", help="List available projects"),
+    project: str = typer.Option(None, "-p", "--project", help="Project folder name (e.g., AN_PKU_PokuDiscovery)"),
+    choose_project: bool = typer.Option(False, "-c", "--choose", help="Choose project interactively"),
 ) -> None:
     """
     Open a DCC application.
@@ -300,11 +310,55 @@ def open(
 
         pipeline-tools open krita
 
-        pipeline-tools open blender --background
+        pipeline-tools open krita --list-projects
 
-        pipeline-tools open krita -b
+        pipeline-tools open krita --project AN_PKU_PokuDiscovery
+
+        pipeline-tools open krita --choose
+
+        pipeline-tools open blender --background
     """
     from pathlib import Path
+    from pipeline_tools.core.paths import get_creative_root
+
+    # List available projects
+    if list_projects:
+        creative_root = get_creative_root()
+
+        if not creative_root.exists():
+            console.print()
+            console.print(f"[yellow]⚠ Projects directory not found: {creative_root}[/yellow]")
+            console.print()
+            raise typer.Exit(1)
+
+        project_folders = [
+            p for p in creative_root.iterdir()
+            if p.is_dir() and not p.name.startswith('.')
+        ]
+
+        if not project_folders:
+            console.print()
+            console.print(f"[yellow]⚠ No projects found in {creative_root}[/yellow]")
+            console.print()
+            raise typer.Exit(1)
+
+        console.print()
+        console.print("[bold cyan]📂 Available Projects[/bold cyan]")
+        console.print()
+
+        table = Table(show_header=False, box=None, padding=(0, 2))
+        table.add_column("Number", style="cyan", width=5)
+        table.add_column("Project Name", style="bold")
+        table.add_column("Path", style="dim")
+
+        for idx, proj in enumerate(project_folders, 1):
+            table.add_row(f"{idx}.", proj.name, str(proj))
+
+        console.print(table)
+        console.print()
+        console.print("[dim]Use [cyan]--project[/cyan] or [cyan]--choose[/cyan] to open with a project[/dim]")
+        console.print()
+        return
 
     if list_dccs:
         console.print()
@@ -327,6 +381,62 @@ def open(
         console.print()
         return
 
+    # Handle project selection
+    project_root = None
+    if choose_project or project:
+        creative_root = get_creative_root()
+
+        # List available projects
+        if not creative_root.exists():
+            console.print()
+            console.print(f"[yellow]⚠ Projects directory not found: {creative_root}[/yellow]")
+            console.print()
+        else:
+            # Find all project folders (directories starting with AN_, DR_, GD_, etc.)
+            project_folders = [
+                p for p in creative_root.iterdir()
+                if p.is_dir() and not p.name.startswith('.')
+            ]
+
+            if choose_project:
+                # Interactive selection
+                if not project_folders:
+                    console.print()
+                    console.print(f"[yellow]⚠ No projects found in {creative_root}[/yellow]")
+                    console.print()
+                    raise typer.Exit(1)
+
+                console.print()
+                console.print("[bold cyan]📂 Available Projects[/bold cyan]")
+                console.print()
+
+                for idx, proj in enumerate(project_folders, 1):
+                    console.print(f"  [cyan]{idx}.[/cyan] {proj.name}")
+
+                console.print()
+                choice = typer.prompt("Select project number", type=int)
+
+                if 1 <= choice <= len(project_folders):
+                    project_root = str(project_folders[choice - 1])
+                else:
+                    console.print()
+                    console.print("[red]❌ Invalid selection[/red]")
+                    console.print()
+                    raise typer.Exit(1)
+
+            elif project:
+                # Direct project name specified
+                project_path = creative_root / project
+                if project_path.exists() and project_path.is_dir():
+                    project_root = str(project_path)
+                else:
+                    console.print()
+                    console.print(f"[red]❌ Project not found: {project}[/red]")
+                    console.print()
+                    console.print("[yellow]Tip:[/yellow] Use [cyan]--choose[/cyan] to see available projects")
+                    console.print()
+                    raise typer.Exit(1)
+
     # Check if DCC exists
     executable = get_dcc_executable(dcc_name)
     if not executable:
@@ -339,30 +449,54 @@ def open(
 
     # Launch
     try:
-        console.print()
-        console.print(f"[bold cyan]🚀 Launching {dcc_name.capitalize()}[/bold cyan]")
+        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
+        import time
+        from pathlib import Path as PathLib
 
-        # Show details in a nice table
-        details = Table(show_header=False, box=None, padding=(0, 1), show_edge=False)
-        details.add_column("Label", style="dim", width=12)
-        details.add_column("Value", style="")
-
-        details.add_row("Executable:", f"[dim]{executable}[/dim]")
-
-        console.print(details)
         console.print()
 
-        process = launch_dcc(
-            dcc_name=dcc_name,
-            file_path=None,
-            project_root=None,
-            background=background
-        )
+        # Determine project name for display
+        project_name = PathLib(project_root).name if project_root else None
 
-        if background:
-            console.print(f"[green bold]✅ {dcc_name.capitalize()} launched[/green bold] [dim](PID: {process.pid})[/dim]")
+        # Show loading bar animation
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[bold cyan]{task.description}"),
+            BarColumn(),
+            console=console,
+            transient=True  # Remove after completion
+        ) as progress:
+            if project_name:
+                task = progress.add_task(
+                    f"→ Launching {dcc_name.capitalize()} for project {project_name}",
+                    total=100
+                )
+            else:
+                task = progress.add_task(
+                    f"→ Launching {dcc_name.capitalize()}",
+                    total=100
+                )
+
+            # Animate progress
+            for i in range(100):
+                progress.update(task, advance=1)
+                time.sleep(0.01)  # Fast animation
+
+            # Launch the DCC
+            process = launch_dcc(
+                dcc_name=dcc_name,
+                file_path=None,
+                project_root=project_root,
+                background=background
+            )
+
+        # Show success message
+        if project_name:
+            console.print(f"[green bold]✅ {dcc_name.capitalize()} launched for project {project_name}[/green bold]")
         else:
-            console.print(f"[green bold]✅ {dcc_name.capitalize()} is running[/green bold]")
+            console.print(f"[green bold]✅ {dcc_name.capitalize()} launched[/green bold]")
+
+        if not background:
             console.print("[dim]Waiting for application to close...[/dim]")
             process.wait()
             console.print(f"[yellow]👋 {dcc_name.capitalize()} closed[/yellow]")

@@ -8,7 +8,7 @@ from pipeline_tools.core.cli import FriendlyArgumentParser
 from pipeline_tools.core.fs_utils import create_folders
 from pipeline_tools.core.paths import make_show_root
 from pipeline_tools.tools.project_creator.templates import TEMPLATES
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def _get_show_or_exit(show_code: str, data: dict) -> dict:
@@ -106,7 +106,7 @@ def cmd_create(args: argparse.Namespace) -> None:
     print(f"Creating show at: {show_root}")
     create_folders(show_root, TEMPLATES[template_key])
 
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     data["shows"][show_code] = {
         "code": show_code,
         "name": args.name,
@@ -212,7 +212,7 @@ def cmd_rename(args: argparse.Namespace) -> None:
         print(f"Show '{args.new_code}' already exists.")
         sys.exit(1)
 
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     new_show = dict(show)
     new_show["code"] = args.new_code
     if args.name:

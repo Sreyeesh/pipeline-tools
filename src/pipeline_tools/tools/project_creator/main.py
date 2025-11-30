@@ -1,11 +1,13 @@
 import argparse
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 from pipeline_tools.core.cli import FriendlyArgumentParser
 from pipeline_tools.core.paths import make_show_root
 from pipeline_tools.core.fs_utils import create_folders
 from pipeline_tools.core.git_utils import setup_git_repo, GitError, check_git_available, check_git_lfs_available
+from pipeline_tools.core.db import get_conn
 from .templates import TEMPLATES
 from .gitignore_templates import GITIGNORE_TEMPLATES
 from .gitattributes_templates import GITATTRIBUTES_TEMPLATES
@@ -125,6 +127,31 @@ def _write_gitattributes(project_path: Path, template_key: str) -> None:
     gitattributes_path.write_text(gitattributes_content)
 
 
+def _register_project_in_db(show_code: str, project_name: str, template_key: str, show_root: Path) -> None:
+    """Register the project in the database."""
+    conn = get_conn()
+    cur = conn.cursor()
+    now = datetime.now(timezone.utc).isoformat()
+
+    # Check if project already exists
+    existing = cur.execute("SELECT code FROM shows WHERE code=?", (show_code,)).fetchone()
+    if existing:
+        print(f"Project '{show_code}' already registered in database, updating...")
+        cur.execute(
+            "UPDATE shows SET name=?, template=?, root=?, updated_at=? WHERE code=?",
+            (project_name, template_key, str(show_root), now, show_code)
+        )
+    else:
+        print(f"Registering project '{show_code}' in database...")
+        cur.execute(
+            "INSERT INTO shows(code, name, template, root, created_at, updated_at) VALUES(?,?,?,?,?,?)",
+            (show_code, project_name, template_key, str(show_root), now, now)
+        )
+
+    conn.commit()
+    conn.close()
+
+
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
 
@@ -195,6 +222,9 @@ def main(argv: list[str] | None = None) -> None:
 
     print(f"Creating project at: {show_root}")
     create_folders(show_root, rel_paths)
+
+    # Register project in database
+    _register_project_in_db(show_code, project_name, template_key, show_root)
 
     # Create starter files for animation projects
     if template_key in ['animation_short', 'animation_series']:
