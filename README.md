@@ -2,7 +2,9 @@
 
 Artist-friendly CLI for creating and managing pipeline folder structures for creative production workflows (animation, game dev, drawing projects).
 
-**Version:** 0.1.7 | **License:** MIT | **Python:** 3.8+
+**Version:** 0.1.8 | **License:** MIT | **Python:** 3.8+
+
+🌐 **[Visit the Official Website](https://sreyeesh.github.io/pipeline-tools/)** | 📦 **[Download Latest Release](https://github.com/Sreyeesh/pipeline-tools/releases/latest)**
 
 ## Overview
 
