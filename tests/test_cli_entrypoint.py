@@ -13,7 +13,7 @@ def test_top_level_defaults_to_interactive() -> None:
     result = runner.invoke(cli.app, [], input="\n")  # Simulate pressing Enter to exit
 
     assert result.exit_code == 0
-    assert "Pipeline Tools" in result.stdout or "pipeline-tools>" in result.stdout
+    assert "Pipeline Tools" in result.stdout or "pipely>" in result.stdout
 
 
 def test_list_shows_commands() -> None:
@@ -87,4 +87,4 @@ def test_version_flag() -> None:
     result = runner.invoke(cli.app, ["--version"])
 
     assert result.exit_code == 0
-    assert "pipeline-tools" in result.stdout
+    assert "pipely" in result.stdout

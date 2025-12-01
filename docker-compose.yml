@@ -1,16 +1,16 @@
 services:
-  pipeline-tools:
-    image: pipeline-tools:latest
+  pipely:
+    image: pipely:latest
     build: .
     working_dir: /app
     volumes:
       - ${PROJECTS_ROOT:-/mnt/c/Projects}:/mnt/c/Projects
-      - ${DB_VOLUME:-pipeline-tools-db}:/root/.pipeline_tools
+      - ${DB_VOLUME:-pipely-db}:/root/.pipeline_tools
     entrypoint: ["python", "-m", "pipeline_tools.cli"]
     command: ["--list"]
 
-  pipeline-tools-test:
-    image: pipeline-tools:builder
+  pipely-test:
+    image: pipely:builder
     build:
       context: .
       target: builder
@@ -20,16 +20,16 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command: ["pytest"]
 
-  pipeline-tools-shell:
-    image: pipeline-tools:latest
+  pipely-shell:
+    image: pipely:latest
     build: .
     working_dir: /app
     volumes:
       - ${PROJECTS_ROOT:-/mnt/c/Projects}:/mnt/c/Projects
-      - ${DB_VOLUME:-pipeline-tools-db}:/root/.pipeline_tools
+      - ${DB_VOLUME:-pipely-db}:/root/.pipeline_tools
       - ./:/app
     entrypoint: ["/bin/sh"]
 
 volumes:
-  pipeline-tools-db:
-    name: ${DB_VOLUME:-pipeline-tools-db}
+  pipely-db:
+    name: ${DB_VOLUME:-pipely-db}

@@ -56,7 +56,7 @@ _STATE = ObservabilityState(
     log_format="console",
     log_level="WARNING",  # Changed from INFO - end users shouldn't see technical logs
     metrics=MetricsSink(host="", port=0, enabled=False),
-    service="pipeline-tools",
+    service="pipely",
 )
 
 
@@ -118,7 +118,7 @@ def init_observability(
     log_format: str = "console",
     request_id: Optional[str] = None,
     metrics_endpoint: Optional[str] = None,
-    service: str = "pipeline-tools",
+    service: str = "pipely",
 ) -> None:
     """
     Configure logging/metrics for this process. Safe to call multiple times.

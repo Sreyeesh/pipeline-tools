@@ -1,5 +1,5 @@
 ---
-- name: Install pipeline-tools for end users (pipx by default)
+- name: Install Pipely for end users (pipx by default)
   hosts: localhost
   connection: local
   gather_facts: yes
@@ -78,13 +78,13 @@
           PATH: "{{ ansible_env.HOME }}/.local/bin:{{ ansible_env.PATH }}"
       when: pipeline_tools_installer == "pipx"
 
-    - name: Install pipeline-tools via pipx
+    - name: Install pipely via pipx
       environment: "{{ pipeline_tools_env | default({}) }}"
       command: >
         pipx install --force "{{ pipeline_tools_src }}"
       when: pipeline_tools_installer == "pipx"
 
-    - name: Install pipeline-tools via pip (user site)
+    - name: Install pipely via pip (user site)
       ansible.builtin.command: >
         {{ pipeline_tools_python }} -m pip install --user --upgrade "{{ pipeline_tools_src }}"
       when: pipeline_tools_installer == "pip"
@@ -92,11 +92,11 @@
     - name: Show next steps for PATH (pipx)
       debug:
         msg: >
-          pipeline-tools installed via pipx. If the command is not found, add {{ ansible_env.HOME }}/.local/bin to PATH.
+          pipely installed via pipx. If the command is not found, add {{ ansible_env.HOME }}/.local/bin to PATH.
       when: pipeline_tools_installer == "pipx"
 
     - name: Show next steps for PATH (pip)
       debug:
         msg: >
-          pipeline-tools installed via pip --user. If the command is not found, add {{ ansible_env.HOME }}/.local/bin to PATH.
+          pipely installed via pip --user. If the command is not found, add {{ ansible_env.HOME }}/.local/bin to PATH.
       when: pipeline_tools_installer == "pip"

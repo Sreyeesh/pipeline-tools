@@ -1,4 +1,4 @@
-# Pipeline Tools
+# Pipely
 
 Artist-friendly CLI for creating and managing pipeline folder structures for creative production workflows (animation, game dev, drawing projects).
 
@@ -6,7 +6,7 @@ Artist-friendly CLI for creating and managing pipeline folder structures for cre
 
 ## Overview
 
-Pipeline Tools provides a database-driven system for managing production pipelines with:
+Pipely provides a database-driven system for managing production pipelines with:
 - **Template-based project scaffolding** - Create standardized folder structures
 - **Show management** - Track multiple projects with contextual command execution
 - **Asset tracking** - Manage characters, environments, and props with status workflows
@@ -25,7 +25,7 @@ Three built-in templates for quick project setup:
 - **drawing_single (DR)** - reference, sketches, final, temp
 
 ### Database-Driven Tracking
-SQLite database (`~/.pipeline_tools/db.sqlite3`) tracks:
+SQLite database (`~/.pipely/db.sqlite3`) tracks:
 - Shows (top-level projects)
 - Assets (characters/CH, environments/ENV, props/PR)
 - Shots with descriptions and status
@@ -49,65 +49,65 @@ Projects follow convention: `{PREFIX}_{SHOW_CODE}_{PROJECT_NAME}`
 ### Installation
 Install from GitHub release (recommended):
 ```sh
-pipx install https://github.com/Sreyeesh/pipeline-tools/releases/download/v0.1.7/pipeline_tools-0.1.7-py3-none-any.whl
+pipx install https://github.com/Sreyeesh/pipely/releases/download/v0.1.7/pipely-0.1.7-py3-none-any.whl
 # or
-pip install --user https://github.com/Sreyeesh/pipeline-tools/releases/download/v0.1.7/pipeline_tools-0.1.7-py3-none-any.whl
+pip install --user https://github.com/Sreyeesh/pipely/releases/download/v0.1.7/pipely-0.1.7-py3-none-any.whl
 ```
 
 ### Basic Usage
 
 **Create a new project:**
 ```sh
-pipeline-tools create --interactive
+pipely create --interactive
 # Or non-interactive:
-pipeline-tools create --template animation_short --show-code DMO --project-name DemoShort30s
+pipely create --template animation_short --show-code DMO --project-name DemoShort30s
 ```
 
 **Manage shows:**
 ```sh
-pipeline-tools shows list                          # List all shows
-pipeline-tools shows use DMO                       # Set current show context
-pipeline-tools shows info DMO                      # Show details
-pipeline-tools shows templates                     # List available templates
+pipely shows list                          # List all shows
+pipely shows use DMO                       # Set current show context
+pipely shows info DMO                      # Show details
+pipely shows templates                     # List available templates
 ```
 
 **Manage assets:**
 ```sh
-pipeline-tools assets add character Hero           # Add character asset
-pipeline-tools assets add environment ForestPath   # Add environment
-pipeline-tools assets list                         # List all assets
-pipeline-tools assets status Hero model            # Update asset status
-pipeline-tools assets tag Hero --tags protagonist,main
-pipeline-tools assets find-by-tag protagonist      # Search by tag
+pipely assets add character Hero           # Add character asset
+pipely assets add environment ForestPath   # Add environment
+pipely assets list                         # List all assets
+pipely assets status Hero model            # Update asset status
+pipely assets tag Hero --tags protagonist,main
+pipely assets find-by-tag protagonist      # Search by tag
 ```
 
 **Manage shots:**
 ```sh
-pipeline-tools shots add SH010 "Hero enters forest"
-pipeline-tools shots list
-pipeline-tools shots status SH010 layout
+pipely shots add SH010 "Hero enters forest"
+pipely shots list
+pipely shots status SH010 layout
 ```
 
 **Track tasks:**
 ```sh
-pipeline-tools tasks add asset Hero "Model character"
-pipeline-tools tasks add shot SH010 "Animate shot"
-pipeline-tools tasks list asset Hero
-pipeline-tools tasks update-status <task-id> in_progress
+pipely tasks add asset Hero "Model character"
+pipely tasks add shot SH010 "Animate shot"
+pipely tasks list asset Hero
+pipely tasks update-status <task-id> in_progress
 ```
 
 **Track versions:**
 ```sh
-pipeline-tools versions create asset Hero model v001
-pipeline-tools versions list asset Hero
-pipeline-tools versions latest asset Hero model
-pipeline-tools versions tag <version-id> --tags approved,final
+pipely versions create asset Hero model v001
+pipely versions list asset Hero
+pipely versions latest asset Hero model
+pipely versions tag <version-id> --tags approved,final
 ```
 
 **Health check:**
 ```sh
-pipeline-tools doctor --json                       # System diagnostics
-pipeline-tools --version                           # Show version
+pipely doctor --json                       # System diagnostics
+pipely --version                           # Show version
 ```
 
 ---
@@ -128,7 +128,7 @@ make build                              # Build Docker image
 make compose-list                       # List available commands
 make compose-test                       # Run pytest suite in container
 make compose-shell                      # Interactive shell in container
-make pt ARGS="create --interactive"     # Run pipeline-tools in container
+make pt ARGS="create --interactive"     # Run pipely in container
 ```
 
 ### Testing
@@ -157,7 +157,7 @@ CI also validates commit messages. Format: `type(scope): message`
 
 ## Release Flow (GitHub Assets)
 
-Pipeline Tools releases are distributed via GitHub releases (PyPI is optional).
+Pipely releases are distributed via GitHub releases (PyPI is optional).
 
 ### Release Process
 
@@ -185,7 +185,7 @@ Pipeline Tools releases are distributed via GitHub releases (PyPI is optional).
 
 4. **Upload artifacts to GitHub release:**
    ```sh
-   make release-ansible VERSION=v0.1.7 REPO=Sreyeesh/pipeline-tools
+   make release-ansible VERSION=v0.1.7 REPO=Sreyeesh/pipely
    ```
 
 5. **Install latest release locally:**
@@ -210,13 +210,13 @@ Automated workflows in `.github/workflows/`:
 Install using Ansible playbooks (WSL/Linux):
 ```sh
 # Install with pipx (recommended):
-ansible-playbook -i localhost, -c local ansible/pipeline-tools.yml
+ansible-playbook -i localhost, -c local ansible/pipely.yml
 
 # Install with pip:
-ansible-playbook -i localhost, -c local ansible/pipeline-tools.yml -e pipeline_tools_installer=pip
+ansible-playbook -i localhost, -c local ansible/pipely.yml -e pipely_installer=pip
 
 # If pipx needs sudo packages:
-ansible-playbook -i localhost, -c local ansible/pipeline-tools.yml -K
+ansible-playbook -i localhost, -c local ansible/pipely.yml -K
 
 # No sudo available:
 make ansible-install-nosudo
@@ -228,7 +228,7 @@ make ansible-install-nosudo
 ```sh
 export PIPELINE_TOOLS_DB=/path/to/custom/db.sqlite3
 ```
-Default: `~/.pipeline_tools/db.sqlite3`
+Default: `~/.pipely/db.sqlite3`
 
 **Creative root (where projects are created):**
 ```sh
@@ -249,24 +249,24 @@ Auto-generated UUID if not set.
 
 **Logging:**
 ```sh
-pipeline-tools --log-format json --log-level DEBUG <command>
+pipely --log-format json --log-level DEBUG <command>
 ```
 Formats: `console` (default), `json`
 Levels: `DEBUG`, `INFO`, `WARNING`, `ERROR`
 
 **Metrics (StatsD):**
 ```sh
-pipeline-tools --metrics-endpoint statsd://localhost:8125 <command>
+pipely --metrics-endpoint statsd://localhost:8125 <command>
 ```
 
 **Request tracking:**
 ```sh
-pipeline-tools --request-id my-custom-id <command>
+pipely --request-id my-custom-id <command>
 ```
 
 ### Health Check & Diagnostics
 ```sh
-pipeline-tools doctor --json
+pipely doctor --json
 ```
 Returns system diagnostics including:
 - Database path and connectivity
@@ -282,7 +282,7 @@ Returns system diagnostics including:
 
 List templates:
 ```sh
-pipeline-tools shows templates
+pipely shows templates
 ```
 
 ---
@@ -307,8 +307,8 @@ pipeline-tools shows templates
 
 ### Project Structure
 ```
-pipeline-tools/
-├── src/pipeline_tools/
+pipely/
+├── src/pipely/
 │   ├── cli.py                      # Main Typer CLI entry point
 │   ├── __init__.py                 # Version and status enums
 │   ├── __main__.py                 # Module runner
