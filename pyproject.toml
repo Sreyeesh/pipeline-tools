@@ -8,7 +8,7 @@ version = "0.1.8"
 description = "Pipeline management made lovely - Artist-friendly CLI for creative production workflows."
 readme = "README.md"
 requires-python = ">=3.8"
-authors = [{ name = "Pipely", email = "hello@pipely.dev" }]
+authors = [{ name = "Pipely", email = "toucan.sg@gmail.com" }]
 license = { text = "MIT" }
 dependencies = ["typer>=0.9,<1.0", "rich>=13.7,<14.0", "prompt-toolkit>=3.0,<4.0"]
 
