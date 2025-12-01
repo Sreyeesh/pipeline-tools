@@ -7,12 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-- **Rebranded from "Pipeline Tools" to "Pipely"** - New name, tagline, and branding across all interfaces
-- Package name changed from `pipeline-tools` to `pipely`
-- CLI command changed from `pipeline-tools` to `pipely`
-- Updated tagline: "Pipeline management made lovely"
-
 ## [0.1.8] - 2025-12-01
 
 ### Added
@@ -25,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Visual indicators for git status (📝 Modified, ➕ Added, etc.)
 
 ### Changed
+- **Rebranded from "Pipeline Tools" to "Pipely"** - New name, tagline, and branding across all interfaces
+- Package name changed from `pipeline-tools` to `pipely`
+- CLI command changed from `pipeline-tools` to `pipely`
+- Updated tagline: "Pipeline management made lovely"
 - Log level from INFO to WARNING for cleaner end-user output
 - All prompts updated to encourage TAB autocomplete usage
 
