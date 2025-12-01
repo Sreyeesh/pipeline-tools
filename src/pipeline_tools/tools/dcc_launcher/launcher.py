@@ -72,6 +72,24 @@ DCC_PATHS = {
             "/Applications/Adobe After Effects 2024/Adobe After Effects 2024.app/Contents/MacOS/After Effects",
         ],
     },
+    "pureref": {
+        "Linux": [
+            "/usr/bin/pureref",
+            "/usr/local/bin/pureref",
+            "pureref",
+        ],
+        "Windows": [
+            r"C:/Program Files/PureRef/PureRef.exe",
+            r"C:\Program Files\PureRef\PureRef.exe",
+            r"C:/Program Files (x86)/PureRef/PureRef.exe",
+            r"C:\Program Files (x86)\PureRef\PureRef.exe",
+            "PureRef.exe",
+        ],
+        "Darwin": [
+            "/Applications/PureRef.app/Contents/MacOS/PureRef",
+            "pureref",
+        ],
+    },
 }
 
 
@@ -185,11 +203,133 @@ def launch_dcc(
         cmd.extend(additional_args)
 
     # Set working directory
-    # Note: On WSL launching Windows apps, we can't set cwd to a Windows path
-    # so we skip it and rely on absolute file paths
+    # Note: When launching Windows apps from WSL, we can't reliably set cwd
+    # because subprocess.Popen doesn't accept Windows paths on Linux.
+    # For WSL->Windows, we'll create a desktop notification file instead.
     cwd = None
-    if project_root and not is_wsl_to_windows:
-        cwd = str(Path(project_root).absolute())
+    project_notification = None
+    dcc_name_lower = dcc_name.lower()
+
+    if project_root:
+        if is_wsl_to_windows:
+            # Convert project path to Windows format
+            windows_project = project_root.replace("/mnt/c/", "C:\\").replace("/", "\\")
+            project_name = Path(project_root).name
+
+            # For Blender, create a startup script that sets the default save path
+            if dcc_name_lower == "blender":
+                try:
+                    # Get Windows username
+                    import subprocess as sp
+                    try:
+                        result = sp.run(["cmd.exe", "/c", "echo", "%USERNAME%"],
+                                      capture_output=True, text=True, check=False)
+                        win_username = result.stdout.strip()
+                    except:
+                        win_username = username if username else "User"
+
+                    # Create script in Windows temp directory accessible from both WSL and Windows
+                    windows_temp = f"C:\\Users\\{win_username}\\AppData\\Local\\Temp"
+                    wsl_temp = f"/mnt/c/Users/{win_username}/AppData/Local/Temp"
+
+                    startup_script = Path(wsl_temp) / "blender_pipeline_startup.py"
+                    windows_script_path = f"{windows_temp}\\blender_pipeline_startup.py"
+
+                    with open(startup_script, "w") as f:
+                        f.write(f'''# Pipeline Tools - Auto-generated startup script
+import bpy
+import os
+
+# Set default blend file path to project directory
+project_path = r"{windows_project}"
+project_name = "{project_name}"
+
+print("=" * 60)
+print("PIPELINE TOOLS - Project Context Active")
+print(f"Project: {{project_name}}")
+print(f"Path: {{project_path}}")
+print("=" * 60)
+
+# Make sure the path exists
+os.makedirs(project_path, exist_ok=True)
+
+# Change working directory
+os.chdir(project_path)
+
+# CRITICAL FIX: Auto-save to project on first Ctrl+S
+def auto_save_to_project():
+    """Automatically save to project directory when file has no path"""
+    if not bpy.data.filepath:
+        # Generate a default filename based on template or timestamp
+        import datetime
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        default_name = f"{{project_name}}_{{timestamp}}.blend"
+        filepath = os.path.join(project_path, default_name)
+
+        # Save directly to project
+        bpy.ops.wm.save_as_mainfile(filepath=filepath)
+        print(f"✓ Auto-saved to: {{filepath}}")
+        return True
+    return False
+
+# Override the save operator to auto-save to project
+original_save_mainfile = bpy.ops.wm.save_mainfile
+
+def pipeline_save_mainfile(*args, **kwargs):
+    """Wrapper that auto-saves to project if no filepath set"""
+    if not bpy.data.filepath:
+        # First save - auto-save to project directory
+        auto_save_to_project()
+    else:
+        # File already has a path, use normal save
+        original_save_mainfile(*args, **kwargs)
+
+# Monkey-patch the save operator
+bpy.ops.wm.save_mainfile = pipeline_save_mainfile
+
+print(f"✓ Working directory: {{os.getcwd()}}")
+print(f"✓ Auto-save to project enabled")
+print("=" * 60)
+print("")
+print("📁 SAVE YOUR WORK:")
+print(f"   • Press Ctrl+S - Auto-saves to {{project_path}}")
+print(f"   • File will be named: {{project_name}}_TIMESTAMP.blend")
+print(f"   • Use Ctrl+Shift+S to choose a custom name")
+print("")
+print("=" * 60)
+''')
+                    # Add the startup script to Blender's command line with Windows path
+                    cmd.extend(["--python", windows_script_path])
+                except Exception as e:
+                    # Debug: print error
+                    import sys
+                    print(f"Warning: Could not create Blender startup script: {e}", file=sys.stderr)
+                    pass
+
+            # Create a desktop notification file for all DCCs
+            desktop_path = Path("/mnt/c/Users").expanduser()
+            username = os.environ.get("USER", "")
+            if username:
+                desktop_path = Path(f"/mnt/c/Users/{username}/Desktop")
+
+            if desktop_path.exists():
+                notification_file = desktop_path / f"PIPELINE_{dcc_name_lower.upper()}_PROJECT.txt"
+                try:
+                    with open(notification_file, "w") as f:
+                        f.write(f"🎨 {dcc_name.upper()} - Current Project\n")
+                        f.write(f"=" * 50 + "\n\n")
+                        f.write(f"Project: {project_name}\n")
+                        f.write(f"Path:    {windows_project}\n\n")
+                        if dcc_name_lower == "blender":
+                            f.write(f"✓ Blender will save to this project by default\n\n")
+                        f.write(f"Navigate to this folder in {dcc_name.capitalize()} to open your files.\n")
+                        f.write(f"\nYou can delete this file when done.\n")
+                    project_notification = str(notification_file)
+                except Exception:
+                    pass  # Silently fail if we can't create the file
+        else:
+            # Only set cwd for native launches (Linux->Linux, Windows->Windows, Mac->Mac)
+            cwd = str(Path(project_root).absolute())
 
     # Launch
     if background:

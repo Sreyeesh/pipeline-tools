@@ -54,7 +54,7 @@ class ObservabilityState:
 _STATE = ObservabilityState(
     request_id=_default_request_id(),
     log_format="console",
-    log_level="INFO",
+    log_level="WARNING",  # Changed from INFO - end users shouldn't see technical logs
     metrics=MetricsSink(host="", port=0, enabled=False),
     service="pipeline-tools",
 )
@@ -114,7 +114,7 @@ def _parse_metrics_endpoint(value: Optional[str]) -> MetricsSink:
 
 def init_observability(
     *,
-    log_level: str = "INFO",
+    log_level: str = "WARNING",  # Changed from INFO - end users shouldn't see technical logs
     log_format: str = "console",
     request_id: Optional[str] = None,
     metrics_endpoint: Optional[str] = None,

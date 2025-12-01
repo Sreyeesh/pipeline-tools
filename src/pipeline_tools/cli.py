@@ -16,6 +16,7 @@ from pipeline_tools.tools.assets import main as assets_main
 from pipeline_tools.tools.character_thumbnails import main as character_thumbnails_main
 from pipeline_tools.tools.dcc_launcher.launcher import launch_dcc, get_dcc_executable, DCC_PATHS
 from pipeline_tools.tools.project_creator import main as project_creator_main
+from pipeline_tools.tools.project_status import main as project_status_main
 from pipeline_tools.tools.shots import main as shots_main
 from pipeline_tools.tools.shows import main as shows_main
 from pipeline_tools.tools.tasks import main as tasks_main
@@ -33,6 +34,7 @@ MENU_SECTIONS = [
         ("open", "Launch apps", "Open Krita, Blender, and other creative tools"),
     ]),
     ("📂 Project Management", [
+        ("project", "Project Status", "Check git status and commit changes"),
         ("shows", "Shows", "Create and manage animation productions"),
         ("assets", "Assets", "Characters, props, and environments"),
         ("shots", "Shots", "Shot sequences and scene management"),
@@ -292,6 +294,15 @@ def versions(ctx: typer.Context) -> None:
 def character_thumbnails(ctx: typer.Context) -> None:
     """Generate thumbnail sheets for characters."""
     _passthrough(ctx, character_thumbnails_main.main, "character-thumbnails")
+
+
+@app.command(
+    "project",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def project(ctx: typer.Context) -> None:
+    """Project status and git workflow (status/commit/list)."""
+    _passthrough(ctx, project_status_main, "project")
 
 
 @app.command()
