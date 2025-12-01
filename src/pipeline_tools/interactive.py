@@ -1,4 +1,4 @@
-"""Interactive shell for pipeline-tools with autocomplete."""
+"""Interactive shell for Pipely with autocomplete."""
 
 from __future__ import annotations
 
@@ -156,7 +156,7 @@ def run_interactive():
     # Print welcome message
     console.print()
     console.print("╭────────────────────────────────────────────────────────╮", style="cyan")
-    console.print("│  [bold cyan]Pipeline Tools[/bold cyan] [dim]- Pick → Launch → Create![/dim]  │")
+    console.print("│      [bold cyan]Pipely[/bold cyan] [dim]- Pipeline management made lovely[/dim]     │")
     console.print("│                                                        │")
     console.print("│  [bold]1.[/bold] Pick a project (or create new)                   │")
     console.print("│  [bold]2.[/bold] Pick an app (Blender, Krita, etc.)               │")
@@ -234,7 +234,7 @@ def run_interactive():
     while True:
         try:
             # Get input
-            text = session.prompt("pipeline-tools> ", style=Style.from_dict({"prompt": "cyan bold"}))
+            text = session.prompt("pipely> ", style=Style.from_dict({"prompt": "cyan bold"}))
             text = text.strip()
 
             if not text:

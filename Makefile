@@ -1,4 +1,4 @@
-IMAGE ?= pipeline-tools
+IMAGE ?= pipely
 PYTHON ?= python3
 ANSIBLE_PLAYBOOK ?= ansible-playbook
 INSTALLER ?= pipx
@@ -8,7 +8,7 @@ REPO ?= $(shell git config --get remote.origin.url | sed -E 's#.*/([^/]+/[^/.]+)
 
 # Auto-detect a sensible creative root; override with PROJECTS_ROOT or PIPELINE_TOOLS_ROOT.
 PROJECTS_ROOT ?= $(shell if [ -n "$(PIPELINE_TOOLS_ROOT)" ]; then printf "%s" "$(PIPELINE_TOOLS_ROOT)"; elif [ -d /mnt/c/Projects ]; then printf "%s" "/mnt/c/Projects"; else printf "%s" "$$HOME/Projects"; fi)
-DB_VOLUME ?= pipeline-tools-db
+DB_VOLUME ?= pipely-db
 
 # Base docker run command with mounts; CMD is passed after.
 RUN := docker run --rm -v "$(PROJECTS_ROOT)":/mnt/c/Projects -v $(DB_VOLUME):/root/.pipeline_tools $(IMAGE)
@@ -46,7 +46,7 @@ help:
 	@echo "  check-monday   - check if today is Monday (for releases)"
 	@echo "  deploy-local   - deploy to local using Ansible (INSTALLER=pip|pipx, default pip)"
 	@echo ""
-	@echo "Variables: IMAGE (default: pipeline-tools), PROJECTS_ROOT (default: /mnt/c/Projects or $$HOME/Projects), DB_VOLUME (default: pipeline-tools-db)"
+	@echo "Variables: IMAGE (default: pipely), PROJECTS_ROOT (default: /mnt/c/Projects or $$HOME/Projects), DB_VOLUME (default: pipely-db)"
 	@echo "           VERSION (default: $(VERSION)), REPO (default: $(REPO)), INSTALLER (default: $(INSTALLER))"
 
 build:
@@ -59,13 +59,13 @@ test-docker: build
 	docker run --rm -v "$(PWD)":/app -w /app --entrypoint /bin/sh $(IMAGE) -c "python3 -m pip install -e . -r requirements-dev.txt && python3 -m pytest"
 
 compose-list:
-	docker compose run --rm pipeline-tools --list
+	docker compose run --rm pipely --list
 
 compose-test:
-	docker compose run --rm pipeline-tools-test
+	docker compose run --rm pipely-test
 
 compose-shell:
-	docker compose run --rm pipeline-tools-shell
+	docker compose run --rm pipely-shell
 
 compose: compose-list
 
@@ -105,7 +105,7 @@ examples:
 	$(RUN) --examples
 
 ansible-install:
-	$(ANSIBLE_PLAYBOOK) -i localhost, -c local ansible/pipeline-tools.yml -e pipeline_tools_installer=$(INSTALLER)
+	$(ANSIBLE_PLAYBOOK) -i localhost, -c local ansible/pipely.yml -e pipeline_tools_installer=$(INSTALLER)
 
 ansible-pip:
 	$(MAKE) ansible-install INSTALLER=pip
@@ -114,7 +114,7 @@ ansible-dev:
 	$(ANSIBLE_PLAYBOOK) -i localhost, -c local ansible/dev.yml
 
 ansible-install-nosudo:
-	$(ANSIBLE_PLAYBOOK) -i localhost, -c local ansible/pipeline-tools.yml -e pipeline_tools_installer=$(INSTALLER) -e pipeline_tools_manage_system_packages=false
+	$(ANSIBLE_PLAYBOOK) -i localhost, -c local ansible/pipely.yml -e pipeline_tools_installer=$(INSTALLER) -e pipeline_tools_manage_system_packages=false
 
 release-tag:
 	@if [ "$$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then echo "Release tags must be created from main"; exit 1; fi
@@ -128,7 +128,7 @@ release-ansible:
 
 release-local:
 	@if [ "$$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then echo "Release install should be run from main"; exit 1; fi
-	$(ANSIBLE_PLAYBOOK) -i localhost, -c local ansible/pipeline-tools.yml -e pipeline_tools_installer=$(INSTALLER)
+	$(ANSIBLE_PLAYBOOK) -i localhost, -c local ansible/pipely.yml -e pipeline_tools_installer=$(INSTALLER)
 
 install-hooks:
 	@if [ ! -d .git/hooks ]; then echo ".git/hooks not found; run inside a git clone."; exit 1; fi
@@ -165,4 +165,4 @@ check-monday:
 	fi
 
 deploy-local:
-	$(ANSIBLE_PLAYBOOK) ansible/pipeline-tools.yml -e pipeline_tools_installer=pip -e pipeline_tools_manage_system_packages=false
+	$(ANSIBLE_PLAYBOOK) ansible/pipely.yml -e pipeline_tools_installer=pip -e pipeline_tools_manage_system_packages=false

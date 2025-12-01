@@ -23,7 +23,7 @@ from pipeline_tools.tools.tasks import main as tasks_main
 from pipeline_tools.tools.versions import main as versions_main
 
 
-app = typer.Typer(add_completion=False, help="Artist-friendly pipeline tools launcher.")
+app = typer.Typer(add_completion=False, help="Pipely - Pipeline management made lovely")
 
 console = Console()
 
@@ -80,7 +80,7 @@ def _render_quick_start() -> None:
 
     for label, cmd, description in QUICK_START:
         console.print(f"  {label}")
-        console.print(f"    [cyan]$ pipeline-tools {cmd}[/cyan]  [dim]{description}[/dim]")
+        console.print(f"    [cyan]$ pipely {cmd}[/cyan]  [dim]{description}[/dim]")
         console.print()
 
     console.print()
@@ -93,7 +93,7 @@ def _render_menu() -> None:
         console.print()
 
         for cmd_name, label, description in commands:
-            console.print(f"  [cyan]pipeline-tools {cmd_name}[/cyan]")
+            console.print(f"  [cyan]pipely {cmd_name}[/cyan]")
             console.print(f"    {label} — [dim]{description}[/dim]")
             console.print()
 
@@ -116,7 +116,7 @@ def _render_examples() -> None:
 
     for task, cmd in examples:
         console.print(f"  {task}")
-        console.print(f"    [cyan]$ pipeline-tools {cmd}[/cyan]")
+        console.print(f"    [cyan]$ pipely {cmd}[/cyan]")
         console.print()
 
     console.print()
@@ -173,14 +173,14 @@ def main(
     ),
 ) -> None:
     if version:
-        console.print(f"pipeline-tools {__version__}")
+        console.print(f"pipely {__version__}")
         raise typer.Exit()
     observability.init_observability(
         log_level=log_level,
         log_format=log_format,
         request_id=request_id,
         metrics_endpoint=metrics_endpoint,
-        service="pipeline-tools",
+        service="pipely",
     )
     observability.log_event("cli_entry", invoked_subcommand=ctx.invoked_subcommand)
     if examples:
@@ -203,7 +203,7 @@ def examples() -> None:
 
 @app.command()
 def interactive() -> None:
-    """Launch interactive GUI-like mode (same as running pipeline-tools with no arguments)."""
+    """Launch interactive GUI-like mode (same as running pipely with no arguments)."""
     from pipeline_tools.interactive import run_interactive
     run_interactive()
 
@@ -319,15 +319,15 @@ def open(
 
     Examples:
 
-        pipeline-tools open krita
+        pipely open krita
 
-        pipeline-tools open krita --list-projects
+        pipely open krita --list-projects
 
-        pipeline-tools open krita --project AN_PKU_PokuDiscovery
+        pipely open krita --project AN_PKU_PokuDiscovery
 
-        pipeline-tools open krita --choose
+        pipely open krita --choose
 
-        pipeline-tools open blender --background
+        pipely open blender --background
     """
     from pathlib import Path
     from pipeline_tools.core.paths import get_creative_root
@@ -454,7 +454,7 @@ def open(
         console.print()
         console.print(f"[red bold]❌ {dcc_name.capitalize()} not found[/red bold]")
         console.print()
-        console.print("[yellow]Tip:[/yellow] Run [cyan]pipeline-tools open --list[/cyan] to see available DCCs")
+        console.print("[yellow]Tip:[/yellow] Run [cyan]pipely open --list[/cyan] to see available DCCs")
         console.print()
         raise typer.Exit(1)
 

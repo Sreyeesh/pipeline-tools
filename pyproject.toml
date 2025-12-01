@@ -3,12 +3,12 @@ requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pipeline-tools"
-version = "0.1.7"
-description = "Small utilities for pipeline folder creation and helpers."
+name = "pipely"
+version = "0.1.8"
+description = "Pipeline management made lovely - Artist-friendly CLI for creative production workflows."
 readme = "README.md"
 requires-python = ">=3.8"
-authors = [{ name = "Pipeline Tools", email = "pipeline@example.com" }]
+authors = [{ name = "Pipely", email = "hello@pipely.dev" }]
 license = { text = "MIT" }
 dependencies = ["typer>=0.9,<1.0", "rich>=13.7,<14.0", "prompt-toolkit>=3.0,<4.0"]
 
@@ -19,4 +19,4 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [project.scripts]
-pipeline-tools = "pipeline_tools.cli:run"
+pipely = "pipeline_tools.cli:run"
