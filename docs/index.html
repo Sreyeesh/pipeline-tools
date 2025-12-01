@@ -184,6 +184,8 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            text-decoration: none;
+            display: inline-block;
         }
 
         .nav-links {
@@ -839,7 +841,7 @@
         .scroll-animate:nth-child(6) { transition-delay: 0.35s; }
     </style>
 </head>
-<body>
+<body id="top">
     <script>
         // Dark mode management
         function initTheme() {
@@ -972,7 +974,7 @@
     <!-- Header -->
     <header>
         <nav class="container">
-            <div class="logo">Pipely</div>
+            <a class="logo" href="#top">Pipely</a>
             <ul class="nav-links">
                 <li><a href="#features">Features</a></li>
                 <li><a href="#use-cases">Use Cases</a></li>
