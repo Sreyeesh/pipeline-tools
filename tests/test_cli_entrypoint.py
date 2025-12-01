@@ -9,11 +9,11 @@ from pipeline_tools import cli
 runner = CliRunner()
 
 
-def test_top_level_defaults_to_examples() -> None:
-    result = runner.invoke(cli.app, [])
+def test_top_level_defaults_to_interactive() -> None:
+    result = runner.invoke(cli.app, [], input="\n")  # Simulate pressing Enter to exit
 
     assert result.exit_code == 0
-    assert "Common commands" in result.stdout
+    assert "Pipeline Tools" in result.stdout or "pipeline-tools>" in result.stdout
 
 
 def test_list_shows_commands() -> None:
