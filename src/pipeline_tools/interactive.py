@@ -237,6 +237,10 @@ def run_interactive():
             text = session.prompt("pipely> ", style=Style.from_dict({"prompt": "cyan bold"}))
             text = text.strip()
 
+            # Allow users to type full commands with the "pipely" prefix (e.g., "pipely tasks list")
+            if text.startswith("pipely "):
+                text = text[len("pipely ") :].strip()
+
             if not text:
                 continue
 
