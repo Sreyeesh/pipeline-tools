@@ -240,7 +240,7 @@ def run_interactive():
             raw_text = raw_text.strip()
 
             # Split multiple commands pasted at once (newline or semicolon separated)
-            commands = [t.strip() for t in re.split(r"[;\\n]+", raw_text) if t.strip()]
+            commands = [t.strip() for t in re.split(r"[;\\r\\n]+", raw_text) if t.strip()]
             if not commands:
                 continue
 
