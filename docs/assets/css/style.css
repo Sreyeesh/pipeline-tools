@@ -167,6 +167,44 @@
             color: var(--primary);
         }
 
+        /* Changelog page */
+        .changelog-page {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .changelog-page .hero {
+            background: var(--gradient);
+            color: var(--white);
+        }
+
+        .changelog-page .changelog-section {
+            background: var(--bg-secondary);
+            padding: 4rem 0 3rem;
+        }
+
+        .changelog-page .code-example {
+            background: var(--bg-secondary);
+        }
+
+        .changelog-page .code-block {
+            background: var(--surface-1);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .changelog-page .changelog-card {
+            background: var(--surface-1);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--card-shadow);
+        }
+
+        .changelog-page .changelog-list,
+        .changelog-page .changelog-date {
+            color: var(--text-secondary);
+        }
+
         /* Changelog cards */
         .changelog-grid {
             display: grid;
