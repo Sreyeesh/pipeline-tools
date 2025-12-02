@@ -511,7 +511,13 @@ def run_interactive():
 
             # If we get here, it's not a recognized command
             # Allow advanced users to still type commands if they want
-            if text.startswith("open") or text.startswith("create") or text.startswith("doctor") or text.startswith("project"):
+            # Forward known commands to the Typer CLI so artists can stay in interactive mode
+            passthrough_cmds = {
+                "open", "create", "doctor", "project", "assets", "shots",
+                "tasks", "shows", "versions", "admin",
+            }
+
+            if any(text.startswith(cmd + " ") or text == cmd for cmd in passthrough_cmds):
                 from pipeline_tools.cli import app
                 args = text.split()
 
