@@ -3,6 +3,7 @@ PYTHON ?= python3
 ANSIBLE_PLAYBOOK ?= ansible-playbook
 ANSIBLE_VENV ?= .ansible-venv
 ANSIBLE_BIN := $(ANSIBLE_VENV)/bin/ansible-playbook
+PIPELINE_TOOLS_PIP_FLAGS ?=
 INSTALLER ?= pipx
 VERSION ?= v0.1.0
 # Derive org/name from origin URL; override with REPO=org/name.
@@ -167,7 +168,7 @@ check-monday:
 	fi
 
 deploy-local: $(ANSIBLE_BIN)
-	$(ANSIBLE_BIN) ansible/pipely.yml -e pipeline_tools_installer=pip -e pipeline_tools_manage_system_packages=false
+	$(ANSIBLE_BIN) ansible/pipely.yml -e pipeline_tools_installer=pip -e pipeline_tools_manage_system_packages=false -e "pipeline_tools_pip_flags=$(PIPELINE_TOOLS_PIP_FLAGS)"
 
 $(ANSIBLE_BIN):
 	@echo "Creating Ansible venv with pinned Jinja (avoids system Jinja3 issues)..."

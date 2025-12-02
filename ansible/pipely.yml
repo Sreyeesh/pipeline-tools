@@ -10,6 +10,7 @@
     pipeline_tools_python: python3
     pipeline_tools_manage_system_packages: true  # set false to skip apt tasks when sudo is unavailable
     pipeline_tools_can_sudo: true
+    pipeline_tools_pip_flags: ""
 
   pre_tasks:
     - name: Check sudo availability for system package installs
@@ -86,7 +87,7 @@
 
     - name: Install pipely via pip (user site)
       ansible.builtin.command: >
-        {{ pipeline_tools_python }} -m pip install --user --upgrade "{{ pipeline_tools_src }}"
+        {{ pipeline_tools_python }} -m pip install --user --upgrade {{ pipeline_tools_pip_flags }} "{{ pipeline_tools_src }}"
       when: pipeline_tools_installer == "pip"
 
     - name: Show next steps for PATH (pipx)
