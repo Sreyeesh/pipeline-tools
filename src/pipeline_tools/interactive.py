@@ -1,7 +1,9 @@
 """Interactive shell for Pipely with autocomplete."""
 
+
 from __future__ import annotations
 
+import re
 import sys
 from typing import List
 
@@ -234,317 +236,329 @@ def run_interactive():
     while True:
         try:
             # Get input
-            text = session.prompt("pipely> ", style=Style.from_dict({"prompt": "cyan bold"}))
-            text = text.strip()
+            raw_text = session.prompt("pipely> ", style=Style.from_dict({"prompt": "cyan bold"}))
+            raw_text = raw_text.strip()
 
-            # Allow users to type full commands with the "pipely" prefix (e.g., "pipely tasks list")
-            if text.startswith("pipely "):
-                text = text[len("pipely ") :].strip()
-
-            if not text:
+            # Split multiple commands pasted at once (newline or semicolon separated)
+            commands = [t.strip() for t in re.split(r"[;\\n]+", raw_text) if t.strip()]
+            if not commands:
                 continue
 
-            # Handle special commands
-            if text in ["exit", "quit"]:
-                console.print("[dim]Goodbye![/dim]")
-                break
+            exit_session = False
 
-            if text == "help":
-                from pipeline_tools.cli import _echo_examples
-                _echo_examples()
-                continue
+            for text in commands:
+                # Allow users to type full commands with the "pipely" prefix (e.g., "pipely tasks list")
+                if text.startswith("pipely "):
+                    text = text[len("pipely ") :].strip()
 
-            if text == "status" or text.startswith("status "):
-                # Quick git status for all projects or specific project
-                from pipeline_tools.cli import app
-                from pathlib import Path
-                from pipeline_tools.core.paths import get_creative_root
+                if not text:
+                    continue
 
-                try:
-                    parts = text.split()
-                    if len(parts) > 1:
-                        # Check if it's a number (project selection)
-                        if parts[1].isdigit() and available_projects:
-                            choice = int(parts[1])
-                            if 1 <= choice <= len(available_projects):
-                                project_name = available_projects[choice - 1].name
-                                app(["project", "status", project_name], standalone_mode=False)
+                # Handle special commands
+                if text in ["exit", "quit"]:
+                    console.print("[dim]Goodbye![/dim]")
+                    exit_session = True
+                    break
+
+                if text == "help":
+                    from pipeline_tools.cli import _echo_examples
+                    _echo_examples()
+                    continue
+
+                if text == "status" or text.startswith("status "):
+                    # Quick git status for all projects or specific project
+                    from pipeline_tools.cli import app
+                    from pathlib import Path
+                    from pipeline_tools.core.paths import get_creative_root
+
+                    try:
+                        parts = text.split()
+                        if len(parts) > 1:
+                            # Check if it's a number (project selection)
+                            if parts[1].isdigit() and available_projects:
+                                choice = int(parts[1])
+                                if 1 <= choice <= len(available_projects):
+                                    project_name = available_projects[choice - 1].name
+                                    app(["project", "status", project_name], standalone_mode=False)
+                                else:
+                                    console.print(f"[red]Invalid project number. Choose 1-{len(available_projects)}[/red]")
                             else:
-                                console.print(f"[red]Invalid project number. Choose 1-{len(available_projects)}[/red]")
+                                # It's a project name
+                                app(["project", "status", parts[1]], standalone_mode=False)
                         else:
-                            # It's a project name
-                            app(["project", "status", parts[1]], standalone_mode=False)
-                    else:
-                        # Status for all projects
-                        app(["project", "status"], standalone_mode=False)
-                except SystemExit:
-                    pass
-                except Exception as e:
-                    console.print(f"[red]Error:[/red] {e}")
-                console.print()
-                continue
-
-            if text == "commit":
-                # Quick commit with prompts
-                from pipeline_tools.cli import app
-                from pathlib import Path
-                from pipeline_tools.core.paths import get_creative_root
-
-                creative_root = get_creative_root()
-                project_folders = [
-                    p for p in creative_root.iterdir()
-                    if p.is_dir() and not p.name.startswith('.') and (p / '.git').exists()
-                ]
-
-                if not project_folders:
-                    console.print("[yellow]No git projects found.[/yellow]")
+                            # Status for all projects
+                            app(["project", "status"], standalone_mode=False)
+                    except SystemExit:
+                        pass
+                    except Exception as e:
+                        console.print(f"[red]Error:[/red] {e}")
                     console.print()
                     continue
 
-                console.print()
-                console.print("[bold cyan]Select project to commit:[/bold cyan]")
-                for idx, proj in enumerate(project_folders, 1):
-                    console.print(f"  {idx}. {proj.name}")
-                console.print()
+                if text == "commit":
+                    # Quick commit with prompts
+                    from pipeline_tools.cli import app
+                    from pathlib import Path
+                    from pipeline_tools.core.paths import get_creative_root
 
-                try:
-                    choice = int(input("Project number: ").strip())
-                    if 1 <= choice <= len(project_folders):
-                        project_name = project_folders[choice - 1].name
-                        app(["project", "commit", project_name], standalone_mode=False)
-                    else:
-                        console.print("[red]Invalid selection[/red]")
-                except (ValueError, KeyboardInterrupt):
-                    console.print("\n[yellow]Cancelled[/yellow]")
-                except SystemExit:
-                    pass
-                except Exception as e:
-                    console.print(f"[red]Error:[/red] {e}")
-                console.print()
-                continue
+                    creative_root = get_creative_root()
+                    project_folders = [
+                        p for p in creative_root.iterdir()
+                        if p.is_dir() and not p.name.startswith('.') and (p / '.git').exists()
+                    ]
 
-            if text == "projects":
-                # List all available projects
-                from pathlib import Path
-                from pipeline_tools.core.paths import get_creative_root
-                from rich.table import Table
-                import subprocess
-
-                creative_root = get_creative_root()
-                creative_root.mkdir(parents=True, exist_ok=True)
-
-                project_folders = [
-                    p for p in creative_root.iterdir()
-                    if p.is_dir() and not p.name.startswith('.')
-                ]
-
-                # Store projects for number selection
-                available_projects = project_folders
-                # Reset DCC menu state
-                show_dcc_menu = False
-                available_dccs = []
-
-                # Update completer to show project suggestions
-                completer.update_context(projects=available_projects, dccs=[], show_dcc_menu=False)
-
-                console.print()
-                console.print("[bold cyan]STEP 1: Pick Your Project[/bold cyan]")
-                console.print()
-
-                table = Table(show_header=False, box=None, padding=(0, 2))
-                table.add_column("Number", style="cyan bold", width=8)
-                table.add_column("Project", style="bold")
-                table.add_column("Branch", style="dim")
-
-                for idx, proj in enumerate(project_folders, 1):
-                    # Try to get git branch
-                    git_dir = proj / '.git'
-                    branch_info = ""
-                    if git_dir.exists():
-                        try:
-                            result = subprocess.run(
-                                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-                                cwd=proj,
-                                capture_output=True,
-                                text=True,
-                                timeout=1
-                            )
-                            if result.returncode == 0:
-                                branch_name = result.stdout.strip()
-                                branch_info = f"[dim]🌿 {branch_name}[/dim]"
-                        except (subprocess.TimeoutExpired, Exception):
-                            pass
-
-                    table.add_row(f"[cyan]{idx}[/cyan]", proj.name, branch_info)
-
-                # Add "Create New Project" option at the end
-                create_option_num = len(project_folders) + 1
-                table.add_row(f"[green]{create_option_num}[/green]", "[green]+ Create New Project[/green]", "")
-
-                console.print(table)
-                console.print()
-                console.print("[dim]→ Type a number or press TAB to see all options[/dim]")
-                console.print()
-                continue
-
-            # Check if input is a number or matches a DCC name
-            choice = None
-            if text.isdigit():
-                choice = int(text)
-            elif show_dcc_menu and available_dccs:
-                # Check if text matches a DCC name (case insensitive)
-                text_lower = text.lower()
-                for idx, dcc in enumerate(available_dccs, 1):
-                    if dcc.lower() == text_lower:
-                        choice = idx
-                        break
-
-            if choice is not None:
-                # If we're showing DCC menu, launch the selected DCC
-                if show_dcc_menu and available_dccs:
-                    if 1 <= choice <= len(available_dccs):
-                        dcc_name = available_dccs[choice - 1]
-
-                        # Build command
-                        cmd_args = ["open", dcc_name, "--background"]
-                        if current_project:
-                            cmd_args.extend(["--project", current_project])
-
-                        console.print()
-                        console.print("[bold cyan]STEP 3: Start Creating![/bold cyan]")
-                        console.print()
-
-                        from pipeline_tools.cli import app
-                        try:
-                            app(cmd_args, standalone_mode=False)
-                        except SystemExit:
-                            pass
-                        except Exception as e:
-                            console.print(f"[red]Error:[/red] {e}")
-
-                        console.print()
-                        console.print("[dim]Type 'projects' to work on another project[/dim]")
-                        console.print()
-
-                        # Reset menus
-                        show_dcc_menu = False
-                        available_dccs = []
-
-                        # Update completer back to project mode
-                        completer.update_context(dccs=[], show_dcc_menu=False)
-                    else:
-                        console.print()
-                        console.print(f"[red]❌ Invalid selection. Choose 1-{len(available_dccs)}[/red]")
-                        console.print()
-                    continue
-
-                # Otherwise, it's project selection
-                elif available_projects is not None:
-                    # Check if user selected "Create New Project" option
-                    create_option_num = len(available_projects) + 1
-
-                    if choice == create_option_num:
-                        # User wants to create a new project
-                        console.print()
-                        console.print("[bold cyan]🆕 Create New Project[/bold cyan]")
-                        console.print()
-
-                        from pipeline_tools.cli import app
-                        try:
-                            # Run the create command in interactive mode
-                            app(["create", "--interactive"], standalone_mode=False)
-                        except SystemExit:
-                            pass
-                        except Exception as e:
-                            console.print(f"[red]Error:[/red] {e}")
-
-                        # After creating, refresh the project list
-                        console.print()
-                        console.print("[dim]Type 'projects' to see your new project[/dim]")
+                    if not project_folders:
+                        console.print("[yellow]No git projects found.[/yellow]")
                         console.print()
                         continue
 
-                    elif 1 <= choice <= len(available_projects):
-                        selected_project = available_projects[choice - 1]
-                        current_project = selected_project.name
+                    console.print()
+                    console.print("[bold cyan]Select project to commit:[/bold cyan]")
+                    for idx, proj in enumerate(project_folders, 1):
+                        console.print(f"  {idx}. {proj.name}")
+                    console.print()
 
-                        console.print()
-                        console.print(f"[green]✓ Project:[/green] [bold]{current_project}[/bold]")
-                        console.print()
+                    try:
+                        choice = int(input("Project number: ").strip())
+                        if 1 <= choice <= len(project_folders):
+                            project_name = project_folders[choice - 1].name
+                            app(["project", "commit", project_name], standalone_mode=False)
+                        else:
+                            console.print("[red]Invalid selection[/red]")
+                    except (ValueError, KeyboardInterrupt):
+                        console.print("\n[yellow]Cancelled[/yellow]")
+                    except SystemExit:
+                        pass
+                    except Exception as e:
+                        console.print(f"[red]Error:[/red] {e}")
+                    console.print()
+                    continue
 
-                        # Show DCC menu
-                        console.print("[bold cyan]STEP 2: Pick Your App[/bold cyan]")
-                        console.print()
+                if text == "projects":
+                    # List all available projects
+                    from pathlib import Path
+                    from pipeline_tools.core.paths import get_creative_root
+                    from rich.table import Table
+                    import subprocess
 
-                        from pipeline_tools.tools.dcc_launcher.launcher import DCC_PATHS, get_dcc_executable
-                        from rich.table import Table
+                    creative_root = get_creative_root()
+                    creative_root.mkdir(parents=True, exist_ok=True)
 
-                        # Build list of installed DCCs
-                        installed_dccs = []
-                        for dcc in sorted(DCC_PATHS.keys()):
-                            if get_dcc_executable(dcc):
-                                installed_dccs.append(dcc)
+                    project_folders = [
+                        p for p in creative_root.iterdir()
+                        if p.is_dir() and not p.name.startswith('.')
+                    ]
 
-                        if not installed_dccs:
-                            console.print("[yellow]⚠ No DCCs found installed[/yellow]")
+                    # Store projects for number selection
+                    available_projects = project_folders
+                    # Reset DCC menu state
+                    show_dcc_menu = False
+                    available_dccs = []
+
+                    # Update completer to show project suggestions
+                    completer.update_context(projects=available_projects, dccs=[], show_dcc_menu=False)
+
+                    console.print()
+                    console.print("[bold cyan]STEP 1: Pick Your Project[/bold cyan]")
+                    console.print()
+
+                    table = Table(show_header=False, box=None, padding=(0, 2))
+                    table.add_column("Number", style="cyan bold", width=8)
+                    table.add_column("Project", style="bold")
+                    table.add_column("Branch", style="dim")
+
+                    for idx, proj in enumerate(project_folders, 1):
+                        # Try to get git branch
+                        git_dir = proj / '.git'
+                        branch_info = ""
+                        if git_dir.exists():
+                            try:
+                                result = subprocess.run(
+                                    ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                                    cwd=proj,
+                                    capture_output=True,
+                                    text=True,
+                                    timeout=1
+                                )
+                                if result.returncode == 0:
+                                    branch_name = result.stdout.strip()
+                                    branch_info = f"[dim]🌿 {branch_name}[/dim]"
+                            except (subprocess.TimeoutExpired, Exception):
+                                pass
+
+                        table.add_row(f"[cyan]{idx}[/cyan]", proj.name, branch_info)
+
+                    # Add "Create New Project" option at the end
+                    create_option_num = len(project_folders) + 1
+                    table.add_row(f"[green]{create_option_num}[/green]", "[green]+ Create New Project[/green]", "")
+
+                    console.print(table)
+                    console.print()
+                    console.print("[dim]→ Type a number or press TAB to see all options[/dim]")
+                    console.print()
+                    continue
+
+                # Check if input is a number or matches a DCC name
+                choice = None
+                if text.isdigit():
+                    choice = int(text)
+                elif show_dcc_menu and available_dccs:
+                    # Check if text matches a DCC name (case insensitive)
+                    text_lower = text.lower()
+                    for idx, dcc in enumerate(available_dccs, 1):
+                        if dcc.lower() == text_lower:
+                            choice = idx
+                            break
+
+                if choice is not None:
+                    # If we're showing DCC menu, launch the selected DCC
+                    if show_dcc_menu and available_dccs:
+                        if 1 <= choice <= len(available_dccs):
+                            dcc_name = available_dccs[choice - 1]
+
+                            # Build command
+                            cmd_args = ["open", dcc_name, "--background"]
+                            if current_project:
+                                cmd_args.extend(["--project", current_project])
+
+                            console.print()
+                            console.print("[bold cyan]STEP 3: Start Creating![/bold cyan]")
+                            console.print()
+
+                            from pipeline_tools.cli import app
+                            try:
+                                app(cmd_args, standalone_mode=False)
+                            except SystemExit:
+                                pass
+                            except Exception as e:
+                                console.print(f"[red]Error:[/red] {e}")
+
+                            console.print()
+                            console.print("[dim]Type 'projects' to work on another project[/dim]")
+                            console.print()
+
+                            # Reset menus
+                            show_dcc_menu = False
+                            available_dccs = []
+
+                            # Update completer back to project mode
+                            completer.update_context(dccs=[], show_dcc_menu=False)
+                        else:
+                            console.print()
+                            console.print(f"[red]❌ Invalid selection. Choose 1-{len(available_dccs)}[/red]")
+                            console.print()
+                        continue
+
+                    # Otherwise, it's project selection
+                    elif available_projects is not None:
+                        # Check if user selected "Create New Project" option
+                        create_option_num = len(available_projects) + 1
+
+                        if choice == create_option_num:
+                            # User wants to create a new project
+                            console.print()
+                            console.print("[bold cyan]🆕 Create New Project[/bold cyan]")
+                            console.print()
+
+                            from pipeline_tools.cli import app
+                            try:
+                                # Run the create command in interactive mode
+                                app(["create", "--interactive"], standalone_mode=False)
+                            except SystemExit:
+                                pass
+                            except Exception as e:
+                                console.print(f"[red]Error:[/red] {e}")
+
+                            # After creating, refresh the project list
+                            console.print()
+                            console.print("[dim]Type 'projects' to see your new project[/dim]")
                             console.print()
                             continue
 
-                        available_dccs = installed_dccs
-                        show_dcc_menu = True
+                        elif 1 <= choice <= len(available_projects):
+                            selected_project = available_projects[choice - 1]
+                            current_project = selected_project.name
 
-                        # Update completer to show DCC suggestions
-                        completer.update_context(dccs=available_dccs, show_dcc_menu=True)
+                            console.print()
+                            console.print(f"[green]✓ Project:[/green] [bold]{current_project}[/bold]")
+                            console.print()
 
-                        table = Table(show_header=False, box=None, padding=(0, 2))
-                        table.add_column("Number", style="cyan bold", width=8)
-                        table.add_column("Application", style="bold")
+                            # Show DCC menu
+                            console.print("[bold cyan]STEP 2: Pick Your App[/bold cyan]")
+                            console.print()
 
-                        for idx, dcc in enumerate(installed_dccs, 1):
-                            table.add_row(f"[cyan]{idx}[/cyan]", dcc.capitalize())
+                            from pipeline_tools.tools.dcc_launcher.launcher import DCC_PATHS, get_dcc_executable
+                            from rich.table import Table
 
-                        console.print(table)
-                        console.print()
-                        console.print("[dim]→ Type a number or press TAB to see all options[/dim]")
-                        console.print()
-                    else:
-                        console.print()
-                        console.print(f"[red]❌ Invalid selection. Choose 1-{create_option_num}[/red]")
-                        console.print()
-                    continue
+                            # Build list of installed DCCs
+                            installed_dccs = []
+                            for dcc in sorted(DCC_PATHS.keys()):
+                                if get_dcc_executable(dcc):
+                                    installed_dccs.append(dcc)
 
-            # If we get here, it's not a recognized command
-            # Allow advanced users to still type commands if they want
-            # Forward known commands to the Typer CLI so artists can stay in interactive mode
-            passthrough_cmds = {
-                "open", "create", "doctor", "project", "assets", "shots",
-                "tasks", "shows", "versions", "admin",
-            }
+                            if not installed_dccs:
+                                console.print("[yellow]⚠ No DCCs found installed[/yellow]")
+                                console.print()
+                                continue
 
-            if any(text.startswith(cmd + " ") or text == cmd for cmd in passthrough_cmds):
-                from pipeline_tools.cli import app
-                args = text.split()
+                            available_dccs = installed_dccs
+                            show_dcc_menu = True
 
-                # Auto-add project to 'open' commands if a project is selected
-                if args and args[0] == "open" and current_project:
-                    if "--project" not in args and "-p" not in args:
-                        args.extend(["--project", current_project])
+                            # Update completer to show DCC suggestions
+                            completer.update_context(dccs=available_dccs, show_dcc_menu=True)
 
-                try:
-                    app(args, standalone_mode=False)
-                except SystemExit:
-                    pass
-                except Exception as e:
-                    console.print(f"[red]Error:[/red] {e}")
-            else:
-                console.print()
-                console.print("[yellow]Not sure what to do?[/yellow]")
-                console.print("  • Type [bold cyan]'projects'[/bold cyan] to see all your projects")
-                console.print("  • Type [bold cyan]'status'[/bold cyan] to check git status")
-                console.print("  • Type [bold cyan]'commit'[/bold cyan] to commit changes")
-                console.print("  • Type [bold cyan]a number[/bold cyan] to select from the menu")
-                console.print("  • Type [bold cyan]'help'[/bold cyan] for advanced commands")
-                console.print()
+                            table = Table(show_header=False, box=None, padding=(0, 2))
+                            table.add_column("Number", style="cyan bold", width=8)
+                            table.add_column("Application", style="bold")
+
+                            for idx, dcc in enumerate(installed_dccs, 1):
+                                table.add_row(f"[cyan]{idx}[/cyan]", dcc.capitalize())
+
+                            console.print(table)
+                            console.print()
+                            console.print("[dim]→ Type a number or press TAB to see all options[/dim]")
+                            console.print()
+                        else:
+                            console.print()
+                            console.print(f"[red]❌ Invalid selection. Choose 1-{create_option_num}[/red]")
+                            console.print()
+                        continue
+
+                # If we get here, it's not a recognized command
+                # Allow advanced users to still type commands if they want
+                # Forward known commands to the Typer CLI so artists can stay in interactive mode
+                passthrough_cmds = {
+                    "open", "create", "doctor", "project", "assets", "shots",
+                    "tasks", "shows", "versions", "admin",
+                }
+
+                if any(text.startswith(cmd + " ") or text == cmd for cmd in passthrough_cmds):
+                    from pipeline_tools.cli import app
+                    args = text.split()
+
+                    # Auto-add project to 'open' commands if a project is selected
+                    if args and args[0] == "open" and current_project:
+                        if "--project" not in args and "-p" not in args:
+                            args.extend(["--project", current_project])
+
+                    try:
+                        app(args, standalone_mode=False)
+                    except SystemExit:
+                        pass
+                    except Exception as e:
+                        console.print(f"[red]Error:[/red] {e}")
+                else:
+                    console.print()
+                    console.print("[yellow]Not sure what to do?[/yellow]")
+                    console.print("  • Type [bold cyan]'projects'[/bold cyan] to see all your projects")
+                    console.print("  • Type [bold cyan]'status'[/bold cyan] to check git status")
+                    console.print("  • Type [bold cyan]'commit'[/bold cyan] to commit changes")
+                    console.print("  • Type [bold cyan]a number[/bold cyan] to select from the menu")
+                    console.print("  • Type [bold cyan]'help'[/bold cyan] for advanced commands")
+                    console.print()
+
+            if exit_session:
+                break
 
         except KeyboardInterrupt:
             # Ctrl+C pressed
