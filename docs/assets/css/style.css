@@ -155,6 +155,18 @@
             list-style: none;
         }
 
+        /* Accent links for content (keeps nav/buttons unchanged) */
+        .accent-link {
+            color: var(--primary-light);
+            text-decoration: underline;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .accent-link:hover {
+            color: var(--primary);
+        }
+
         .nav-links a {
             text-decoration: none;
             color: var(--text-primary);
