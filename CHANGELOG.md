@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.8.1] - 2025-12-02
+### :bug: Bug Fixes
+- Ensure interactive shell forwards core CLI commands (tasks/assets/shows/versions/admin/project/open) so artists can work in one place
+
+### :memo: Documentation
+- Clarify quick start, developer setup, and licensing (free for artists; contact for commercial/studio use)
+
+### :test_tube: Tests
+- Add coverage for interactive passthrough, database helpers, path resolution, and DCC launcher executable lookup
+
 ## [v0.1.8] - 2025-12-01
 ### :sparkles: New Features
 - [`03ad1c9`](https://github.com/Sreyeesh/pipeline-tools/commit/03ad1c932a8fd42a800304bb4d54528844036256) - add reference folder to animation template *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
@@ -95,7 +105,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Character thumbnail generation
 - Tag-based search functionality
 
-[Unreleased]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.7...HEAD
+[Unreleased]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8.1...HEAD
+[0.1.8.1]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8...v0.1.8.1
 [0.1.7]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.0...v0.1.5
