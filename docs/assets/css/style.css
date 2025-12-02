@@ -169,7 +169,7 @@
 
         /* Changelog page theming */
         .changelog-page {
-            background: var(--bg-primary);
+            background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 60%);
             color: var(--text-primary);
         }
 
@@ -185,6 +185,7 @@
 
         .changelog-page .changelog-section {
             background: var(--bg-secondary);
+            padding-bottom: 3rem;
         }
 
         .changelog-page .code-example {
@@ -202,6 +203,9 @@
 
         .changelog-page .changelog-card {
             color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--card-shadow);
+            background: var(--surface-1);
         }
 
         .changelog-page .changelog-list,
