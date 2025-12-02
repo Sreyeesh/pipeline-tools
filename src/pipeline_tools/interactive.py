@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import re
 import sys
+import shlex
 from typing import List
 
 from prompt_toolkit import PromptSession
@@ -44,7 +45,10 @@ def _split_user_commands(raw_text: str, passthrough_cmds: set[str]) -> list[str]
         chunk = chunk.strip()
         if not chunk:
             continue
-        tokens = chunk.split()
+        try:
+            tokens = shlex.split(chunk)
+        except ValueError:
+            tokens = chunk.split()
         if not tokens:
             continue
 
@@ -292,7 +296,10 @@ def run_interactive():
 
             for text in commands:
                 # Allow users to type full commands with the "pipely"/common typos prefix (e.g., "pipely tasks list")
-                parts = text.split()
+                try:
+                    parts = shlex.split(text)
+                except ValueError:
+                    parts = text.split()
                 if parts and parts[0].lower() in PREFIX_ALIASES:
                     text = " ".join(parts[1:]).strip()
 
