@@ -26,12 +26,19 @@ def _split_user_commands(raw_text: str, passthrough_cmds: set[str]) -> list[str]
     Split pasted input into individual commands.
 
     Rules:
-    - Split on semicolons and newlines (handles Windows CRLF).
+    - Normalize separators (semicolons -> newlines).
+    - Insert a newline before any subsequent known command token (helps when paste loses newlines).
+    - Split on newlines (handles Windows CRLF).
     - Within each chunk, if another known command token appears, start a new command.
     """
+    # Normalize common separators
+    normalized = raw_text.replace(";", "\n")
+    # Force a newline before any subsequent passthrough command (when pastes collapse newlines)
+    cmd_pattern = r"(?<!^)\s+(?=(" + "|".join(re.escape(cmd) for cmd in passthrough_cmds) + r")\\b)"
+    normalized = re.sub(cmd_pattern, "\n", normalized)
+
     commands: list[str] = []
-    # First pass: split on separators
-    for chunk in re.split(r"[;\\r\\n]+", raw_text):
+    for chunk in re.split(r"[\\r\\n]+", normalized):
         chunk = chunk.strip()
         if not chunk:
             continue
@@ -40,7 +47,7 @@ def _split_user_commands(raw_text: str, passthrough_cmds: set[str]) -> list[str]
             continue
 
         current: list[str] = []
-        for idx, tok in enumerate(tokens):
+        for tok in tokens:
             if current and tok in passthrough_cmds:
                 commands.append(" ".join(current))
                 current = [tok]
@@ -562,12 +569,7 @@ def run_interactive():
                 # If we get here, it's not a recognized command
                 # Allow advanced users to still type commands if they want
                 # Forward known commands to the Typer CLI so artists can stay in interactive mode
-                passthrough_cmds = {
-                    "open", "create", "doctor", "project", "assets", "shots",
-                    "tasks", "shows", "versions", "admin",
-                }
-
-                if any(text.startswith(cmd + " ") or text == cmd for cmd in passthrough_cmds):
+                if any(text.startswith(cmd + " ") or text == cmd for cmd in PASSTHROUGH_CMDS):
                     from pipeline_tools.cli import app
                     args = text.split()
 
