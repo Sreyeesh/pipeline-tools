@@ -488,6 +488,17 @@
             border-color: var(--white);
         }
 
+        /* Hero contrast helpers */
+        .hero-dark {
+            background: var(--dark);
+            color: var(--white);
+        }
+
+        .hero-dark h1,
+        .hero-dark p {
+            color: var(--white);
+        }
+
         .btn-secondary:hover {
             background: var(--white);
             color: var(--primary);
