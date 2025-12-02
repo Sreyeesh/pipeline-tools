@@ -167,6 +167,80 @@
             color: var(--primary);
         }
 
+        /* Changelog cards */
+        .changelog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .changelog-card {
+            background: var(--surface-1);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .changelog-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--card-shadow-hover);
+            border-color: var(--primary-light);
+        }
+
+        .changelog-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .version-badge {
+            background: var(--gradient);
+            color: #fff;
+            font-weight: 700;
+            padding: 0.4rem 0.85rem;
+            border-radius: 999px;
+            font-size: 0.95rem;
+            box-shadow: 0 8px 18px rgba(99, 102, 241, 0.25);
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+        }
+
+        .pill.hotfix {
+            background: rgba(236, 72, 153, 0.12);
+            color: var(--secondary);
+        }
+
+        .changelog-date {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.9rem;
+        }
+
+        .changelog-list {
+            list-style: disc;
+            padding-left: 1.2rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .changelog-list li {
+            margin-bottom: 0.4rem;
+        }
+
         .nav-links a {
             text-decoration: none;
             color: var(--text-primary);
