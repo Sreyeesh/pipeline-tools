@@ -48,6 +48,7 @@
             <a class="logo" href="#top">Pipely</a>
             <ul class="nav-links">
                 <li><a href="#features">Features</a></li>
+                <li><a href="#workflow">Workflow</a></li>
                 <li><a href="#use-cases">Use Cases</a></li>
                 <li><a href="#getting-started">Get Started</a></li>
                 <li><a href="changelog.html">Changelog</a></li>
@@ -94,6 +95,36 @@
                 <a href="https://github.com/Sreyeesh/pipeline-tools" class="btn btn-secondary">View on GitHub</a>
             </div>
             <p class="tagline animate-in" style="margin-top:0.5rem;font-size:0.95rem;">Free for artists — no license or activation needed for personal use.</p>
+        </div>
+    </section>
+
+    <!-- Workflow Section -->
+    <section id="workflow" class="code-example" style="padding-top: 4rem;">
+        <div class="container">
+            <h2 class="section-title scroll-animate">Workflow Demo</h2>
+            <p class="section-subtitle scroll-animate">A quick path from empty project to tasks and versions</p>
+
+            <div class="code-block scroll-scale">
+<pre><code><span class="code-comment"># 1) Launch interactive (pick project/app)</span>
+<span class="code-command">pipely</span>
+
+<span class="code-comment"># 2) Create shot + task</span>
+<span class="code-command">pipely shots add SH010 "First shot"</span>
+<span class="code-command">pipely tasks add DMO_SH010 Layout</span>
+<span class="code-command">pipely tasks status DMO_SH010 Layout in_progress</span>
+
+<span class="code-comment"># 3) Add an asset and tag it</span>
+<span class="code-command">pipely assets add -t CH -n Hero</span>
+<span class="code-command">pipely assets tag DMO_CH_Hero hero</span>
+
+<span class="code-comment"># 4) Version the shot</span>
+<span class="code-command">pipely versions new DMO_SH010 anim</span>
+<span class="code-command">pipely versions latest --shot DMO_SH010 --kind anim</span>
+
+<span class="code-comment"># Tip: the interactive prompt accepts the same commands</span>
+<span class="code-command">tasks add DMO_SH010 Blocking</span>
+<span class="code-command">tasks list DMO_SH010</span></code></pre>
+            </div>
         </div>
     </section>
 
