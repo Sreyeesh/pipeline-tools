@@ -61,10 +61,35 @@
         </div>
     </section>
 
+    <section class="code-example" style="padding-top: 3rem;">
+        <div class="container">
+            <h2 class="section-title scroll-animate">Full Changelog (Markdown)</h2>
+            <p class="section-subtitle scroll-animate">Rendered directly from <code>CHANGELOG.md</code></p>
+            <div class="code-block scroll-scale" style="max-height: 480px; overflow: auto;">
+                <pre id="changelog-raw" style="white-space: pre-wrap;">Loading changelog...</pre>
+            </div>
+        </div>
+    </section>
+
     <footer class="footer">
         <div class="container">
             <p>&copy; Pipely — Pipeline management made lovely.</p>
         </div>
     </footer>
+
+    <script>
+        (function() {
+            const target = document.getElementById('changelog-raw');
+            if (!target) return;
+            fetch('https://raw.githubusercontent.com/Sreyeesh/pipeline-tools/main/CHANGELOG.md')
+                .then(resp => resp.ok ? resp.text() : Promise.reject(new Error('Fetch failed')))
+                .then(text => {
+                    target.textContent = text;
+                })
+                .catch(() => {
+                    target.textContent = 'Unable to load changelog right now. Please visit GitHub instead.';
+                });
+        })();
+    </script>
 </body>
 </html>
