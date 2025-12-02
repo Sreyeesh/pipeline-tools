@@ -34,11 +34,11 @@ def _split_user_commands(raw_text: str, passthrough_cmds: set[str]) -> list[str]
     # Normalize common separators
     normalized = raw_text.replace(";", "\n")
     # Force a newline before any subsequent passthrough command (when pastes collapse newlines)
-    cmd_pattern = r"(?<!^)\s+(?=(" + "|".join(re.escape(cmd) for cmd in passthrough_cmds) + r")\\b)"
+    cmd_pattern = r"(?<!^)\s+(?=(" + "|".join(re.escape(cmd) for cmd in passthrough_cmds) + r")\b)"
     normalized = re.sub(cmd_pattern, "\n", normalized)
 
     commands: list[str] = []
-    for chunk in re.split(r"[\\r\\n]+", normalized):
+    for chunk in re.split(r"[\r\n]+", normalized):
         chunk = chunk.strip()
         if not chunk:
             continue
