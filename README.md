@@ -46,117 +46,71 @@ Projects follow convention: `{PREFIX}_{SHOW_CODE}_{PROJECT_NAME}`
 
 ---
 
-## Quick Start (Users)
+## Quick Start for Artists
 
-### Installation
-Install from GitHub release (recommended):
+### Install
+Use the latest GitHub release (pipx recommended):
 ```sh
-pipx install https://github.com/Sreyeesh/pipely/releases/download/v0.1.7/pipely-0.1.7-py3-none-any.whl
+pipx install https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-0.1.8-py3-none-any.whl
 # or
-pip install --user https://github.com/Sreyeesh/pipely/releases/download/v0.1.7/pipely-0.1.7-py3-none-any.whl
+pip install --user https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-0.1.8-py3-none-any.whl
 ```
 
-### Basic Usage
+### Use the interactive shell
+- Run `pipely` (no args) to open the prompt.
+- Step 1: pick a project by number (or type `projects` to refresh).
+- Step 2: pick an app by number (`open` auto-adds `--project` for you).
+- Step 3: run the same commands as the CLI without leaving the prompt:
+  - Tasks: `tasks add DMO_SH010 Layout`, `tasks list DMO_SH010`, `tasks status DMO_SH010 Layout in_progress`
+  - Assets/shots/shows/versions: `assets list -c DMO`, `shows info -c DMO`, `versions latest --shot DMO_SH010 --kind anim`
+- Use the asset/shot IDs (e.g., `DMO_CH_Hero`, `DMO_SH010`) when adding tasks/versions.
 
-**Create a new project:**
+### If you prefer direct CLI
 ```sh
-pipely create --interactive
-# Or non-interactive:
-pipely create --template animation_short --show-code DMO --project-name DemoShort30s
-```
-
-**Manage shows:**
-```sh
-pipely shows list                          # List all shows
-pipely shows use DMO                       # Set current show context
-pipely shows info DMO                      # Show details
-pipely shows templates                     # List available templates
-```
-
-**Manage assets:**
-```sh
-pipely assets add character Hero           # Add character asset
-pipely assets add environment ForestPath   # Add environment
-pipely assets list                         # List all assets
-pipely assets status Hero model            # Update asset status
-pipely assets tag Hero --tags protagonist,main
-pipely assets find-by-tag protagonist      # Search by tag
-```
-
-**Manage shots:**
-```sh
-pipely shots add SH010 "Hero enters forest"
-pipely shots list
-pipely shots status SH010 layout
-```
-
-**Track tasks:**
-```sh
-pipely tasks add asset Hero "Model character"
-pipely tasks add shot SH010 "Animate shot"
-pipely tasks list asset Hero
-pipely tasks update-status <task-id> in_progress
-```
-
-**Track versions:**
-```sh
-pipely versions create asset Hero model v001
-pipely versions list asset Hero
-pipely versions latest asset Hero model
-pipely versions tag <version-id> --tags approved,final
-```
-
-**Health check:**
-```sh
-pipely doctor --json                       # System diagnostics
-pipely --version                           # Show version
+pipely create --interactive                      # Create a project
+pipely shows list                                # Manage shows
+pipely assets add -t CH -n Hero                  # Add an asset
+pipely shots add SH010 "Hero enters forest"         # Add a shot
+pipely tasks add DMO_SH010 Layout                # Attach a task to a shot
+pipely versions new DMO_SH010 anim               # Create a version
+pipely doctor --json                             # Health check
 ```
 
 ---
 
 ## Developer Setup
 
-### Local Development Environment
-Set up a local Python virtual environment:
+### Prerequisites
+- Python 3.8+
+- git, pip or pipx
+- Optional: make, Docker, and Ansible (for playbooks)
+
+### Local environment
 ```sh
-ansible-playbook -i localhost, -c local ansible/dev.yml
-source .venv/bin/activate
+git clone https://github.com/Sreyeesh/pipeline-tools.git
+cd pipeline-tools
+python -m venv .venv && source .venv/bin/activate
+pip install -e .
+pip install -r requirements-dev.txt
+pytest tests/                                    # run tests
+pipely --help                                    # sanity check
 ```
 
-### Docker Workflow
-Build and test with Docker:
+### Docker workflow (optional)
 ```sh
-make build                              # Build Docker image
-make compose-list                       # List available commands
-make compose-test                       # Run pytest suite in container
-make compose-shell                      # Interactive shell in container
-make pt ARGS="create --interactive"     # Run pipely in container
+make build                                      # Build image
+make compose-test                               # Run pytest in container
+make compose-shell                              # Shell into container
+make pt ARGS="create --interactive"               # Run pipely inside container
 ```
 
-### Testing
-Run the test suite:
+### Conventional commits
 ```sh
-pytest tests/                           # Run all tests
-pytest tests/test_project_creator.py    # Specific test file
+make install-hooks                              # Install commit-msg hook
+# commit messages: feat|fix|chore|docs|refactor|test(scope): message
 ```
-
-Test coverage includes:
-- Project creation and show registration
-- Asset, shot, task, and version management
-- Character thumbnail generation
-- Tag-based search functionality
-- CLI entry point validation
-
-### Conventional Commits
-This project enforces [Conventional Commits](https://www.conventionalcommits.org/):
-```sh
-make install-hooks                      # Install commit-msg hook
-```
-CI also validates commit messages. Format: `type(scope): message`
-- Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`
 
 ---
-
 ## Release Flow (GitHub Assets)
 
 Pipely releases are distributed via GitHub releases (PyPI is optional).
