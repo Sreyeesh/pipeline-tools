@@ -15,6 +15,41 @@ from rich.console import Console
 
 console = Console()
 
+PASSTHROUGH_CMDS = {
+    "open", "create", "doctor", "project", "assets", "shots",
+    "tasks", "shows", "versions", "admin",
+}
+
+
+def _split_user_commands(raw_text: str, passthrough_cmds: set[str]) -> list[str]:
+    """
+    Split pasted input into individual commands.
+
+    Rules:
+    - Split on semicolons and newlines (handles Windows CRLF).
+    - Within each chunk, if another known command token appears, start a new command.
+    """
+    commands: list[str] = []
+    # First pass: split on separators
+    for chunk in re.split(r"[;\\r\\n]+", raw_text):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        tokens = chunk.split()
+        if not tokens:
+            continue
+
+        current: list[str] = []
+        for idx, tok in enumerate(tokens):
+            if current and tok in passthrough_cmds:
+                commands.append(" ".join(current))
+                current = [tok]
+            else:
+                current.append(tok)
+        if current:
+            commands.append(" ".join(current))
+    return commands
+
 # All available commands and their subcommands
 COMMANDS = {
     "create": ["--interactive", "-c", "--show-code", "-n", "--name", "-t", "--template", "--git", "--git-lfs"],
@@ -240,7 +275,7 @@ def run_interactive():
             raw_text = raw_text.strip()
 
             # Split multiple commands pasted at once (newline or semicolon separated)
-            commands = [t.strip() for t in re.split(r"[;\\r\\n]+", raw_text) if t.strip()]
+            commands = _split_user_commands(raw_text, PASSTHROUGH_CMDS)
             if not commands:
                 continue
 
