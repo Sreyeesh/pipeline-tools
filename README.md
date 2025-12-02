@@ -314,7 +314,10 @@ See [docs/backlog.md](docs/backlog.md) for detailed roadmap.
 
 ## License
 
-This is private/proprietary software owned by Sreyeesh Garimella. A license will need to be purchased for use.
+Pipeline Tools is currently free for artists to use. No purchase or activation required for personal/individual creative work.
+
+- **Free use (artists):** You can download and run the tool as-is for your own projects.
+- **Teams/commercial:** Please contact Sreyeesh Garimella if you plan to bundle, redistribute, or use it in a studio/production setting.
 
 Contact Sreyeesh Garimella for licensing and commercial inquiries.
 
