@@ -20,6 +20,8 @@ PASSTHROUGH_CMDS = {
     "tasks", "shows", "versions", "admin",
 }
 
+PREFIX_ALIASES = {"pipely", "pipley", "piply"}
+
 
 def _split_user_commands(raw_text: str, passthrough_cmds: set[str]) -> list[str]:
     """
@@ -289,9 +291,10 @@ def run_interactive():
             exit_session = False
 
             for text in commands:
-                # Allow users to type full commands with the "pipely" prefix (e.g., "pipely tasks list")
-                if text.startswith("pipely "):
-                    text = text[len("pipely ") :].strip()
+                # Allow users to type full commands with the "pipely"/common typos prefix (e.g., "pipely tasks list")
+                parts = text.split()
+                if parts and parts[0].lower() in PREFIX_ALIASES:
+                    text = " ".join(parts[1:]).strip()
 
                 if not text:
                     continue
