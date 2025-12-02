@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.8.1] - 2025-12-02
+### :sparkles: New Features
+- [`ce25ced`](https://github.com/Sreyeesh/pipeline-tools/commit/ce25ced738d9962698e2118023cd03e97cc07b14) - rebrand from Pipeline Tools to Pipely *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`f4a704c`](https://github.com/Sreyeesh/pipeline-tools/commit/f4a704cb79e6923a50b7bfcb7951f04ba0da0305) - add professional landing page for Pipely with SEO optimization *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`249a481`](https://github.com/Sreyeesh/pipeline-tools/commit/249a481c540b154fa0877b682a4e07d5d70f31c2) - add smooth scrolling and scroll animations to landing page *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`cdbd7ee`](https://github.com/Sreyeesh/pipeline-tools/commit/cdbd7eeeec4a81c54e64069b1544a045ec72bb96) - add dark mode, mobile optimization, and smoother animations to landing page *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`6be8854`](https://github.com/Sreyeesh/pipeline-tools/commit/6be88543be87fcafc735aa8c3aa9baf9a79fc363) - add dark mode, mobile optimization, and smoother animations to landing page *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`fe0f116`](https://github.com/Sreyeesh/pipeline-tools/commit/fe0f116f6c0fe7f914b008f403903b3052c43dea) - forward core CLI commands in interactive *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+### :bug: Bug Fixes
+- [`881f38c`](https://github.com/Sreyeesh/pipeline-tools/commit/881f38c8f1168c94cf9b42325172705d64f27292) - update __version__ to 0.1.8 in __init__.py *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`7543392`](https://github.com/Sreyeesh/pipeline-tools/commit/754339288f01789e86b5d9b41d3ef56f68703321) - improve dark mode readability on landing page *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`eab752f`](https://github.com/Sreyeesh/pipeline-tools/commit/eab752f5a67ddc2dacbc2ff463780805971cc75f) - make Pipely logo a clickable link *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+### :recycle: Refactors
+- [`2e3e971`](https://github.com/Sreyeesh/pipeline-tools/commit/2e3e971a01d976955cd839b5d31a3f72680a2429) - modularize landing page assets *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+### :white_check_mark: Tests
+- [`f3e9e2a`](https://github.com/Sreyeesh/pipeline-tools/commit/f3e9e2a7286e073fd5215be886b0d15b2e2eb172) - cover interactive passthrough and open auto-project *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`82a2aec`](https://github.com/Sreyeesh/pipeline-tools/commit/82a2aec4f66482f3be744b50b4d7ac76e5348f6e) - cover db helpers, paths, and dcc launcher *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+### :wrench: Chores
+- [`6eabcd3`](https://github.com/Sreyeesh/pipeline-tools/commit/6eabcd3516c2866c724a985058891ce9f1dd8945) - rename Ansible playbook to pipely.yml and update references *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`11bc45f`](https://github.com/Sreyeesh/pipeline-tools/commit/11bc45f6d403c175694480fef27be99847cc3465) - remove old pipeline-tools.yml playbook *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`b1f2d2d`](https://github.com/Sreyeesh/pipeline-tools/commit/b1f2d2d05920857f7c38a4a4c02e1de9e8724aaf) - merge dev to main - complete rebrand to Pipely *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`42ceee5`](https://github.com/Sreyeesh/pipeline-tools/commit/42ceee5b72360c4d61edabb251a72d7a08489040) - update contact email to toucan.sg@gmail.com *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`ad70dac`](https://github.com/Sreyeesh/pipeline-tools/commit/ad70dac62868df335093e8fb1d8c45d9728ab2cd) - remove testimonials section from landing page *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`288d348`](https://github.com/Sreyeesh/pipeline-tools/commit/288d34846cb0614c1e561030ce7fad1f37fdd571) - bump version to 0.1.8.1 *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+
 ## [0.1.8.1] - 2025-12-02
 ### :bug: Bug Fixes
 - Ensure interactive shell forwards core CLI commands (tasks/assets/shows/versions/admin/project/open) so artists can work in one place
@@ -112,3 +142,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.1.5]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.0...v0.1.5
 [0.1.0]: https://github.com/Sreyeesh/pipeline-tools/releases/tag/v0.1.0
 [v0.1.8]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.7...v0.1.8
+[v0.1.8.1]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8...v0.1.8.1
