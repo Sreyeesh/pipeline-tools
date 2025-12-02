@@ -157,7 +157,7 @@
 
         /* Accent links for content (keeps nav/buttons unchanged) */
         .accent-link {
-            color: var(--primary-light);
+            color: var(--primary);
             text-decoration: underline;
             font-weight: 600;
             transition: color 0.2s ease;
