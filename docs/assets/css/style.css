@@ -696,11 +696,12 @@
             border: 1px solid var(--border-color);
             max-width: 800px;
             margin: 0 auto;
+            color: var(--text-primary);
         }
 
         .code-block pre {
             margin: 0;
-            color: #e2e8f0;
+            color: var(--text-primary);
         }
 
         .code-comment {
