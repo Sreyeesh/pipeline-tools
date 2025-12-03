@@ -145,9 +145,11 @@
 <span class="code-command">shows create DMO "Demo" animation_short</span>
 <span class="code-command">shows use -c DMO</span>
 
-<span class="code-comment"># Drop the animation bible into 01_ADMIN</span>
+<span class="code-comment"># Create the animation bible in 01_ADMIN (Pipely-only)</span>
+<span class="code-command">admin create --name DMO_animation_bible.md --content "Start your bible here"</span>
+<span class="code-comment"># Or use the bundled template (if available)</span>
 <span class="code-command">admin template -t animation_bible --name DMO_animation_bible.md</span>
-<span class="code-command">admin files --open DMO_animation_bible.md</span>
+<span class="code-command">admin files --open DMO_animation_bible.md   # open from Pipely</span>
 
 <span class="code-comment"># Shots (one per beat)</span>
 <span class="code-command">shots add SH010 First beat</span>
