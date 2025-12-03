@@ -108,22 +108,29 @@
 <pre><code><span class="code-comment"># 1) Launch interactive (pick project/app)</span>
 <span class="code-command">pipely</span>
 
-<span class="code-comment"># 2) Create shot + task</span>
-<span class="code-command">pipely shots add SH010 "First shot"</span>
+<span class="code-comment"># 2) Create/show (first time)</span>
+<span class="code-command">pipely shows create DMO "Demo" animation_short</span>
+<span class="code-command">pipely shows use -c DMO</span>
+
+<span class="code-comment"># 3) Shot + tasks</span>
+<span class="code-command">pipely shots add SH010 First shot</span>
 <span class="code-command">pipely tasks add DMO_SH010 Layout</span>
+<span class="code-command">pipely tasks add DMO_SH010 Blocking</span>
 <span class="code-command">pipely tasks status DMO_SH010 Layout in_progress</span>
 
-<span class="code-comment"># 3) Add an asset and tag it</span>
+<span class="code-comment"># 4) Asset + tag</span>
 <span class="code-command">pipely assets add -t CH -n Hero</span>
 <span class="code-command">pipely assets tag DMO_CH_Hero hero</span>
 
-<span class="code-comment"># 4) Version the shot</span>
+<span class="code-comment"># 5) Versioning</span>
 <span class="code-command">pipely versions new DMO_SH010 anim</span>
 <span class="code-command">pipely versions latest --shot DMO_SH010 --kind anim</span>
 
-<span class="code-comment"># Tip: the interactive prompt accepts the same commands</span>
-<span class="code-command">tasks add DMO_SH010 Blocking</span>
-<span class="code-command">tasks list DMO_SH010</span></code></pre>
+<span class="code-comment"># 6) Check progress</span>
+<span class="code-command">pipely shots list DMO</span>
+<span class="code-command">pipely tasks list DMO_SH010</span>
+<span class="code-command">pipely assets list -c DMO</span>
+<span class="code-command">pipely versions list --shot DMO_SH010</span></code></pre>
             </div>
         </div>
     </section>
