@@ -161,7 +161,7 @@ def main(
     examples: bool = typer.Option(False, "--examples", help="Show common commands and exit."),
     list_commands: bool = typer.Option(False, "--list", "--commands", help="List available commands."),
     version: bool = typer.Option(False, "--version", help="Show version and exit."),
-    log_level: str = typer.Option("INFO", "--log-level", help="Log level (DEBUG, INFO, WARNING, ERROR)."),
+    log_level: str = typer.Option("WARNING", "--log-level", help="Log level (DEBUG, INFO, WARNING, ERROR)."),
     log_format: str = typer.Option(
         "console", "--log-format", help="Log format: console or json for structured logs."
     ),
