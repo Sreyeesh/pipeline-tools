@@ -8,6 +8,7 @@ Creates empty starter files for common animation software:
 """
 
 import json
+import shutil
 import struct
 import zipfile
 from pathlib import Path
@@ -157,7 +158,8 @@ def create_animation_starter_files(
     created_files: Dict[str, List[Path]] = {
         'pureref': [],
         'krita': [],
-        'blender': []
+        'blender': [],
+        'admin': [],
     }
 
     # Only create starter files for animation templates
@@ -193,6 +195,18 @@ def create_animation_starter_files(
 
     # Blender files (note: these will be placeholders)
     # Better to create via Blender's --python in a future update
+
+    # Admin reference files (animation bible, screenplay samples)
+    admin_ref_dir = Path(__file__).resolve().parent / "reference" / template_key / "01_ADMIN"
+    dest_admin_dir = project_root / "01_ADMIN"
+    if admin_ref_dir.exists() and dest_admin_dir.exists():
+        for ref_file in admin_ref_dir.iterdir():
+            if not ref_file.is_file():
+                continue
+            dest_file = dest_admin_dir / ref_file.name
+            if not dest_file.exists():
+                shutil.copy2(ref_file, dest_file)
+                created_files['admin'].append(dest_file)
 
     return created_files
 

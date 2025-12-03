@@ -243,6 +243,8 @@ def main(argv: list[str] | None = None) -> None:
             print(f"  Created {len(created_files['krita'])} Krita file(s)")
         if created_files['blender']:
             print(f"  Created {len(created_files['blender'])} Blender file(s)")
+        if created_files['admin']:
+            print(f"  Copied {len(created_files['admin'])} admin reference file(s)")
 
     # Write .gitignore if using git
     if use_git:
