@@ -35,6 +35,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     c_add.add_argument("--name", help="Optional destination name (default: keep source name).")
     c_add.add_argument("-c", "--show-code", help="Show code (defaults to current show).")
 
+    c_create = sub.add_parser("create", help="Create a file in 01_ADMIN with provided content or stdin.")
+    c_create.add_argument("--name", required=True, help="Destination filename (e.g., PKU_animation_bible.md).")
+    c_create.add_argument("--content", help="Inline content; if omitted, reads from stdin.")
+    c_create.add_argument("-c", "--show-code", help="Show code (defaults to current show).")
+
     c_template = sub.add_parser("template", help="Copy a bundled template into 01_ADMIN.")
     c_template.add_argument(
         "--template",
@@ -240,6 +245,25 @@ def cmd_template(args: argparse.Namespace) -> None:
     print(f"Copied template to: {dest}")
 
 
+def cmd_create(args: argparse.Namespace) -> None:
+    show = _load_show(args.show_code)
+    admin_dir = Path(show["root"]) / "01_ADMIN"
+    admin_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.content:
+        content = args.content
+    else:
+        # Read from stdin; if tty with no content, prompt to provide content
+        if sys.stdin.isatty():
+            print("No --content provided and stdin is empty. Pipe content or use --content.")
+            sys.exit(1)
+        content = sys.stdin.read()
+
+    dest = admin_dir / args.name
+    dest.write_text(content, encoding="utf-8")
+    print(f"Wrote file: {dest}")
+
+
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     if args.command == "config_show":
@@ -269,6 +293,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_files(args)
     elif args.command == "add":
         cmd_add(args)
+    elif args.command == "create":
+        cmd_create(args)
     elif args.command == "template":
         cmd_template(args)
     else:
