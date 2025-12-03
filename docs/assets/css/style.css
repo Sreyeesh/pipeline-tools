@@ -473,6 +473,21 @@
             color: var(--primary);
         }
 
+        /* Dark-mode primary buttons avoid white flash */
+        [data-theme="dark"] .btn-primary,
+        :root:not([data-theme="light"]) .btn-primary {
+            background: var(--primary);
+            color: var(--bg-primary);
+            border-color: var(--primary);
+        }
+
+        [data-theme="dark"] .btn-primary:hover,
+        :root:not([data-theme="light"]) .btn-primary:hover {
+            background: var(--primary-dark);
+            color: var(--white);
+            box-shadow: 0 12px 28px rgba(99, 102, 241, 0.35);
+        }
+
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
