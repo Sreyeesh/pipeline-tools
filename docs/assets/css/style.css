@@ -500,9 +500,9 @@
         [data-theme="dark"] .btn-secondary:hover,
         :root:not([data-theme="light"]) .btn-secondary:hover,
         .hero .btn-secondary:hover {
-            background: var(--white);
-            color: var(--primary);
-            border-color: var(--white);
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--primary-light);
+            border-color: var(--primary-light);
         }
 
         /* Hero contrast helpers */
