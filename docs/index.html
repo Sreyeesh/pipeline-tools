@@ -135,6 +135,61 @@
         </div>
     </section>
 
+    <!-- Artist Workflow Guide -->
+    <section id="artist-workflow" class="features" style="padding-top: 2rem;">
+        <div class="container">
+            <h2 class="section-title scroll-animate">Artist Workflow (PKU example)</h2>
+            <p class="section-subtitle scroll-animate">Copy/paste these commands inside the interactive prompt to follow the bible-friendly flow.</p>
+            <div class="code-block scroll-scale" style="max-width: 900px;">
+<pre><code><span class="code-comment"># Create and select the show</span>
+<span class="code-command">shows create PKU "Poku &amp; the Birds" animation_short</span>
+<span class="code-command">shows use -c PKU</span>
+
+<span class="code-comment"># Shots (one per beat)</span>
+<span class="code-command">shots add SH010 Wide tree + nest + Poku</span>
+<span class="code-command">shots add SH020 Nest mid – mother lands, babies visible</span>
+<span class="code-command">shots add SH030 Close on Poku, soft push-in</span>
+
+<span class="code-comment"># Characters</span>
+<span class="code-command">assets add -t CH -n Poku_Main</span>
+<span class="code-command">assets add -t CH -n Bird_Mother</span>
+<span class="code-command">assets add -t CH -n Bird_Baby_A</span>
+<span class="code-command">assets add -t CH -n Bird_Baby_B</span>
+<span class="code-command">assets add -t CH -n Bird_Baby_C</span>
+
+<span class="code-comment"># Environment &amp; props (use PR for FX beats)</span>
+<span class="code-command">assets add -t ENV -n Tree_Trunk</span>
+<span class="code-command">assets add -t ENV -n Tree_Branch_Main</span>
+<span class="code-command">assets add -t ENV -n Tree_Leaves_L</span>
+<span class="code-command">assets add -t ENV -n Tree_Leaves_R</span>
+<span class="code-command">assets add -t ENV -n BG_Wash_01</span>
+<span class="code-command">assets add -t PR  -n Bird_Nest_Main</span>
+<span class="code-command">assets add -t PR  -n Leaves_Sway_01   # FX placeholder</span>
+<span class="code-command">assets add -t PR  -n Poku_CloakHair_01 # FX placeholder</span>
+
+<span class="code-comment"># Tasks (design/layout)</span>
+<span class="code-command">tasks add PKU_CH_Poku_Main Design</span>
+<span class="code-command">tasks add PKU_CH_Bird_Mother Design</span>
+<span class="code-command">tasks add PKU_CH_Bird_Baby_A Design</span>
+<span class="code-command">tasks add PKU_ENV_Tree_Trunk Design</span>
+<span class="code-command">tasks add PKU_SH010 Layout</span>
+<span class="code-command">tasks add PKU_SH020 Layout</span>
+<span class="code-command">tasks add PKU_SH030 Layout</span>
+
+<span class="code-comment"># Versions</span>
+<span class="code-command">versions new PKU_CH_Poku_Main design</span>
+<span class="code-command">versions new PKU_SH010 layout</span>
+
+<span class="code-comment"># Check progress</span>
+<span class="code-command">shots list PKU</span>
+<span class="code-command">tasks list PKU_CH_Poku_Main</span>
+<span class="code-command">tasks list PKU_SH010</span>
+<span class="code-command">assets list -c PKU</span>
+<span class="code-command">versions list --shot PKU_SH010</span></code></pre>
+            </div>
+        </div>
+    </section>
+
     <!-- Features Section -->
     <section id="features" class="features">
         <div class="container">
