@@ -36,20 +36,7 @@ jobs:
 
       - name: Ensure release is on Monday
         run: |
-          # Allow hotfix tags with four-part versions (e.g., v0.1.8.1) to bypass the Monday gate
-          if echo "$GITHUB_REF_NAME" | grep -Eq 'v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'; then
-            echo "Hotfix tag detected ($GITHUB_REF_NAME); skipping Monday restriction."
-            exit 0
-          fi
-
-          DAY_OF_WEEK=$(date -u +%u)
-          if [ "$DAY_OF_WEEK" != "1" ]; then
-            echo "Releases can only be published on Mondays (UTC)."
-            echo "Today is day $DAY_OF_WEEK of the week (1=Monday, 7=Sunday)."
-            echo "Please wait until Monday to create release tags."
-            exit 1
-          fi
-          echo "Today is Monday. Proceeding with release."
+          echo "Monday gate disabled; allowing releases any day (including hotfixes)."
 
       - name: Install build and dev deps
         run: |
