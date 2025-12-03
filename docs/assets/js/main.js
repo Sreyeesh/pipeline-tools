@@ -22,18 +22,20 @@
         }
 
         function updateThemeIcon() {
-            const themeToggle = document.querySelector('.theme-toggle');
-            if (!themeToggle) return;
+            const themeToggles = document.querySelectorAll('.theme-toggle');
+            if (!themeToggles.length) return;
 
             const theme = document.documentElement.getAttribute('data-theme');
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             const effectiveTheme = theme || (prefersDark ? 'dark' : 'light');
 
-            themeToggle.setAttribute('data-mode', effectiveTheme);
-            themeToggle.setAttribute(
-                'aria-label',
-                effectiveTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
-            );
+            themeToggles.forEach(toggle => {
+                toggle.setAttribute('data-mode', effectiveTheme);
+                toggle.setAttribute(
+                    'aria-label',
+                    effectiveTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
+                );
+            });
         }
 
         // Mobile menu toggle
@@ -51,10 +53,9 @@
             initTheme();
 
             // Dark mode toggle
-            const themeToggle = document.querySelector('.theme-toggle');
-            if (themeToggle) {
-                themeToggle.addEventListener('click', toggleTheme);
-            }
+            document.querySelectorAll('.theme-toggle').forEach(toggle => {
+                toggle.addEventListener('click', toggleTheme);
+            });
 
             // Mobile menu toggle
             const menuToggle = document.querySelector('.mobile-menu-toggle');
