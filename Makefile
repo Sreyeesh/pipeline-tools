@@ -127,7 +127,7 @@ release-tag:
 	git push origin $(VERSION)
 
 release-ansible:
-	$(ANSIBLE_PLAYBOOK) -i localhost, -c local ansible/release.yml -e repo=$(REPO) -e version=$(VERSION)
+	$(ANSIBLE_PLAYBOOK) -i localhost, -c local ansible/release.yml -e repo=$(REPO) -e version=$(VERSION) -e allow_non_monday=$(ALLOW_NON_MONDAY)
 
 release-local:
 	@if [ "$$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then echo "Release install should be run from main"; exit 1; fi

@@ -10,6 +10,7 @@
     api_root: "https://api.github.com/repos/{{ repo }}"
     python_bin: "{{ ansible_playbook_python | default('python3') }}"
     repo_root: "{{ playbook_dir | dirname }}"
+    allow_non_monday: false            # set to true to bypass Monday-only gate (e.g., hotfixes)
 
   pre_tasks:
     - name: Ensure version tag is provided
@@ -25,7 +26,9 @@
     - name: Abort if not Monday
       ansible.builtin.fail:
         msg: "Releases can only be published on Mondays (UTC). Today is day {{ day_of_week.stdout }} (1=Monday, 7=Sunday)."
-      when: day_of_week.stdout != "1"
+      when:
+        - day_of_week.stdout != "1"
+        - not allow_non_monday
 
     - name: Verify current branch is main
       ansible.builtin.command: git rev-parse --abbrev-ref HEAD
