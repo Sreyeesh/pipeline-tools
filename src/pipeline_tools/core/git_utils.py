@@ -159,3 +159,59 @@ def setup_git_repo(
     if create_commit:
         msg = commit_message or "Initial commit: project structure"
         create_initial_commit(project_path, msg)
+
+
+def set_remote(project_path: Path, remote_url: str, remote_name: str = "origin") -> None:
+    """
+    Add or update a git remote for the repository.
+
+    Args:
+        project_path: Path to the project directory
+        remote_url: Remote URL (e.g., git@github.com:org/repo.git)
+        remote_name: Remote name (default: origin)
+
+    Raises:
+        GitError: If setting the remote fails
+    """
+    try:
+        # If the remote exists, update it; otherwise add it
+        result = subprocess.run(
+            ["git", "remote"],
+            cwd=project_path,
+            capture_output=True,
+            check=True,
+            text=True,
+        )
+        remotes = result.stdout.split()
+        cmd = (
+            ["git", "remote", "set-url", remote_name, remote_url]
+            if remote_name in remotes
+            else ["git", "remote", "add", remote_name, remote_url]
+        )
+        subprocess.run(cmd, cwd=project_path, capture_output=True, check=True, text=True)
+    except subprocess.CalledProcessError as e:
+        raise GitError(f"Failed to set remote '{remote_name}': {e.stderr}")
+
+
+def push_branch(project_path: Path, branch: str = "main", remote_name: str = "origin") -> None:
+    """
+    Push the branch to the specified remote.
+
+    Args:
+        project_path: Path to the project directory
+        branch: Branch name to push
+        remote_name: Remote name (default: origin)
+
+    Raises:
+        GitError: If push fails
+    """
+    try:
+        subprocess.run(
+            ["git", "push", remote_name, branch],
+            cwd=project_path,
+            capture_output=True,
+            check=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as e:
+        raise GitError(f"Failed to push branch '{branch}' to '{remote_name}': {e.stderr}")

@@ -75,6 +75,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default="main",
         help="Initial git branch name (default: main).",
     )
+    parser.add_argument(
+        "--git-remote",
+        help="Git remote URL to set after init (e.g., git@github.com:org/repo.git). Implies --git.",
+    )
+    parser.add_argument(
+        "--git-push",
+        action="store_true",
+        help="Push initial branch to the remote (requires --git-remote and Git auth configured).",
+    )
     return parser.parse_args(argv)
 
 
@@ -158,20 +167,26 @@ def main(argv: list[str] | None = None) -> None:
     template_key = args.template or "animation_short"
     show_code = args.show_code
     project_name = args.name
-    use_git = args.git or args.git_lfs
+    use_git = args.git or args.git_lfs or bool(args.git_remote) or args.git_push
     use_lfs = args.git_lfs
     git_branch = args.git_branch
+    git_remote = args.git_remote
+    git_push = args.git_push
 
     # Check Git availability if requested
-    if use_git and not check_git_available():
-        print("Error: Git is not installed or not available in PATH.")
-        print("Please install Git to use --git or --git-lfs options.")
-        sys.exit(1)
+        if use_git and not check_git_available():
+            print("Error: Git is not installed or not available in PATH.")
+            print("Please install Git to use --git or --git-lfs options.")
+            sys.exit(1)
 
     if use_lfs and not check_git_lfs_available():
         print("Error: Git LFS is not installed or not available in PATH.")
         print("Please install Git LFS to use --git-lfs option.")
         print("Visit: https://git-lfs.github.com/")
+        sys.exit(1)
+
+    if git_push and not git_remote:
+        print("Error: --git-push requires --git-remote to be set.")
         sys.exit(1)
 
     if args.interactive:
@@ -206,6 +221,8 @@ def main(argv: list[str] | None = None) -> None:
             print(f"Git repository: Yes (branch: {git_branch})")
             if use_lfs:
                 print("Git LFS: Yes")
+            if git_remote:
+                print(f"Git remote: {git_remote}")
         print("Dry run complete; nothing was created.")
         return
 
@@ -215,6 +232,8 @@ def main(argv: list[str] | None = None) -> None:
             print(f"Git repository: Yes (branch: {git_branch})")
             if use_lfs:
                 print("Git LFS: Yes")
+            if git_remote:
+                print(f"Git remote: {git_remote}")
         proceed = input("Create these folders? [y/N]: ").strip().lower()
         if proceed not in {"y", "yes"}:
             print("Aborted.")
@@ -269,9 +288,21 @@ def main(argv: list[str] | None = None) -> None:
             print("Git repository initialized successfully.")
             if use_lfs:
                 print("Git LFS configured and ready.")
+
+            if git_remote:
+                from pipeline_tools.core.git_utils import set_remote, push_branch
+
+                print(f"Setting remote '{git_remote}'...")
+                set_remote(show_root, git_remote)
+                print("Remote set.")
+
+                if git_push:
+                    print(f"Pushing branch '{git_branch}' to remote...")
+                    push_branch(show_root, git_branch)
+                    print("Push complete.")
         except GitError as e:
-            print(f"Warning: Git initialization failed: {e}")
-            print("Project created but without Git repository.")
+            print(f"Warning: Git setup failed: {e}")
+            print("Project created but Git operations may be incomplete.")
 
     print("Done.")
 
