@@ -23,6 +23,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     c_status.add_argument("task_name", help="Task name.")
     c_status.add_argument("status", choices=sorted(TASK_STATUS_VALUES), help="Task status.")
 
+    c_delete = sub.add_parser("delete", help="Delete a task from a target.")
+    c_delete.add_argument("target_id", help="Asset or shot ID.")
+    c_delete.add_argument("task_name", help="Task name.")
+
     return parser.parse_args(argv)
 
 
@@ -72,6 +76,22 @@ def cmd_status(args: argparse.Namespace) -> None:
     sys.exit(1)
 
 
+def cmd_delete(args: argparse.Namespace) -> None:
+    data = db.load_db()
+    _ensure_target_exists(args.target_id, data)
+    tasks = data.get("tasks", {}).get(args.target_id, [])
+    new_tasks = [t for t in tasks if t["name"] != args.task_name]
+    if len(new_tasks) == len(tasks):
+        print(f"Task '{args.task_name}' not found for {args.target_id}.")
+        sys.exit(1)
+    if new_tasks:
+        data["tasks"][args.target_id] = new_tasks
+    else:
+        data["tasks"].pop(args.target_id, None)
+    db.save_db(data)
+    print(f"Deleted task '{args.task_name}' from {args.target_id}.")
+
+
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     if args.command == "add":
@@ -80,6 +100,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_list(args)
     elif args.command == "status":
         cmd_status(args)
+    elif args.command == "delete":
+        cmd_delete(args)
     else:
         print("Unknown command")
         sys.exit(1)

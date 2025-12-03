@@ -27,6 +27,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     c_tag.add_argument("version_id", help="Version ID.")
     c_tag.add_argument("tag", help="Tag to add.")
 
+    c_delete = sub.add_parser("delete", help="Delete a version by ID.")
+    c_delete.add_argument("version_id", help="Version ID to delete.")
+
     return parser.parse_args(argv)
 
 
@@ -133,6 +136,16 @@ def cmd_tag(args: argparse.Namespace) -> None:
     print(f"Tagged {args.version_id} with '{args.tag}'.")
 
 
+def cmd_delete(args: argparse.Namespace) -> None:
+    data = db.load_db()
+    if args.version_id not in data.get("versions", {}):
+        print(f"Version '{args.version_id}' not found.")
+        sys.exit(1)
+    del data["versions"][args.version_id]
+    db.save_db(data)
+    print(f"Deleted version '{args.version_id}'.")
+
+
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     if args.command == "new":
@@ -143,6 +156,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_latest(args)
     elif args.command == "tag":
         cmd_tag(args)
+    elif args.command == "delete":
+        cmd_delete(args)
     else:
         print("Unknown command")
         sys.exit(1)
