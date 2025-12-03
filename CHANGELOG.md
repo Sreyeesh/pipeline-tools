@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### :test_tube: Tests
 - Coverage added for admin template copy and workfile creation/opening.
 
+### :bug: Bug Fixes
+- `admin files --open` now falls back gracefully when a system opener (e.g., xdg-open) is missing and prints the path to open manually.
+
 ## [v0.1.8.4] - 2025-12-03
 ### :sparkles: New Features
 - Toggle workspace summaries in interactive to see shots/assets/tasks after commands.
