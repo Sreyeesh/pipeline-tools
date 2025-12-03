@@ -32,14 +32,22 @@ def _split_user_commands(raw_text: str, passthrough_cmds: set[str]) -> list[str]
 
     Rules:
     - Normalize separators (semicolons -> newlines).
-    - Insert a newline before any subsequent known command token (helps when paste loses newlines).
+    - Insert a newline before any subsequent top-level command token (helps when paste loses newlines) but
+      avoid splitting on tokens that are only subcommands (like 'create' after 'shows').
     - Split on newlines (handles Windows CRLF).
     - Within each chunk, if another known command token appears, start a new command.
     """
     # Normalize common separators
     normalized = raw_text.replace(";", "\n")
+
+    # Only split before top-level commands (not subcommands like "create" of "shows")
+    subcommand_tokens = set()
+    for subs in COMMANDS.values():
+        subcommand_tokens.update(subs)
+    top_level_tokens = [cmd for cmd in passthrough_cmds if cmd not in subcommand_tokens]
+
     # Force a newline before any subsequent passthrough command (when pastes collapse newlines)
-    cmd_pattern = r"(?<!^)\s+(?=(" + "|".join(re.escape(cmd) for cmd in passthrough_cmds) + r")\b)"
+    cmd_pattern = r"(?<!^)\s+(?=(" + "|".join(re.escape(cmd) for cmd in top_level_tokens) + r")\b)"
     normalized = re.sub(cmd_pattern, "\n", normalized)
 
     commands: list[str] = []
