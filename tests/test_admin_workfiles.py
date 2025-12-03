@@ -91,3 +91,15 @@ def test_workfiles_open_picks_latest(monkeypatch, tmp_path):
 
     assert opened["path"].name == "PKU_CH_Poku_Main_krita_w002.kra"
     assert opened["kind"] == "krita"
+
+
+def test_admin_create_with_content(monkeypatch, tmp_path):
+    _with_temp_db(monkeypatch, tmp_path)
+    show_root = _seed_show(tmp_path, "PKU")
+
+    args = admin_main.parse_args(["create", "--name", "PKU_animation_bible.md", "--content", "hello"])
+    admin_main.cmd_create(args)
+
+    dest = show_root / "01_ADMIN" / "PKU_animation_bible.md"
+    assert dest.exists()
+    assert dest.read_text().strip() == "hello"

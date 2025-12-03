@@ -168,7 +168,7 @@ COMMANDS = {
     "shots": ["add", "list", "info", "status", "delete"],
     "tasks": ["list", "add", "complete", "status", "delete"],
     "versions": ["list", "info", "latest", "delete"],
-    "admin": ["config_show", "config_set", "doctor", "files", "add", "template"],
+    "admin": ["config_show", "config_set", "doctor", "files", "add", "template", "create"],
     "workfiles": ["add", "list", "open"],
     "workspace": ["on", "off", "show"],
     "projects": [],
