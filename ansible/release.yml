@@ -11,6 +11,9 @@
     python_bin: "{{ ansible_playbook_python | default('python3') }}"
     repo_root: "{{ playbook_dir | dirname }}"
     allow_non_monday: false            # set to true to bypass Monday-only gate (e.g., hotfixes)
+    package_name: "pipely"
+    dist_whl: "{{ repo_root }}/dist/{{ package_name }}-{{ version | regex_replace('^v','') }}-py3-none-any.whl"
+    dist_sdist: "{{ repo_root }}/dist/{{ package_name }}-{{ version | regex_replace('^v','') }}.tar.gz"
 
   pre_tasks:
     - name: Ensure version tag is provided
@@ -103,22 +106,22 @@
 
     - name: Upload wheel
       ansible.builtin.uri:
-        url: "{{ upload_url }}?name=pipeline_tools-{{ version | regex_replace('^v','') }}-py3-none-any.whl"
+        url: "{{ upload_url }}?name={{ package_name }}-{{ version | regex_replace('^v','') }}-py3-none-any.whl"
         method: POST
         headers:
           Authorization: "Bearer {{ lookup('env', 'GITHUB_TOKEN') }}"
           Content-Type: "application/octet-stream"
           Accept: "application/vnd.github+json"
-        src: "{{ repo_root }}/dist/pipeline_tools-{{ version | regex_replace('^v','') }}-py3-none-any.whl"
+        src: "{{ dist_whl }}"
         status_code: [201, 422]
 
     - name: Upload sdist
       ansible.builtin.uri:
-        url: "{{ upload_url }}?name=pipeline_tools-{{ version | regex_replace('^v','') }}.tar.gz"
+        url: "{{ upload_url }}?name={{ package_name }}-{{ version | regex_replace('^v','') }}.tar.gz"
         method: POST
         headers:
           Authorization: "Bearer {{ lookup('env', 'GITHUB_TOKEN') }}"
           Content-Type: "application/octet-stream"
           Accept: "application/vnd.github+json"
-        src: "{{ repo_root }}/dist/pipeline_tools-{{ version | regex_replace('^v','') }}.tar.gz"
+        src: "{{ dist_sdist }}"
         status_code: [201, 422]
