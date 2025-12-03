@@ -56,3 +56,30 @@ def test_interactive_auto_adds_project_to_open(monkeypatch, tmp_path):
     interactive.run_interactive()
 
     assert captured[-1] == (["open", "blender", "--project", "AN_TEST_Project"], False)
+
+
+def test_shows_create_shorthand_stays_together(monkeypatch, tmp_path):
+    captured: list[tuple[list[str], bool]] = []
+
+    class FakeApp:
+        def __call__(self, args, standalone_mode=False):
+            captured.append((list(args), standalone_mode))
+
+    class FakeSession:
+        def __init__(self, *_, **__):
+            self._commands = ['shows create DMO "Demo" animation_short']
+
+        def prompt(self, *_, **__):
+            if not self._commands:
+                raise EOFError
+            return self._commands.pop(0)
+
+    monkeypatch.setattr(interactive, "PromptSession", FakeSession)
+    monkeypatch.setattr(core_paths, "get_creative_root", lambda: tmp_path)
+    monkeypatch.setattr(cli, "app", FakeApp())
+
+    interactive.run_interactive()
+
+    assert captured == [
+        (["shows", "create", "-c", "DMO", "-n", "Demo", "-t", "animation_short"], False)
+    ]
