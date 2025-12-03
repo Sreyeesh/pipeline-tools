@@ -2,7 +2,7 @@
 
 Artist-friendly CLI for creating and managing pipeline folder structures for creative production workflows (animation, game dev, drawing projects).
 
-**Version:** 0.1.9 (hotfix) | **License:** MIT | **Python:** 3.8+
+**Version:** 0.1.10 (hotfix) | **License:** MIT | **Python:** 3.8+
 
 🌐 **[Visit the Official Website](https://sreyeesh.github.io/pipeline-tools/)** | 📦 **[Download Latest Release](https://github.com/Sreyeesh/pipeline-tools/releases/latest)**
 
@@ -51,9 +51,9 @@ Projects follow convention: `{PREFIX}_{SHOW_CODE}_{PROJECT_NAME}`
 ### Install
 Use the latest GitHub release (pipx recommended):
 ```sh
-pipx install https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-0.1.9-py3-none-any.whl
+pipx install https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-0.1.10-py3-none-any.whl
 # or
-pip install --user https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-0.1.9-py3-none-any.whl
+pip install --user https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-0.1.10-py3-none-any.whl
 ```
 
 ### Use the interactive shell
@@ -153,21 +153,21 @@ Pipely releases are distributed via GitHub releases (PyPI is optional).
 
 2. **Bump version:**
    ```sh
-   make set-version VERSION=0.1.9
+   make set-version VERSION=0.1.10
    git add pyproject.toml
-   git commit -m "chore: bump version to 0.1.9"
+   git commit -m "chore: bump version to 0.1.10"
    git push origin main
    ```
 
 3. **Create and push tag:**
    ```sh
-   git tag v0.1.9
-   git push origin v0.1.9
+   git tag v0.1.10
+   git push origin v0.1.10
    ```
 
 4. **Upload artifacts to GitHub release:**
    ```sh
-   ALLOW_NON_MONDAY=true make release-ansible VERSION=v0.1.9 REPO=Sreyeesh/pipeline-tools
+   ALLOW_NON_MONDAY=true make release-ansible VERSION=v0.1.10 REPO=Sreyeesh/pipeline-tools
    ```
 
 5. **Install latest release locally:**

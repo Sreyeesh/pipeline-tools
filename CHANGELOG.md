@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.10] - 2025-12-03
+### :bug: Bug Fixes
+- `admin files --open` now falls back gracefully when a system opener (e.g., xdg-open) is missing and prints the path to open manually.
+
 ## [v0.1.9] - 2025-12-03
 ### :sparkles: New Features
 - Workfiles flow inside Pipely: add/list/open per asset/shot with versioned filenames.
@@ -16,9 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### :test_tube: Tests
 - Coverage added for admin template copy and workfile creation/opening.
-
-### :bug: Bug Fixes
-- `admin files --open` now falls back gracefully when a system opener (e.g., xdg-open) is missing and prints the path to open manually.
 
 ## [v0.1.8.4] - 2025-12-03
 ### :sparkles: New Features
