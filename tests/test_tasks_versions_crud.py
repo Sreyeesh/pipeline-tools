@@ -4,7 +4,8 @@ import os
 from datetime import datetime
 
 from pipeline_tools.core import db
-from pipeline_tools.tools import tasks, versions
+from pipeline_tools.tools.tasks import main as tasks_main
+from pipeline_tools.tools.versions import main as versions_main
 
 
 def _with_temp_db(tmp_path):
@@ -27,8 +28,8 @@ def test_tasks_delete_removes_task(monkeypatch, tmp_path):
     }
     db.save_db(data)
 
-    args = tasks.parse_args(["delete", "DMO_CH_Hero", "Layout"])
-    tasks.cmd_delete(args)
+    args = tasks_main.parse_args(["delete", "DMO_CH_Hero", "Layout"])
+    tasks_main.cmd_delete(args)
 
     saved = db.load_db()
     assert "DMO_CH_Hero" not in saved.get("tasks", {})
@@ -58,8 +59,8 @@ def test_versions_delete_removes_entry(tmp_path):
     }
     db.save_db(data)
 
-    args = versions.parse_args(["delete", "DMO_SH010_anim_v001"])
-    versions.cmd_delete(args)
+    args = versions_main.parse_args(["delete", "DMO_SH010_anim_v001"])
+    versions_main.cmd_delete(args)
 
     saved = db.load_db()
     assert "DMO_SH010_anim_v001" not in saved.get("versions", {})
