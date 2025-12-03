@@ -64,6 +64,8 @@ pip install --user https://github.com/Sreyeesh/pipeline-tools/releases/latest/do
   - Tasks: `tasks add DMO_SH010 Layout`, `tasks list DMO_SH010`, `tasks status DMO_SH010 Layout in_progress`
   - Assets/shots/shows/versions: `assets list -c DMO`, `shows info -c DMO`, `versions latest --shot DMO_SH010 --kind anim`
 - Use the asset/shot IDs (e.g., `DMO_CH_Hero`, `DMO_SH010`) when adding tasks/versions.
+- Docs stay inside Pipely: `admin template -t animation_bible --name DMO_animation_bible.md`, then `admin files --open DMO_animation_bible.md`.
+- Workfiles stay in the project: `workfiles add DMO_CH_Hero --kind krita --open` (creates in `05_WORK/...` and launches Krita), later `workfiles open --target-id DMO_CH_Hero --kind krita`.
 
 ### If you prefer direct CLI
 ```sh
@@ -74,9 +76,33 @@ pipely shots add SH010 "Hero enters forest"         # Add a shot
 pipely tasks add DMO_SH010 Layout                # Attach a task to a shot
 pipely versions new DMO_SH010 anim               # Create a version
 pipely doctor --json                             # Health check
+pipely admin template -t animation_bible         # Drop the animation bible into 01_ADMIN
+pipely workfiles add DMO_SH010 --kind krita      # Create a Krita workfile under 05_WORK
 ```
 
 ---
+
+## Standard Project Layout (animation_short)
+```
+AN_DMO_DemoShort/
+├─ 01_ADMIN/               # Animation bible, screenplay, production notes
+├─ 02_PREPRO/
+│  ├─ boards/
+│  ├─ designs/
+│  └─ reference/
+├─ 03_ASSETS/
+│  ├─ characters/
+│  ├─ environments/
+│  └─ props/
+├─ 04_SHOTS/
+│  └─ SH010/
+├─ 05_WORK/                # New: workfiles created via `pipely workfiles add`
+│  ├─ assets/
+│  └─ shots/
+├─ 05_POST/
+├─ 06_DELIVERY/
+└─ z_TEMP/
+```
 
 ## Developer Setup
 
@@ -127,21 +153,21 @@ Pipely releases are distributed via GitHub releases (PyPI is optional).
 
 2. **Bump version:**
    ```sh
-   make set-version VERSION=0.1.7
+   make set-version VERSION=0.1.9
    git add pyproject.toml
-   git commit -m "chore: bump version to 0.1.7"
+   git commit -m "chore: bump version to 0.1.9"
    git push origin main
    ```
 
 3. **Create and push tag:**
    ```sh
-   git tag v0.1.7
-   git push origin v0.1.7
+   git tag v0.1.9
+   git push origin v0.1.9
    ```
 
 4. **Upload artifacts to GitHub release:**
    ```sh
-   make release-ansible VERSION=v0.1.7 REPO=Sreyeesh/pipely
+   ALLOW_NON_MONDAY=true make release-ansible VERSION=v0.1.9 REPO=Sreyeesh/pipeline-tools
    ```
 
 5. **Install latest release locally:**
@@ -235,6 +261,13 @@ Returns system diagnostics including:
 - `animation_short` (prefix: AN) - Animation production pipeline
 - `game_dev_small` (prefix: GD) - Small game development workflow
 - `drawing_single` (prefix: DR) - Single drawing project structure
+
+### Admin Docs & Workfiles (Artist QoL)
+- `admin template -t animation_bible --name <FILE>`: copy the bundled bible into `01_ADMIN` for the current show.
+- `admin add <path> [--name <FILE>]`: copy any doc into `01_ADMIN` so artists can open it via Pipely.
+- `workfiles add <TARGET_ID> --kind <dcc> [--open]`: create a versioned workfile under `05_WORK/...` and optionally launch the DCC.
+- `workfiles open --target-id <TARGET_ID> --kind <dcc>`: open the latest workfile for that asset/shot.
+- `open <dcc> --project <PROJECT_FOLDER>`: DCC launcher now passes file paths again when invoked via workfiles.
 
 List templates:
 ```sh
