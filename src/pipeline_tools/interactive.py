@@ -13,6 +13,7 @@ from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.styles import Style
 from rich.console import Console
+from rich.table import Table
 
 from pipeline_tools.tools.project_creator.templates import TEMPLATES
 
@@ -20,7 +21,7 @@ console = Console()
 
 PASSTHROUGH_CMDS = {
     "open", "create", "doctor", "project", "assets", "shots",
-    "tasks", "shows", "versions", "admin",
+    "tasks", "shows", "versions", "admin", "workspace",
 }
 
 PREFIX_ALIASES = {"pipely", "pipley", "piply"}
@@ -103,6 +104,59 @@ def _normalize_shorthand_command(parts: list[str]) -> list[str]:
 
     return parts
 
+
+def _workspace_summary(show_code: str | None = None) -> None:
+    """
+    Print a compact workspace summary for the current show.
+    """
+    from pipeline_tools.core import db
+
+    data = db.load_db()
+    code = show_code or data.get("current_show")
+    if not code:
+        console.print("[yellow]No current show. Use 'shows use -c CODE' first.[/yellow]")
+        return
+    show = data.get("shows", {}).get(code)
+    if not show:
+        console.print(f"[yellow]Show '{code}' not found in DB.[/yellow]")
+        return
+
+    shots = [s for s in data.get("shots", {}).values() if s.get("show_code") == code]
+    assets = [a for a in data.get("assets", {}).values() if a.get("show_code") == code]
+    versions = [v for v in data.get("versions", {}).values() if v.get("show_code") == code]
+
+    tasks = []
+    for target_id, items in data.get("tasks", {}).items():
+        if target_id.startswith(code + "_"):
+            for t in items:
+                tasks.append((target_id, t))
+
+    console.print()
+    console.print(f"[bold cyan]Workspace:[/bold cyan] {code} - {show.get('name','')}")
+    console.print(f"[dim]{show.get('root','')}[/dim]")
+
+    table = Table(show_header=True, header_style="bold", box=None, padding=(0, 1))
+    table.add_column("Shots", style="cyan", no_wrap=True)
+    table.add_column("Assets", style="magenta", no_wrap=True)
+    table.add_column("Tasks", style="green")
+
+    # Prepare rows (up to 3 entries each)
+    shot_lines = [f"{s['id']} [{s['status']}]" for s in sorted(shots, key=lambda s: s["id"])[:3]]
+    asset_lines = [f"{a['id']} [{a['type']}]" for a in sorted(assets, key=lambda a: a["id"])[:3]]
+    task_lines = [f"{tid}:{t['name']} [{t['status']}]" for tid, t in tasks[:3]]
+
+    def _lines(lines: list[str], more: int) -> str:
+        extra = f"\n+{more} more" if more > 0 else ""
+        return "\n".join(lines) + extra if lines else "—"
+
+    table.add_row(
+        _lines(shot_lines, max(0, len(shots) - len(shot_lines))),
+        _lines(asset_lines, max(0, len(assets) - len(asset_lines))),
+        _lines(task_lines, max(0, len(tasks) - len(task_lines))),
+    )
+    console.print(table)
+    console.print()
+
 # All available commands and their subcommands
 COMMANDS = {
     "create": ["--interactive", "-c", "--show-code", "-n", "--name", "-t", "--template", "--git", "--git-lfs"],
@@ -115,6 +169,7 @@ COMMANDS = {
     "tasks": ["list", "add", "complete", "status", "delete"],
     "versions": ["list", "info", "latest", "delete"],
     "admin": ["config-show", "config-set", "doctor"],
+    "workspace": ["on", "off", "show"],
     "projects": [],
     "status": [],
     "commit": [],
@@ -134,6 +189,7 @@ COMMAND_DESCRIPTIONS = {
     "tasks": "Track work tasks",
     "versions": "File version history",
     "admin": "Configure settings",
+    "workspace": "Show or toggle project summary",
     "projects": "List all available projects",
     "status": "Quick git status for all projects",
     "commit": "Quick commit (prompts for project and message)",
@@ -262,6 +318,7 @@ def run_interactive():
     available_dccs = []
     current_project = None
     show_dcc_menu = False
+    workspace_summary_enabled = False
 
     # Auto-show projects menu on startup
     from pathlib import Path
@@ -353,6 +410,20 @@ def run_interactive():
 
                 parts = _normalize_shorthand_command(parts)
                 text = " ".join(parts)
+
+                # Workspace summary toggles
+                if text == "workspace" or text == "workspace show":
+                    _workspace_summary()
+                    continue
+                if text == "workspace on":
+                    workspace_summary_enabled = True
+                    console.print("[green]Workspace summary enabled.[/green]")
+                    _workspace_summary()
+                    continue
+                if text == "workspace off":
+                    workspace_summary_enabled = False
+                    console.print("[yellow]Workspace summary disabled.[/yellow]")
+                    continue
 
                 # Handle special commands
                 if text in ["exit", "quit"]:
@@ -651,6 +722,9 @@ def run_interactive():
                     console.print("  • Type [bold cyan]a number[/bold cyan] to select from the menu")
                     console.print("  • Type [bold cyan]'help'[/bold cyan] for advanced commands")
                     console.print()
+
+                if workspace_summary_enabled:
+                    _workspace_summary()
 
             if exit_session:
                 break
