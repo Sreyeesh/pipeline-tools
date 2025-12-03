@@ -47,7 +47,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     c_add = sub.add_parser("add", help="Add a shot.")
     c_add.add_argument("--show-code", "-c", help="Show code (defaults to current).")
     c_add.add_argument("code", help="Shot code, e.g. SH020.")
-    c_add.add_argument("description", help="Shot description.")
+    c_add.add_argument("description", nargs="+", help="Shot description (no quotes needed).")
 
     c_list = sub.add_parser("list", help="List shots for a show.")
     c_list.add_argument("--show-code", "-c", help="Show code (defaults to current).")
@@ -96,7 +96,7 @@ def cmd_add(args: argparse.Namespace) -> None:
         "id": shot_id,
         "code": args.code.upper(),
         "show_code": show_code,
-        "description": args.description,
+        "description": " ".join(args.description),
         "status": DEFAULT_SHOT_STATUS,
         "path": str(shot_path),
         "created_at": now,
