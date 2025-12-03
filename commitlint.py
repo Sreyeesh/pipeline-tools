@@ -37,10 +37,53 @@ def _run_git(args):
     return subprocess.check_output(["git", *args], text=True).strip()
 
 
+def _rev_exists(ref: str) -> bool:
+    return (
+        subprocess.run(
+            ["git", "rev-parse", "--verify", ref],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        ).returncode
+        == 0
+    )
+
+
+def _parent_of(ref: str) -> str | None:
+    result = subprocess.run(
+        ["git", "rev-parse", f"{ref}^"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+    )
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
 def commits_in_range(base: str, head: str) -> Iterable[Tuple[str, str]]:
     fmt = "%H:::%s"
-    log_range = f"{base}..{head}"
-    output = _run_git(["log", "--format=" + fmt, log_range])
+    attempts = []
+
+    if _rev_exists(base):
+        attempts.append(["log", "--format=" + fmt, f"{base}..{head}"])
+
+    parent = _parent_of(head)
+    if parent:
+        attempts.append(["log", "--format=" + fmt, f"{parent}..{head}"])
+
+    attempts.append(["show", "--format=" + fmt, "-s", head])
+
+    output = ""
+    last_error = None
+    for args in attempts:
+        try:
+            output = _run_git(args)
+            if output:
+                break
+        except subprocess.CalledProcessError as exc:
+            last_error = exc
+
+    if not output and last_error:
+        raise last_error
+
     for line in output.splitlines():
         sha, _, subject = line.partition(":::")
         yield sha, subject
