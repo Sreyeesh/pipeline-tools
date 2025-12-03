@@ -1,5 +1,6 @@
 import argparse
 import sys
+import shutil
 from pathlib import Path
 from typing import Optional
 
@@ -60,7 +61,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     c_delete = sub.add_parser("delete", help="Delete a show record (DB only).")
     c_delete.add_argument("-c", "--show-code", required=True, help="Show code to delete.")
     c_delete.add_argument(
-        "--force", action="store_true", help="Skip warning about existing folders."
+        "--force", action="store_true", help="Skip warning about existing folders (keeps folders)."
+    )
+    c_delete.add_argument(
+        "--delete-folders", action="store_true", help="Also delete the show folder from disk."
     )
 
     c_rename = sub.add_parser("rename", help="Rename a show code in the DB.")
@@ -174,11 +178,19 @@ def cmd_delete(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     root = Path(show["root"])
-    if root.exists() and not args.force:
-        print(
-            f"Show folder exists at {root}. Delete or use --force if you only want to remove the DB record."
-        )
-        sys.exit(1)
+    if root.exists():
+        if args.delete_folders:
+            try:
+                shutil.rmtree(root)
+                print(f"Deleted show folder: {root}")
+            except Exception as exc:
+                print(f"Failed to delete show folder '{root}': {exc}")
+                sys.exit(1)
+        elif not args.force:
+            print(
+                f"Show folder exists at {root}. Delete it, use --delete-folders to remove it automatically, or pass --force to keep folders and only remove the DB record."
+            )
+            sys.exit(1)
 
     # Drop assets/shots tied to the show
     assets = {
