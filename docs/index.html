@@ -139,11 +139,15 @@
     <section id="artist-workflow" class="features" style="padding-top: 2rem;">
         <div class="container">
             <h2 class="section-title scroll-animate">Artist Workflow (DMO example)</h2>
-            <p class="section-subtitle scroll-animate">Copy/paste these commands inside the interactive prompt to follow the standard demo flow.</p>
+            <p class="section-subtitle scroll-animate">Copy/paste inside the interactive prompt—no file browsing needed.</p>
             <div class="code-block scroll-scale" style="max-width: 900px;">
 <pre><code><span class="code-comment"># Create and select the show</span>
 <span class="code-command">shows create DMO "Demo" animation_short</span>
 <span class="code-command">shows use -c DMO</span>
+
+<span class="code-comment"># Drop the animation bible into 01_ADMIN</span>
+<span class="code-command">admin template -t animation_bible --name DMO_animation_bible.md</span>
+<span class="code-command">admin files --open DMO_animation_bible.md</span>
 
 <span class="code-comment"># Shots (one per beat)</span>
 <span class="code-command">shots add SH010 First beat</span>
@@ -170,6 +174,10 @@
 <span class="code-command">tasks add DMO_SH020 Layout</span>
 <span class="code-command">tasks add DMO_SH030 Layout</span>
 
+<span class="code-comment"># Workfiles (kept in 05_WORK) and open in Krita</span>
+<span class="code-command">workfiles add DMO_CH_Hero --kind krita --open</span>
+<span class="code-command">workfiles add DMO_SH010 --kind krita</span>
+
 <span class="code-comment"># Versions</span>
 <span class="code-command">versions new DMO_CH_Hero design</span>
 <span class="code-command">versions new DMO_SH010 layout</span>
@@ -179,7 +187,10 @@
 <span class="code-command">tasks list DMO_CH_Hero</span>
 <span class="code-command">tasks list DMO_SH010</span>
 <span class="code-command">assets list -c DMO</span>
-<span class="code-command">versions list --shot DMO_SH010</span></code></pre>
+<span class="code-command">versions list --shot DMO_SH010</span>
+
+<span class="code-comment"># Open a DCC against your project context</span>
+<span class="code-command">open krita --project AN_DMO_Demo</span></code></pre>
             </div>
         </div>
     </section>
