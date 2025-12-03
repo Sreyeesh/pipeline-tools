@@ -51,6 +51,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
     c_list = sub.add_parser("list", help="List shots for a show.")
     c_list.add_argument("--show-code", "-c", help="Show code (defaults to current).")
+    c_list.add_argument("show_code_positional", nargs="?", help="Show code (optional).")
     c_list.add_argument("--status", choices=sorted(SHOT_STATUS_VALUES), help="Filter by status.")
 
     c_info = sub.add_parser("info", help="Shot details.")
@@ -108,7 +109,8 @@ def cmd_add(args: argparse.Namespace) -> None:
 
 def cmd_list(args: argparse.Namespace) -> None:
     data = db.load_db()
-    show_code = _resolve_show_code(args.show_code, data)
+    show_code_arg = args.show_code or args.show_code_positional
+    show_code = _resolve_show_code(show_code_arg, data)
     _get_show_or_exit(show_code, data)
     shots = [
         s for s in data.get("shots", {}).values() if s.get("show_code") == show_code
