@@ -83,3 +83,60 @@ def test_shows_create_shorthand_stays_together(monkeypatch, tmp_path):
     assert captured == [
         (["shows", "create", "-c", "DMO", "-n", "Demo", "-t", "animation_short"], False)
     ]
+
+
+def test_workspace_show_calls_summary(monkeypatch, tmp_path):
+    calls: list[list] = []
+
+    class FakeSession:
+        def __init__(self, *_, **__):
+            self._commands = ["workspace show"]
+
+        def prompt(self, *_, **__):
+            if not self._commands:
+                raise EOFError
+            return self._commands.pop(0)
+
+    def fake_summary(show_code=None):
+        calls.append([show_code])
+
+    monkeypatch.setattr(interactive, "PromptSession", FakeSession)
+    monkeypatch.setattr(core_paths, "get_creative_root", lambda: tmp_path)
+    monkeypatch.setattr(interactive, "_workspace_summary", fake_summary)
+    monkeypatch.setattr(cli, "app", lambda *args, **kwargs: None)
+
+    interactive.run_interactive()
+
+    assert calls == [[None]]
+
+
+def test_workspace_on_runs_after_commands(monkeypatch, tmp_path):
+    summary_calls: list[list] = []
+    app_calls: list[list[str]] = []
+
+    class FakeApp:
+        def __call__(self, args, standalone_mode=False):
+            app_calls.append(list(args))
+
+    class FakeSession:
+        def __init__(self, *_, **__):
+            self._commands = ["workspace on", "tasks list DMO_SH010"]
+
+        def prompt(self, *_, **__):
+            if not self._commands:
+                raise EOFError
+            return self._commands.pop(0)
+
+    def fake_summary(show_code=None):
+        summary_calls.append([show_code])
+
+    monkeypatch.setattr(interactive, "PromptSession", FakeSession)
+    monkeypatch.setattr(core_paths, "get_creative_root", lambda: tmp_path)
+    monkeypatch.setattr(interactive, "_workspace_summary", fake_summary)
+    monkeypatch.setattr(cli, "app", FakeApp())
+
+    interactive.run_interactive()
+
+    assert app_calls == [["tasks", "list", "DMO_SH010"]]
+    # Called once when enabling, once after the passthrough command
+    assert summary_calls == [[None], [None]]

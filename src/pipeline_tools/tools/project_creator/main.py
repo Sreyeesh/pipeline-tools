@@ -174,10 +174,10 @@ def main(argv: list[str] | None = None) -> None:
     git_push = args.git_push
 
     # Check Git availability if requested
-        if use_git and not check_git_available():
-            print("Error: Git is not installed or not available in PATH.")
-            print("Please install Git to use --git or --git-lfs options.")
-            sys.exit(1)
+    if use_git and not check_git_available():
+        print("Error: Git is not installed or not available in PATH.")
+        print("Please install Git to use --git or --git-lfs options.")
+        sys.exit(1)
 
     if use_lfs and not check_git_lfs_available():
         print("Error: Git LFS is not installed or not available in PATH.")
