@@ -210,6 +210,7 @@ def cmd_delete(args: argparse.Namespace) -> None:
     del data["shows"][args.show_code]
     if data.get("current_show") == args.show_code:
         data["current_show"] = None
+        data.get("config", {}).pop("current_show", None)
     db.save_db(data)
     print(f"Deleted show '{args.show_code}' from DB.")
 
