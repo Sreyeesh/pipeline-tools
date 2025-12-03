@@ -152,16 +152,31 @@ def _open_file(path: Path) -> None:
     if not path.exists():
         print(f"File not found: {path}")
         sys.exit(1)
+
+    # Try native open first
     try:
         if sys.platform.startswith("darwin"):
             subprocess.run(["open", str(path)], check=True)
+            return
         elif os.name == "nt":
             os.startfile(path)  # type: ignore[attr-defined]
+            return
         else:
             subprocess.run(["xdg-open", str(path)], check=True)
+            return
     except Exception as exc:  # pragma: no cover
-        print(f"Failed to open file: {exc}")
-        sys.exit(1)
+        # Fall back to browser open if available
+        try:
+            import webbrowser
+
+            if webbrowser.open(path.as_uri()):
+                print(f"Opened in browser: {path}")
+                return
+        except Exception:
+            pass
+
+        print(f"Could not auto-open (missing opener?). Open manually: {path}")
+        print(f"Details: {exc}")
 
 
 def _load_show(show_code: str | None) -> dict:

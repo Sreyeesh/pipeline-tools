@@ -103,3 +103,22 @@ def test_admin_create_with_content(monkeypatch, tmp_path):
     dest = show_root / "01_ADMIN" / "PKU_animation_bible.md"
     assert dest.exists()
     assert dest.read_text().strip() == "hello"
+
+
+def test_admin_files_open_fallback(monkeypatch, tmp_path, capsys):
+    _with_temp_db(monkeypatch, tmp_path)
+    show_root = _seed_show(tmp_path, "PKU")
+    target = show_root / "01_ADMIN" / "PKU_animation_bible.md"
+    target.write_text("hi")
+
+    # Simulate xdg-open failure
+    def fake_run(*_args, **_kwargs):
+        raise FileNotFoundError("xdg-open missing")
+    monkeypatch.setattr(admin_main.subprocess, "run", fake_run)
+    # Simulate webbrowser.open returning False
+    import webbrowser
+    monkeypatch.setattr(webbrowser, "open", lambda *_a, **_k: False)
+
+    admin_main._open_file(target)
+    out = capsys.readouterr().out
+    assert "Open manually" in out
