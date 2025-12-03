@@ -3,6 +3,8 @@ import json
 import os
 import sys
 import time
+import subprocess
+from pathlib import Path
 
 from pipeline_tools.core import db, observability
 from pipeline_tools.core.cli import FriendlyArgumentParser
@@ -21,6 +23,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
     c_doc = sub.add_parser("doctor", help="Run a basic health check.")
     c_doc.add_argument("--json", action="store_true", help="Emit JSON output for automation.")
+
+    c_files = sub.add_parser("files", help="List or open admin files (01_ADMIN) for a show.")
+    c_files.add_argument("-c", "--show-code", help="Show code (defaults to current show).")
+    c_files.add_argument("filename", nargs="?", help="File name in 01_ADMIN to open.")
+    c_files.add_argument("--open", action="store_true", help="Open the file instead of just listing.")
 
     return parser.parse_args(argv)
 
@@ -116,6 +123,60 @@ def _print_human_doctor(report: dict) -> None:
     print(f"Doctor: {report['status'].upper()}")
 
 
+def _open_file(path: Path) -> None:
+    if not path.exists():
+        print(f"File not found: {path}")
+        sys.exit(1)
+    try:
+        if sys.platform.startswith("darwin"):
+            subprocess.run(["open", str(path)], check=True)
+        elif os.name == "nt":
+            os.startfile(path)  # type: ignore[attr-defined]
+        else:
+            subprocess.run(["xdg-open", str(path)], check=True)
+    except Exception as exc:  # pragma: no cover
+        print(f"Failed to open file: {exc}")
+        sys.exit(1)
+
+
+def cmd_files(args: argparse.Namespace) -> None:
+    data = db.load_db()
+    show_code = args.show_code or data.get("current_show")
+    if not show_code:
+        print("No show specified and no current show is set. Use --show-code or set a current show.")
+        sys.exit(1)
+
+    show = data.get("shows", {}).get(show_code)
+    if not show:
+        print(f"Show '{show_code}' not found in DB.")
+        sys.exit(1)
+
+    admin_dir = Path(show["root"]) / "01_ADMIN"
+    if not admin_dir.exists():
+        print(f"Admin folder not found: {admin_dir}")
+        sys.exit(1)
+
+    files = sorted([p for p in admin_dir.iterdir() if p.is_file()])
+    if not args.filename:
+        if not files:
+            print("No files found in 01_ADMIN.")
+            return
+        for f in files:
+            size_kb = f.stat().st_size / 1024
+            print(f"{f.name} ({size_kb:.1f} KB)")
+        return
+
+    target = admin_dir / args.filename
+    if not args.open:
+        if target.exists():
+            print(target)
+        else:
+            print(f"File not found: {target}")
+            sys.exit(1)
+    else:
+        _open_file(target)
+
+
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     if args.command == "config_show":
@@ -141,6 +202,8 @@ def main(argv: list[str] | None = None) -> None:
             _print_human_doctor(report)
         if report["status"] != "ok":
             sys.exit(1)
+    elif args.command == "files":
+        cmd_files(args)
     else:
         print("Unknown command")
         sys.exit(1)
