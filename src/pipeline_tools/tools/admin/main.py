@@ -165,6 +165,13 @@ def _open_file(path: Path) -> None:
             subprocess.run(["xdg-open", str(path)], check=True)
             return
     except Exception as exc:  # pragma: no cover
+        # WSL: try explorer.exe for Windows paths
+        try:
+            if sys.platform.startswith("linux") and os.path.exists("/mnt/c/Windows/explorer.exe"):
+                subprocess.run(["/mnt/c/Windows/explorer.exe", str(path)], check=True)
+                return
+        except Exception:
+            pass
         # Fall back to browser open if available
         try:
             import webbrowser
