@@ -194,9 +194,16 @@ def launch_dcc(
     )
 
     # Note: File path handling disabled - just open the DCC without files
-    # Users can open files from within the application
-    # if file_path:
-    #     ... (code removed to prevent automatic file opening)
+    file_arg = None
+    if file_path:
+        file_obj = Path(file_path)
+        if not file_obj.exists():
+            raise ValueError(f"File does not exist: {file_path}")
+        if is_wsl_to_windows:
+            file_arg = str(file_obj).replace("/mnt/c/", "C:\\").replace("/", "\\")
+        else:
+            file_arg = str(file_obj)
+        cmd.append(file_arg)
 
     # Add additional arguments
     if additional_args:

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.9] - 2025-12-03
+### :sparkles: New Features
+- Workfiles flow inside Pipely: add/list/open per asset/shot with versioned filenames.
+- Admin helpers to copy files into 01_ADMIN and drop in the bundled animation bible template.
+- DCC launcher accepts file paths again for seamless open from Pipely commands.
+
+### :memo: Documentation
+- Website/cards updated for 0.1.9 and the new workfile/admin flows.
+
+### :test_tube: Tests
+- Coverage added for admin template copy and workfile creation/opening.
+
 ## [v0.1.8.4] - 2025-12-03
 ### :sparkles: New Features
 - Toggle workspace summaries in interactive to see shots/assets/tasks after commands.

@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import time
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -28,6 +29,25 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     c_files.add_argument("-c", "--show-code", help="Show code (defaults to current show).")
     c_files.add_argument("filename", nargs="?", help="File name in 01_ADMIN to open.")
     c_files.add_argument("--open", action="store_true", help="Open the file instead of just listing.")
+
+    c_add = sub.add_parser("add", help="Copy a file into 01_ADMIN for the current show.")
+    c_add.add_argument("source", help="Source file to copy.")
+    c_add.add_argument("--name", help="Optional destination name (default: keep source name).")
+    c_add.add_argument("-c", "--show-code", help="Show code (defaults to current show).")
+
+    c_template = sub.add_parser("template", help="Copy a bundled template into 01_ADMIN.")
+    c_template.add_argument(
+        "--template",
+        "-t",
+        default="animation_bible",
+        choices=["animation_bible"],
+        help="Template key to copy (default: animation_bible).",
+    )
+    c_template.add_argument(
+        "--name",
+        help="Destination name (default: <SHOWCODE>_animation_bible.md for animation_bible).",
+    )
+    c_template.add_argument("-c", "--show-code", help="Show code (defaults to current show).")
 
     return parser.parse_args(argv)
 
@@ -139,17 +159,21 @@ def _open_file(path: Path) -> None:
         sys.exit(1)
 
 
-def cmd_files(args: argparse.Namespace) -> None:
+def _load_show(show_code: str | None) -> dict:
     data = db.load_db()
-    show_code = args.show_code or data.get("current_show")
-    if not show_code:
+    code = show_code or data.get("current_show")
+    if not code:
         print("No show specified and no current show is set. Use --show-code or set a current show.")
         sys.exit(1)
-
-    show = data.get("shows", {}).get(show_code)
+    show = data.get("shows", {}).get(code)
     if not show:
-        print(f"Show '{show_code}' not found in DB.")
+        print(f"Show '{code}' not found in DB.")
         sys.exit(1)
+    return show
+
+
+def cmd_files(args: argparse.Namespace) -> None:
+    show = _load_show(args.show_code)
 
     admin_dir = Path(show["root"]) / "01_ADMIN"
     if not admin_dir.exists():
@@ -175,6 +199,45 @@ def cmd_files(args: argparse.Namespace) -> None:
             sys.exit(1)
     else:
         _open_file(target)
+
+
+def cmd_add(args: argparse.Namespace) -> None:
+    show = _load_show(args.show_code)
+    admin_dir = Path(show["root"]) / "01_ADMIN"
+    admin_dir.mkdir(parents=True, exist_ok=True)
+
+    source = Path(args.source)
+    if not source.exists():
+        print(f"Source file not found: {source}")
+        sys.exit(1)
+
+    dest_name = args.name or source.name
+    dest = admin_dir / dest_name
+    shutil.copy2(source, dest)
+    print(f"Copied to: {dest}")
+
+
+def _template_source_path(template_key: str) -> Path:
+    if template_key == "animation_bible":
+        base = Path(__file__).resolve().parent.parent / "project_creator" / "reference" / "animation_short" / "01_ADMIN"
+        return base / "animation_bible_template.md"
+    raise ValueError(f"Unknown template '{template_key}'")
+
+
+def cmd_template(args: argparse.Namespace) -> None:
+    show = _load_show(args.show_code)
+    admin_dir = Path(show["root"]) / "01_ADMIN"
+    admin_dir.mkdir(parents=True, exist_ok=True)
+
+    src = _template_source_path(args.template)
+    if not src.exists():
+        print(f"Template file missing: {src}")
+        sys.exit(1)
+
+    dest_name = args.name or f"{show['code']}_animation_bible.md" if args.template == "animation_bible" else src.name
+    dest = admin_dir / dest_name
+    shutil.copy2(src, dest)
+    print(f"Copied template to: {dest}")
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -204,6 +267,10 @@ def main(argv: list[str] | None = None) -> None:
             sys.exit(1)
     elif args.command == "files":
         cmd_files(args)
+    elif args.command == "add":
+        cmd_add(args)
+    elif args.command == "template":
+        cmd_template(args)
     else:
         print("Unknown command")
         sys.exit(1)

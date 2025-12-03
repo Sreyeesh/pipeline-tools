@@ -21,6 +21,7 @@ from pipeline_tools.tools.shots import main as shots_main
 from pipeline_tools.tools.shows import main as shows_main
 from pipeline_tools.tools.tasks import main as tasks_main
 from pipeline_tools.tools.versions import main as versions_main
+from pipeline_tools.tools.workfiles import main as workfiles_main
 
 
 app = typer.Typer(add_completion=False, help="Pipely - Pipeline management made lovely")
@@ -42,6 +43,7 @@ MENU_SECTIONS = [
     ("💼 Production", [
         ("tasks", "Tasks", "Track and assign work items"),
         ("versions", "Versions", "File version history and tracking"),
+        ("workfiles", "Workfiles", "Create/open workfiles per asset/shot"),
         ("admin", "Settings", "Configure pipeline preferences"),
     ]),
 ]
@@ -285,6 +287,12 @@ def tasks(ctx: typer.Context) -> None:
 def versions(ctx: typer.Context) -> None:
     """Version tracking commands."""
     _passthrough(ctx, versions_main.main, "versions")
+
+
+@app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+def workfiles(ctx: typer.Context) -> None:
+    """Create/list/open workfiles for assets and shots."""
+    _passthrough(ctx, workfiles_main.main, "workfiles")
 
 
 @app.command(

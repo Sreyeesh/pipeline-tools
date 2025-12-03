@@ -21,7 +21,7 @@ console = Console()
 
 PASSTHROUGH_CMDS = {
     "open", "create", "doctor", "project", "assets", "shots",
-    "tasks", "shows", "versions", "admin", "workspace",
+    "tasks", "shows", "versions", "admin", "workspace", "workfiles",
 }
 
 PREFIX_ALIASES = {"pipely", "pipley", "piply"}
@@ -168,7 +168,8 @@ COMMANDS = {
     "shots": ["add", "list", "info", "status", "delete"],
     "tasks": ["list", "add", "complete", "status", "delete"],
     "versions": ["list", "info", "latest", "delete"],
-    "admin": ["config-show", "config-set", "doctor"],
+    "admin": ["config_show", "config_set", "doctor", "files", "add", "template"],
+    "workfiles": ["add", "list", "open"],
     "workspace": ["on", "off", "show"],
     "projects": [],
     "status": [],
@@ -188,7 +189,8 @@ COMMAND_DESCRIPTIONS = {
     "shots": "Manage shot sequences",
     "tasks": "Track work tasks",
     "versions": "File version history",
-    "admin": "Configure settings",
+    "workfiles": "Create/open workfiles",
+    "admin": "Configure settings and admin files",
     "workspace": "Show or toggle project summary",
     "projects": "List all available projects",
     "status": "Quick git status for all projects",
