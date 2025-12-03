@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.8.3] - 2025-12-03
+### :sparkles: New Features
+- Add `--delete-folders` to `shows delete` to remove the show folder and DB entry together.
+
+### :bug: Bug Fixes
+- Clear `current_show` when deleting a show to avoid stale selections.
+
+### :test_tube: Tests
+- Add coverage for show deletion with folder removal.
+
+
 ## [v0.1.8.2] - 2025-12-03
 ### :sparkles: New Features
 - Add delete commands for tasks and versions (with interactive autocomplete support) to complete CRUD coverage.
@@ -158,13 +169,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Character thumbnail generation
 - Tag-based search functionality
 
-[Unreleased]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8.2...HEAD
+[Unreleased]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8.3...HEAD
+[0.1.8.3]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8.2...v0.1.8.3
 [0.1.8.2]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8.1...v0.1.8.2
 [0.1.8.1]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8...v0.1.8.1
 [0.1.7]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.0...v0.1.5
 [0.1.0]: https://github.com/Sreyeesh/pipeline-tools/releases/tag/v0.1.0
+[v0.1.8.3]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8.2...v0.1.8.3
 [v0.1.8.2]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8.1...v0.1.8.2
 [v0.1.8]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.7...v0.1.8
 [v0.1.8.1]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8...v0.1.8.1
