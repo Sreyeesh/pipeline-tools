@@ -14,6 +14,8 @@ from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.styles import Style
 from rich.console import Console
 
+from pipeline_tools.tools.project_creator.templates import TEMPLATES
+
 console = Console()
 
 PASSTHROUGH_CMDS = {
@@ -62,6 +64,33 @@ def _split_user_commands(raw_text: str, passthrough_cmds: set[str]) -> list[str]
         if current:
             commands.append(" ".join(current))
     return commands
+
+
+def _normalize_shorthand_command(parts: list[str]) -> list[str]:
+    """
+    Allow artist-friendly shorthand like:
+    'shows create DMO \"Demo\" animation_short' -> adds required flags.
+    """
+    if len(parts) >= 3 and parts[0] == "shows" and parts[1] == "create":
+        has_flags = any(p.startswith("-") for p in parts[2:])
+        if has_flags:
+            return parts
+
+        show_code = parts[2]
+        name_tokens = parts[3:]
+        template = None
+        if name_tokens and name_tokens[-1] in TEMPLATES:
+            template = name_tokens.pop()
+        if not name_tokens:
+            return parts
+        name = " ".join(name_tokens)
+
+        normalized = ["shows", "create", "-c", show_code, "-n", name]
+        if template:
+            normalized.extend(["-t", template])
+        return normalized
+
+    return parts
 
 # All available commands and their subcommands
 COMMANDS = {
@@ -303,8 +332,16 @@ def run_interactive():
                 if parts and parts[0].lower() in PREFIX_ALIASES:
                     text = " ".join(parts[1:]).strip()
 
+                    try:
+                        parts = shlex.split(text)
+                    except ValueError:
+                        parts = text.split()
+
                 if not text:
                     continue
+
+                parts = _normalize_shorthand_command(parts)
+                text = " ".join(parts)
 
                 # Handle special commands
                 if text in ["exit", "quit"]:
@@ -579,17 +616,17 @@ def run_interactive():
                 # If we get here, it's not a recognized command
                 # Allow advanced users to still type commands if they want
                 # Forward known commands to the Typer CLI so artists can stay in interactive mode
-                if any(text.startswith(cmd + " ") or text == cmd for cmd in PASSTHROUGH_CMDS):
+                if parts and parts[0] in PASSTHROUGH_CMDS:
                     from pipeline_tools.cli import app
-                    args = text.split()
+                    args = parts
 
                     # Auto-add project to 'open' commands if a project is selected
-                    if args and args[0] == "open" and current_project:
-                        if "--project" not in args and "-p" not in args:
-                            args.extend(["--project", current_project])
+                    if parts and parts[0] == "open" and current_project:
+                        if "--project" not in parts and "-p" not in parts:
+                            parts.extend(["--project", current_project])
 
                     try:
-                        app(args, standalone_mode=False)
+                        app(parts, standalone_mode=False)
                     except SystemExit:
                         pass
                     except Exception as e:
