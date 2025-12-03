@@ -496,6 +496,15 @@
             border-color: var(--white);
         }
 
+        /* Ensure hover stays readable in dark contexts */
+        [data-theme="dark"] .btn-secondary:hover,
+        :root:not([data-theme="light"]) .btn-secondary:hover,
+        .hero .btn-secondary:hover {
+            background: var(--white);
+            color: var(--primary);
+            border-color: var(--white);
+        }
+
         /* Hero contrast helpers */
         .hero-dark {
             background: var(--dark);
