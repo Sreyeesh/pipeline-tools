@@ -56,7 +56,10 @@ def _split_user_commands(raw_text: str, passthrough_cmds: set[str]) -> list[str]
 
         current: list[str] = []
         for tok in tokens:
-            if current and tok in passthrough_cmds:
+            current_main = current[0] if current else None
+            # Avoid splitting when 'tok' is actually a subcommand/flag of the current main command
+            is_sub_of_current = current_main in COMMANDS and tok in COMMANDS[current_main]
+            if current and tok in passthrough_cmds and not is_sub_of_current:
                 commands.append(" ".join(current))
                 current = [tok]
             else:
