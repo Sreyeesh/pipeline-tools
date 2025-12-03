@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.8.2] - 2025-12-03
+### :sparkles: New Features
+- Add delete commands for tasks and versions (with interactive autocomplete support) to complete CRUD coverage.
+
+### :bug: Bug Fixes
+- Keep `shows create` shorthand together in interactive, accept multiword shot descriptions without quotes, and allow positional show codes for `shots list`.
+- Improve changelog readability in light mode and ensure the dark-mode toggle is available across docs.
+
+### :memo: Documentation
+- Refresh the workflow demo with the standard artist flow and surface the theme toggle on the changelog page.
+
+### :test_tube: Tests
+- Add coverage for `shows create` shorthand and task/version delete commands.
+
+
+## [0.1.8.2] - 2025-12-03
+### :sparkles: Highlights
+- Complete CRUD: add delete for tasks and versions; interactive autocomplete shows the new commands.
+- Friendlier interactive: shorthand `shows create` works reliably; shots accept multiword descriptions; `shots list` accepts positional show codes.
+- Docs polish: improved light-mode readability, theme toggle on changelog page, and refreshed workflow demo.
+- Tests added for shorthand handling and the new delete commands.
+
+
 ## [v0.1.8.1] - 2025-12-02
 ### :sparkles: New Features
 - [`ce25ced`](https://github.com/Sreyeesh/pipeline-tools/commit/ce25ced738d9962698e2118023cd03e97cc07b14) - rebrand from Pipeline Tools to Pipely *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
@@ -135,11 +158,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Character thumbnail generation
 - Tag-based search functionality
 
-[Unreleased]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8.1...HEAD
+[Unreleased]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8.2...HEAD
+[0.1.8.2]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8.1...v0.1.8.2
 [0.1.8.1]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8...v0.1.8.1
 [0.1.7]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.0...v0.1.5
 [0.1.0]: https://github.com/Sreyeesh/pipeline-tools/releases/tag/v0.1.0
+[v0.1.8.2]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8.1...v0.1.8.2
 [v0.1.8]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.7...v0.1.8
 [v0.1.8.1]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8...v0.1.8.1

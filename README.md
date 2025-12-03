@@ -2,7 +2,7 @@
 
 Artist-friendly CLI for creating and managing pipeline folder structures for creative production workflows (animation, game dev, drawing projects).
 
-**Version:** 0.1.8.1 (hotfix) | **License:** MIT | **Python:** 3.8+
+**Version:** 0.1.8.2 (hotfix) | **License:** MIT | **Python:** 3.8+
 
 🌐 **[Visit the Official Website](https://sreyeesh.github.io/pipeline-tools/)** | 📦 **[Download Latest Release](https://github.com/Sreyeesh/pipeline-tools/releases/latest)**
 
@@ -51,9 +51,9 @@ Projects follow convention: `{PREFIX}_{SHOW_CODE}_{PROJECT_NAME}`
 ### Install
 Use the latest GitHub release (pipx recommended):
 ```sh
-pipx install https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-0.1.8.1-py3-none-any.whl
+pipx install https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-0.1.8.2-py3-none-any.whl
 # or
-pip install --user https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-0.1.8.1-py3-none-any.whl
+pip install --user https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-0.1.8.2-py3-none-any.whl
 ```
 
 ### Use the interactive shell
