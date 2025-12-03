@@ -482,8 +482,16 @@
             transform: translateY(0);
         }
 
-        .btn-secondary {
+.btn-secondary {
             background: transparent;
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Preserve contrast on dark/hero backgrounds */
+        [data-theme="dark"] .btn-secondary,
+        :root:not([data-theme="light"]) .btn-secondary,
+        .hero .btn-secondary {
             color: var(--white);
             border-color: var(--white);
         }
