@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### :sparkles: New Features
+- Krita now has auto-save support: Press Ctrl+S and it automatically saves to the correct versioned filename.
+- Both Blender and Krita auto-save to `05_WORK/` with proper naming (e.g., `PKU_CH_Poku_Main_krita_w001.kra`).
+
+### :memo: Documentation
+- Updated artist workflow guide to reflect new interactive TUI interface.
+- Website documentation now highlights both Blender and Krita auto-save support.
+
 ## [v0.1.10.3] - 2025-12-04
 ### :bug: Bug Fixes
 - Fix Blender workfile crash caused by undefined `dcc_kind` variable.
