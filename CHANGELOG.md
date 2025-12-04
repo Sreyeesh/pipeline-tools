@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.10.3] - 2025-12-04
+### :bug: Bug Fixes
+- Fix Blender workfile crash caused by undefined `dcc_kind` variable.
+- Create valid Krita files with proper ZIP structure, layer data (1920x1080 RGBA), and sRGB ICC profile.
+- Improve error handling for Blender file creation with better path escaping for WSL.
+
+### :sparkles: New Features
+- Add `info` command to view current project information without opening app picker.
+- Blender auto-saves to correct versioned filename when pressing Ctrl+S (via `target_file_path` parameter).
+
 ## [v0.1.10.2] - 2025-12-03
 ### :sparkles: New Features
 - Interactive Step 3 artist picker: browse existing workfiles, open by number, or create+open a new version without typing commands.
