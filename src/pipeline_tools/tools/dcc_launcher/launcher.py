@@ -225,8 +225,8 @@ def launch_dcc(
             windows_project = project_root.replace("/mnt/c/", "C:\\").replace("/", "\\")
             project_name = Path(project_root).name
 
-            # For Blender, create a startup script that sets the default save path
-            if dcc_name_lower == "blender":
+            # For Blender and Krita, create a startup script that sets the default save path
+            if dcc_name_lower in ["blender", "krita"]:
                 try:
                     # Get Windows username
                     import subprocess as sp
@@ -241,8 +241,9 @@ def launch_dcc(
                     windows_temp = f"C:\\Users\\{win_username}\\AppData\\Local\\Temp"
                     wsl_temp = f"/mnt/c/Users/{win_username}/AppData/Local/Temp"
 
-                    startup_script = Path(wsl_temp) / "blender_pipeline_startup.py"
-                    windows_script_path = f"{windows_temp}\\blender_pipeline_startup.py"
+                    script_name = f"{dcc_name_lower}_pipeline_startup.py"
+                    startup_script = Path(wsl_temp) / script_name
+                    windows_script_path = f"{windows_temp}\\{script_name}"
 
                     # Get target file path if provided
                     target_file = None
@@ -253,7 +254,8 @@ def launch_dcc(
                             target_file = target_file_path
 
                     with open(startup_script, "w") as f:
-                        f.write(f'''# Pipeline Tools - Auto-generated startup script
+                        if dcc_name_lower == "blender":
+                            f.write(f'''# Pipeline Tools - Auto-generated startup script
 import bpy
 import os
 
@@ -328,12 +330,127 @@ print(f"   • Use Ctrl+Shift+S to choose a custom name")
 print("")
 print("=" * 60)
 ''')
-                    # Add the startup script to Blender's command line with Windows path
-                    cmd.extend(["--python", windows_script_path])
+                        elif dcc_name_lower == "krita":
+                            f.write(f'''# Pipeline Tools - Auto-generated startup script for Krita
+from krita import *
+import os
+
+# Set default file path to project directory
+project_path = r"{windows_project}"
+project_name = "{project_name}"
+target_file = r"{target_file}" if {bool(target_file)} else None
+
+print("=" * 60)
+print("PIPELINE TOOLS - Project Context Active")
+print(f"Project: {{project_name}}")
+print(f"Path: {{project_path}}")
+print("=" * 60)
+
+# Make sure the path exists
+os.makedirs(project_path, exist_ok=True)
+
+# Change working directory
+os.chdir(project_path)
+
+# Get Krita instance
+krita_instance = Krita.instance()
+
+# Store original action
+original_save_action = None
+
+def auto_save_to_project():
+    """Automatically save to target file or project directory when file has no path"""
+    doc = krita_instance.activeDocument()
+    if doc is None:
+        return False
+
+    # Check if document has been saved before
+    if not doc.fileName() or doc.fileName() == "":
+        # Use target file path if provided, otherwise generate filename
+        if target_file:
+            filepath = target_file
+            # Make sure parent directory exists
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        else:
+            # Generate a default filename based on template or timestamp
+            import datetime
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            default_name = f"{{project_name}}_{{timestamp}}.kra"
+            filepath = os.path.join(project_path, default_name)
+
+        # Save the document
+        doc.saveAs(filepath)
+        print(f"✓ Auto-saved to: {{filepath}}")
+        return True
+    return False
+
+# Hook into Krita's save action via notifier
+class PipelineSaveNotifier(QObject):
+    def __init__(self):
+        super().__init__()
+
+    def canvasChanged(self, canvas):
+        pass
+
+    def viewCreated(self):
+        # Try to patch the save action when a view is created
+        window = krita_instance.activeWindow()
+        if window:
+            try:
+                save_action = window.action('file_save')
+                if save_action and not hasattr(save_action, '_pipeline_patched'):
+                    original_trigger = save_action.trigger
+
+                    def pipeline_trigger():
+                        doc = krita_instance.activeDocument()
+                        if doc and (not doc.fileName() or doc.fileName() == ""):
+                            auto_save_to_project()
+                        else:
+                            original_trigger()
+
+                    save_action.trigger = pipeline_trigger
+                    save_action._pipeline_patched = True
+            except Exception as e:
+                print(f"Could not patch save action: {{e}}")
+
+# Create and register notifier
+try:
+    notifier = PipelineSaveNotifier()
+    krita_instance.notifier().viewCreated.connect(notifier.viewCreated)
+
+    # Also try to patch immediately if window exists
+    window = krita_instance.activeWindow()
+    if window:
+        notifier.viewCreated()
+except Exception as e:
+    print(f"Warning: Could not set up auto-save: {{e}}")
+
+print(f"✓ Working directory: {{os.getcwd()}}")
+print(f"✓ Auto-save to project enabled")
+if target_file:
+    print(f"✓ Target file: {{os.path.basename(target_file)}}")
+print("=" * 60)
+print("")
+print("📁 SAVE YOUR WORK:")
+if target_file:
+    print(f"   • Press Ctrl+S - Auto-saves to {{os.path.basename(target_file)}}")
+    print(f"   • Full path: {{target_file}}")
+else:
+    print(f"   • Press Ctrl+S - Auto-saves to {{project_path}}")
+    print(f"   • File will be named: {{project_name}}_TIMESTAMP.kra")
+print(f"   • Use Ctrl+Shift+S to choose a custom name")
+print("")
+print("=" * 60)
+''')
+                    # Add the startup script to command line with Windows path
+                    if dcc_name_lower == "blender":
+                        cmd.extend(["--python", windows_script_path])
+                    elif dcc_name_lower == "krita":
+                        cmd.extend(["--python-script", windows_script_path])
                 except Exception as e:
                     # Debug: print error
                     import sys
-                    print(f"Warning: Could not create Blender startup script: {e}", file=sys.stderr)
+                    print(f"Warning: Could not create {dcc_name_lower} startup script: {e}", file=sys.stderr)
                     pass
 
             # Create a desktop notification file for all DCCs
@@ -350,8 +467,8 @@ print("=" * 60)
                         f.write(f"=" * 50 + "\n\n")
                         f.write(f"Project: {project_name}\n")
                         f.write(f"Path:    {windows_project}\n\n")
-                        if dcc_name_lower == "blender":
-                            f.write(f"✓ Blender will save to this project by default\n\n")
+                        if dcc_name_lower in ["blender", "krita"]:
+                            f.write(f"✓ {dcc_name.capitalize()} will auto-save to this project by default\n\n")
                         f.write(f"Navigate to this folder in {dcc_name.capitalize()} to open your files.\n")
                         f.write(f"\nYou can delete this file when done.\n")
                     project_notification = str(notification_file)
