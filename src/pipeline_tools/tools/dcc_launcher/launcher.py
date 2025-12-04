@@ -156,17 +156,19 @@ def launch_dcc(
     file_path: Optional[str] = None,
     project_root: Optional[str] = None,
     background: bool = False,
-    additional_args: Optional[List[str]] = None
+    additional_args: Optional[List[str]] = None,
+    target_file_path: Optional[str] = None
 ) -> subprocess.Popen:
     """
     Launch a DCC application.
 
     Args:
         dcc_name: Name of the DCC (krita, blender, etc.)
-        file_path: Optional file to open
+        file_path: Optional file to open (must exist)
         project_root: Optional project root directory to set as working directory
         background: If True, launch in background and return immediately
         additional_args: Additional command line arguments
+        target_file_path: Optional target file path for save-as default (doesn't need to exist)
 
     Returns:
         Popen object
@@ -242,6 +244,14 @@ def launch_dcc(
                     startup_script = Path(wsl_temp) / "blender_pipeline_startup.py"
                     windows_script_path = f"{windows_temp}\\blender_pipeline_startup.py"
 
+                    # Get target file path if provided
+                    target_file = None
+                    if target_file_path:
+                        if is_wsl_to_windows:
+                            target_file = target_file_path.replace("/mnt/c/", "C:\\").replace("/", "\\")
+                        else:
+                            target_file = target_file_path
+
                     with open(startup_script, "w") as f:
                         f.write(f'''# Pipeline Tools - Auto-generated startup script
 import bpy
@@ -250,6 +260,7 @@ import os
 # Set default blend file path to project directory
 project_path = r"{windows_project}"
 project_name = "{project_name}"
+target_file = r"{target_file}" if {bool(target_file)} else None
 
 print("=" * 60)
 print("PIPELINE TOOLS - Project Context Active")
@@ -263,15 +274,21 @@ os.makedirs(project_path, exist_ok=True)
 # Change working directory
 os.chdir(project_path)
 
-# CRITICAL FIX: Auto-save to project on first Ctrl+S
+# CRITICAL FIX: Auto-save to specific target file or project on first Ctrl+S
 def auto_save_to_project():
-    """Automatically save to project directory when file has no path"""
+    """Automatically save to target file or project directory when file has no path"""
     if not bpy.data.filepath:
-        # Generate a default filename based on template or timestamp
-        import datetime
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        default_name = f"{{project_name}}_{{timestamp}}.blend"
-        filepath = os.path.join(project_path, default_name)
+        # Use target file path if provided, otherwise generate filename
+        if target_file:
+            filepath = target_file
+            # Make sure parent directory exists
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        else:
+            # Generate a default filename based on template or timestamp
+            import datetime
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            default_name = f"{{project_name}}_{{timestamp}}.blend"
+            filepath = os.path.join(project_path, default_name)
 
         # Save directly to project
         bpy.ops.wm.save_as_mainfile(filepath=filepath)
@@ -285,7 +302,7 @@ original_save_mainfile = bpy.ops.wm.save_mainfile
 def pipeline_save_mainfile(*args, **kwargs):
     """Wrapper that auto-saves to project if no filepath set"""
     if not bpy.data.filepath:
-        # First save - auto-save to project directory
+        # First save - auto-save to target file or project directory
         auto_save_to_project()
     else:
         # File already has a path, use normal save
@@ -296,11 +313,17 @@ bpy.ops.wm.save_mainfile = pipeline_save_mainfile
 
 print(f"✓ Working directory: {{os.getcwd()}}")
 print(f"✓ Auto-save to project enabled")
+if target_file:
+    print(f"✓ Target file: {{os.path.basename(target_file)}}")
 print("=" * 60)
 print("")
 print("📁 SAVE YOUR WORK:")
-print(f"   • Press Ctrl+S - Auto-saves to {{project_path}}")
-print(f"   • File will be named: {{project_name}}_TIMESTAMP.blend")
+if target_file:
+    print(f"   • Press Ctrl+S - Auto-saves to {{os.path.basename(target_file)}}")
+    print(f"   • Full path: {{target_file}}")
+else:
+    print(f"   • Press Ctrl+S - Auto-saves to {{project_path}}")
+    print(f"   • File will be named: {{project_name}}_TIMESTAMP.blend")
 print(f"   • Use Ctrl+Shift+S to choose a custom name")
 print("")
 print("=" * 60)

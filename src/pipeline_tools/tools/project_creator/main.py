@@ -84,6 +84,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Push initial branch to the remote (requires --git-remote and Git auth configured).",
     )
+    parser.add_argument(
+        "--no-git",
+        action="store_true",
+        help="Skip git initialization (not recommended).",
+    )
     return parser.parse_args(argv)
 
 
@@ -167,7 +172,8 @@ def main(argv: list[str] | None = None) -> None:
     template_key = args.template or "animation_short"
     show_code = args.show_code
     project_name = args.name
-    use_git = args.git or args.git_lfs or bool(args.git_remote) or args.git_push
+    user_requested_git = args.git or args.git_lfs or bool(args.git_remote) or args.git_push
+    use_git = user_requested_git or not args.no_git
     use_lfs = args.git_lfs
     git_branch = args.git_branch
     git_remote = args.git_remote
@@ -175,15 +181,17 @@ def main(argv: list[str] | None = None) -> None:
 
     # Check Git availability if requested
     if use_git and not check_git_available():
-        print("Error: Git is not installed or not available in PATH.")
-        print("Please install Git to use --git or --git-lfs options.")
-        sys.exit(1)
+        print("Warning: Git is not installed or not available in PATH. Skipping git init.")
+        use_git = False
 
-    if use_lfs and not check_git_lfs_available():
+    if use_git and use_lfs and not check_git_lfs_available():
         print("Error: Git LFS is not installed or not available in PATH.")
         print("Please install Git LFS to use --git-lfs option.")
         print("Visit: https://git-lfs.github.com/")
         sys.exit(1)
+
+    if not use_git:
+        use_lfs = False
 
     if git_push and not git_remote:
         print("Error: --git-push requires --git-remote to be set.")
@@ -217,23 +225,21 @@ def main(argv: list[str] | None = None) -> None:
 
     if args.dry_run:
         _preview_tree(show_root, rel_paths)
-        if use_git:
-            print(f"Git repository: Yes (branch: {git_branch})")
-            if use_lfs:
-                print("Git LFS: Yes")
-            if git_remote:
-                print(f"Git remote: {git_remote}")
+        print(f"Git repository: {'Yes' if use_git else 'No'} (branch: {git_branch if use_git else '—'})")
+        if use_lfs and use_git:
+            print("Git LFS: Yes")
+        if git_remote and use_git:
+            print(f"Git remote: {git_remote}")
         print("Dry run complete; nothing was created.")
         return
 
     if args.interactive and not args.yes:
         _preview_tree(show_root, rel_paths)
-        if use_git:
-            print(f"Git repository: Yes (branch: {git_branch})")
-            if use_lfs:
-                print("Git LFS: Yes")
-            if git_remote:
-                print(f"Git remote: {git_remote}")
+        print(f"Git repository: {'Yes' if use_git else 'No'} (branch: {git_branch if use_git else '—'})")
+        if use_lfs and use_git:
+            print("Git LFS: Yes")
+        if git_remote and use_git:
+            print(f"Git remote: {git_remote}")
         proceed = input("Create these folders? [y/N]: ").strip().lower()
         if proceed not in {"y", "yes"}:
             print("Aborted.")
@@ -265,24 +271,24 @@ def main(argv: list[str] | None = None) -> None:
         if created_files['admin']:
             print(f"  Copied {len(created_files['admin'])} admin reference file(s)")
 
-    # Write .gitignore if using git
+    # Always write .gitignore so projects are ready for version control
+    print("Creating .gitignore...")
+    _write_gitignore(show_root, template_key)
+
+    # Write .gitattributes if using LFS
+    if use_git and use_lfs:
+        print("Creating .gitattributes for LFS...")
+        _write_gitattributes(show_root, template_key)
+
+    # Initialize git repository
     if use_git:
-        print("Creating .gitignore...")
-        _write_gitignore(show_root, template_key)
-
-        # Write .gitattributes if using LFS
-        if use_lfs:
-            print("Creating .gitattributes for LFS...")
-            _write_gitattributes(show_root, template_key)
-
-        # Initialize git repository
         try:
             print(f"Initializing Git repository (branch: {git_branch})...")
             setup_git_repo(
                 show_root,
                 use_lfs=use_lfs,
                 initial_branch=git_branch,
-                create_commit=True,
+                create_commit=False,
                 commit_message=f"Initial commit: {project_name} ({show_code})",
             )
             print("Git repository initialized successfully.")

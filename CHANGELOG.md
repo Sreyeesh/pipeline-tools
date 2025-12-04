@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.10.2] - 2025-12-03
+### :sparkles: New Features
+- Interactive Step 3 artist picker: browse existing workfiles, open by number, or create+open a new version without typing commands.
+- Add first-class Fountain (`.fountain`) and Markdown (`.md`) workfile kinds so scripts/docs show up in the app list.
+
+### :wrench: Maintenance
+- Projects now always get a `.gitignore` (with `05_WORK/` ignored) and auto git init when available; initial commits are skipped to keep the flow low-friction.
+
 ## [v0.1.10.1] - 2025-12-03
 ### :bug: Bug Fixes
 - `admin files --open` now falls back to Windows Explorer on WSL when system openers are missing.

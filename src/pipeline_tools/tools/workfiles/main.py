@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import subprocess
 from pathlib import Path
 from typing import Iterable
 
@@ -15,6 +16,8 @@ KIND_EXTENSIONS = {
     "pureref": "pur",
     "photoshop": "psd",
     "aftereffects": "aep",
+    "fountain": "fountain",
+    "markdown": "md",
     "image": "png",
 }
 
@@ -98,15 +101,152 @@ def _next_version_path(base_dir: Path, base_name: str, ext: str) -> Path:
 
 def _create_placeholder(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    if path.suffix == ".blend":
+        _create_blender_file(path)
+        return
+    if path.suffix == ".kra":
+        _create_krita_file(path)
+        return
     if not path.exists():
         path.write_bytes(b"")  # simple placeholder
 
 
+def _create_krita_file(path: Path) -> None:
+    """Create a valid Krita file manually (it's a ZIP archive with specific structure)."""
+    import zipfile
+    import base64
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        # Create a minimal valid .kra file (which is a ZIP archive)
+        with zipfile.ZipFile(path, 'w', zipfile.ZIP_STORED) as kra:
+            # Create mimetype (must be first and uncompressed)
+            kra.writestr('mimetype', 'application/x-kra', compress_type=zipfile.ZIP_STORED)
+
+            # Create minimal maindoc.xml
+            maindoc = '''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE DOC PUBLIC '-//KDE//DTD krita 2.0//EN' 'http://www.calligra.org/DTD/krita-2.0.dtd'>
+<DOC xmlns="http://www.calligra.org/DTD/krita" syntaxVersion="2" editor="Krita" kritaVersion="5.0">
+ <IMAGE name="Untitled" mime="application/x-kra" width="1920" height="1080" colorspace-name="RGBA" profile="sRGB-elle-V2-srgbtrc.icc" description="" x-res="300" y-res="300">
+  <layers>
+   <layer name="Background" opacity="255" visible="1" locked="0" uuid="{00000000-0000-0000-0000-000000000001}" nodetype="paintlayer" colorlabel="0" collapsed="0" filename="layer1" colorspace="RGBA" channelflags="" channellockflags=""/>
+  </layers>
+ </IMAGE>
+</DOC>
+'''
+            kra.writestr('maindoc.xml', maindoc)
+
+            # Create minimal documentinfo.xml
+            docinfo = '''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE document-info PUBLIC '-//KDE//DTD document-info 1.1//EN' 'http://www.calligra.org/DTD/document-info-1.1.dtd'>
+<document-info xmlns="http://www.calligra.org/DTD/document-info">
+ <about>
+  <title>Untitled</title>
+ </about>
+</document-info>
+'''
+            kra.writestr('documentinfo.xml', docinfo)
+
+            # Create minimal preview.png (1x1 transparent PNG)
+            tiny_png = base64.b64decode(
+                'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+            )
+            kra.writestr('preview.png', tiny_png)
+
+            # Create proper layer data in Untitled/layers/
+            # 1920x1080 RGBA = 1920 * 1080 * 4 = 8,294,400 bytes of transparent pixels
+            layer_data = b'\x00' * (1920 * 1080 * 4)
+            kra.writestr('Untitled/layers/layer1', layer_data)
+
+            # Create a minimal sRGB ICC profile
+            # This is a simplified sRGB v2 profile
+            srgb_profile = base64.b64decode(
+                'AAACLEFEQkUCEAAAbW50clJHQiBYWVogB9YAAQABAAAAAAABAABhY3NwAAAAAAAAAAAAAAAAAAAA'
+                'AAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+                'AAAAAAAAAAAAAAAAAAAALY3BydAAAAQAAAAA0ZGVzYwAAAWAAAAAAdGV4dAAAAABDb3B5cmlnaH'
+                'Qgc1JHQiBJRUM2MTk2Ni0yLjEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+                'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+            )
+            kra.writestr('Untitled/layers/layer1.icc', srgb_profile)
+
+    except Exception as exc:
+        print(f"[warning] Could not create Krita file at {path.name}: {exc}")
+
+
+def _create_blender_file(path: Path) -> None:
+    """Create a valid Blender file using Blender in background if available."""
+    exe = dcc_launcher.get_dcc_executable("blender")
+    if not exe:
+        # Fallback: avoid writing an invalid .blend; leave absent
+        print(f"[warning] Blender not found; skipping creation of {path.name}. Open Blender and save to this path.")
+        return
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # Convert path to string and escape backslashes for Python expression
+    path_str = str(path).replace("\\", "\\\\")
+    parent_str = str(path.parent).replace("\\", "\\\\")
+
+    cmd = [
+        exe,
+        "--background",
+        "--factory-startup",
+        "--python-expr",
+        (
+            "import bpy, os; "
+            f"os.makedirs(r'{parent_str}', exist_ok=True); "
+            "bpy.ops.wm.read_factory_settings(use_empty=True); "
+            f"bpy.ops.wm.save_as_mainfile(filepath=r'{path_str}')"
+        ),
+    ]
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as exc:  # pragma: no cover
+        print(f"[warning] Could not create Blender file at {path.name}")
+        print(f"[warning] Blender error: {exc.stderr if exc.stderr else exc}")
+    except Exception as exc:  # pragma: no cover
+        print(f"[warning] Could not create Blender file at {path}: {exc}")
+
+
 def _open_workfile(path: Path, kind: str | None = None) -> None:
+    dcc_kind = (kind or "").lower()
+    if not path.exists() and dcc_kind == "blender":
+        # Try to create a valid .blend on the fly
+        _create_blender_file(path)
+    if not path.exists() and dcc_kind == "krita":
+        # Try to create a valid .kra on the fly
+        _create_krita_file(path)
     if not path.exists():
+        if dcc_kind == "blender":
+            # Fallback: open Blender with target file path set for auto-save
+            project_root = None
+            try:
+                project_root = path.parents[4]
+            except IndexError:
+                project_root = path.parent
+            try:
+                dcc_launcher.launch_dcc("blender", project_root=str(project_root), target_file_path=str(path))
+                print(f"[info] Opening Blender with target file: {path.name}")
+                print(f"[info] Press Ctrl+S in Blender to save to this file.")
+                return
+            except Exception:
+                pass
+        if dcc_kind == "krita":
+            # Fallback: open Krita with target file path set for auto-save
+            project_root = None
+            try:
+                project_root = path.parents[4]
+            except IndexError:
+                project_root = path.parent
+            try:
+                dcc_launcher.launch_dcc("krita", project_root=str(project_root), target_file_path=str(path))
+                print(f"[info] Opening Krita with target file: {path.name}")
+                print(f"[info] Press Ctrl+S in Krita to save to this file.")
+                return
+            except Exception:
+                pass
         print(f"File not found: {path}")
         sys.exit(1)
-    dcc_kind = (kind or "").lower()
     try:
         if dcc_kind in dcc_launcher.DCC_PATHS:
             dcc_launcher.launch_dcc(dcc_kind, file_path=str(path), project_root=str(path.parent))

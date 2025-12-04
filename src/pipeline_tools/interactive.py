@@ -6,7 +6,9 @@ from __future__ import annotations
 import re
 import sys
 import shlex
-from typing import List
+from pathlib import Path
+from typing import List, Iterable
+from datetime import datetime
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import Completer, Completion
@@ -15,7 +17,9 @@ from prompt_toolkit.styles import Style
 from rich.console import Console
 from rich.table import Table
 
+from pipeline_tools.core import db
 from pipeline_tools.tools.project_creator.templates import TEMPLATES
+from pipeline_tools.tools.workfiles.main import KIND_EXTENSIONS
 
 console = Console()
 
@@ -109,8 +113,6 @@ def _workspace_summary(show_code: str | None = None) -> None:
     """
     Print a compact workspace summary for the current show.
     """
-    from pipeline_tools.core import db
-
     data = db.load_db()
     code = show_code or data.get("current_show")
     if not code:
@@ -193,12 +195,168 @@ COMMAND_DESCRIPTIONS = {
     "admin": "Configure settings and admin files",
     "workspace": "Show or toggle project summary",
     "projects": "List all available projects",
+    "info": "Show current project information",
     "status": "Quick git status for all projects",
     "commit": "Quick commit (prompts for project and message)",
     "help": "Show help menu",
     "exit": "Exit interactive mode",
     "quit": "Exit interactive mode",
 }
+
+
+def _resolve_show_for_project_path(project_path: Path) -> tuple[str | None, dict | None]:
+    """Find the DB show entry that matches a project path (by exact root or code in folder name)."""
+    data = db.load_db()
+    shows = data.get("shows", {}) or {}
+    # Exact root match
+    for code, show in shows.items():
+        root = show.get("root")
+        if root and Path(root).resolve() == project_path.resolve():
+            return code, show
+    # Fallback: try folder name second token as code
+    parts = project_path.name.split("_")
+    if len(parts) >= 2:
+        code_candidate = parts[1]
+        if code_candidate in shows:
+            return code_candidate, shows[code_candidate]
+    return None, None
+
+
+def _iter_workfiles_for_kind(base: Path, kind: str) -> list[Path]:
+    """Return all workfiles for a given kind under 05_WORK, newest first."""
+    ext = KIND_EXTENSIONS.get(kind.lower())
+    if not ext:
+        return []
+    if not base.exists():
+        return []
+    files = [p for p in base.rglob(f"*.{ext}") if p.is_file()]
+    files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    return files
+
+
+def _format_mtime(path: Path) -> str:
+    ts = path.stat().st_mtime
+    return datetime.fromtimestamp(ts).strftime("%b %d %H:%M")
+
+
+def _render_workfile_table(files: list[Path], show_root: Path) -> None:
+    table = Table(show_header=True, header_style="bold cyan", box=None, padding=(0, 1))
+    table.add_column("#", style="cyan", width=4)
+    table.add_column("Target", style="magenta")
+    table.add_column("File", style="white")
+    table.add_column("Updated", style="dim")
+    for idx, f in enumerate(files, 1):
+        # target id is the parent folder name under workfiles (assets/shots/<id>/kind)
+        parts = f.relative_to(show_root).parts
+        target = parts[2] if len(parts) >= 3 else "—"
+        table.add_row(str(idx), target, f.name, _format_mtime(f))
+    console.print(table)
+
+
+def _render_target_table(target_ids: Iterable[str]) -> None:
+    table = Table(show_header=False, box=None, padding=(0, 1))
+    table.add_column("#", style="cyan", width=4)
+    table.add_column("Target ID", style="magenta")
+    for idx, tid in enumerate(target_ids, 1):
+        table.add_row(str(idx), tid)
+    console.print(table)
+
+
+def _artist_workfile_menu(project_path: Path, dcc_name: str, show_entry: dict | None) -> None:
+    """
+    Artist-friendly menu: pick/open existing workfile, or create + open a new one.
+    """
+    from pipeline_tools.cli import app
+
+    show_root = project_path
+    work_root = show_root / "05_WORK"
+    files = _iter_workfiles_for_kind(work_root, dcc_name)
+
+    target_ids: list[str] = []
+    if show_entry:
+        code = show_entry.get("code")
+        data = db.load_db()
+        target_ids = sorted([
+            a["id"] for a in data.get("assets", {}).values() if a.get("show_code") == code
+        ] + [
+            s["id"] for s in data.get("shots", {}).values() if s.get("show_code") == code
+        ])
+
+    console.print()
+    console.print(f"[bold cyan]STEP 3: Pick Your File ({dcc_name.capitalize()})[/bold cyan]")
+    if files:
+        _render_workfile_table(files[:12], show_root)
+        if len(files) > 12:
+            console.print(f"[dim]+{len(files) - 12} more…[/dim]")
+    else:
+        console.print("[yellow]No workfiles yet for this app.[/yellow]")
+
+    console.print()
+    console.print("[bold]Options:[/bold]")
+    console.print("  • Type a [cyan]number[/cyan] to open that file")
+    console.print("  • Type [green]n[/green] to create + open a new version")
+    console.print("  • Type [blue]o[/blue] to open the app without a file")
+    console.print("  • Press [dim]Enter[/dim] to go back")
+    console.print()
+
+    while True:
+        choice = input("Select: ").strip().lower()
+        if not choice:
+            return
+        if choice.isdigit():
+            idx = int(choice)
+            if 1 <= idx <= len(files):
+                path = files[idx - 1]
+                try:
+                    app(["workfiles", "open", "--file", str(path), "--kind", dcc_name], standalone_mode=False)
+                except SystemExit:
+                    pass
+                except Exception as exc:
+                    console.print(f"[red]Error:[/red] {exc}")
+                return
+            console.print(f"[red]Invalid selection. Choose 1-{len(files)}[/red]")
+            continue
+        if choice == "o":
+            try:
+                app(["open", dcc_name, "--project", str(show_root)], standalone_mode=False)
+            except SystemExit:
+                pass
+            except Exception as exc:
+                console.print(f"[red]Error:[/red] {exc}")
+            return
+        if choice == "n":
+            # Show targets if available
+            console.print()
+            if target_ids:
+                console.print("[bold magenta]Pick a target for the new file[/bold magenta]")
+                _render_target_table(target_ids[:20])
+                if len(target_ids) > 20:
+                    console.print(f"[dim]+{len(target_ids) - 20} more…[/dim]")
+                target_sel = input("Target number (or id): ").strip()
+                if not target_sel:
+                    return
+                if target_sel.isdigit():
+                    t_idx = int(target_sel)
+                    if 1 <= t_idx <= len(target_ids):
+                        target_id = target_ids[t_idx - 1]
+                    else:
+                        console.print(f"[red]Invalid target. Choose 1-{len(target_ids)}[/red]")
+                        continue
+                else:
+                    target_id = target_sel
+            else:
+                target_id = input("Target id (e.g., PKU_SH010): ").strip()
+                if not target_id:
+                    return
+
+            try:
+                app(["workfiles", "add", target_id, "--kind", dcc_name, "--open"], standalone_mode=False)
+            except SystemExit:
+                pass
+            except Exception as exc:
+                console.print(f"[red]Error:[/red] {exc}")
+            return
+        console.print("[yellow]Choose a file number, 'n' for new, 'o' to open the app, or Enter to go back.[/yellow]")
 
 
 class PipelineCompleter(Completer):
@@ -319,6 +477,9 @@ def run_interactive():
     available_projects = []
     available_dccs = []
     current_project = None
+    current_project_path: Path | None = None
+    current_show_entry: dict | None = None
+    current_show_code: str | None = None
     show_dcc_menu = False
     workspace_summary_enabled = False
 
@@ -436,6 +597,54 @@ def run_interactive():
                 if text == "help":
                     from pipeline_tools.cli import _echo_examples
                     _echo_examples()
+                    continue
+
+                if text == "info":
+                    # Show info about current project without opening app picker
+                    if current_project and current_project_path:
+                        console.print()
+                        console.print(f"[bold cyan]Project Information[/bold cyan]")
+                        console.print(f"[bold]Name:[/bold] {current_project}")
+                        console.print(f"[bold]Path:[/bold] {current_project_path}")
+                        if current_show_code:
+                            console.print(f"[bold]Show:[/bold] {current_show_code}")
+
+                        # Show git status if available
+                        git_dir = current_project_path / '.git'
+                        if git_dir.exists():
+                            try:
+                                import subprocess
+                                result = subprocess.run(
+                                    ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                                    cwd=current_project_path,
+                                    capture_output=True,
+                                    text=True,
+                                    timeout=1
+                                )
+                                if result.returncode == 0:
+                                    branch_name = result.stdout.strip()
+                                    console.print(f"[bold]Branch:[/bold] {branch_name}")
+
+                                # Show git status summary
+                                result = subprocess.run(
+                                    ["git", "status", "--short"],
+                                    cwd=current_project_path,
+                                    capture_output=True,
+                                    text=True,
+                                    timeout=2
+                                )
+                                if result.returncode == 0 and result.stdout.strip():
+                                    console.print(f"[bold]Status:[/bold] [yellow]{len(result.stdout.strip().splitlines())} changed file(s)[/yellow]")
+                                elif result.returncode == 0:
+                                    console.print(f"[bold]Status:[/bold] [green]Clean working tree[/green]")
+                            except Exception:
+                                pass
+
+                        console.print()
+                    else:
+                        console.print()
+                        console.print("[yellow]No project selected. Type 'projects' to pick one.[/yellow]")
+                        console.print()
                     continue
 
                 if text == "status" or text.startswith("status "):
@@ -589,23 +798,8 @@ def run_interactive():
                         if 1 <= choice <= len(available_dccs):
                             dcc_name = available_dccs[choice - 1]
 
-                            # Build command
-                            cmd_args = ["open", dcc_name, "--background"]
-                            if current_project:
-                                cmd_args.extend(["--project", current_project])
-
                             console.print()
-                            console.print("[bold cyan]STEP 3: Start Creating![/bold cyan]")
-                            console.print()
-
-                            from pipeline_tools.cli import app
-                            try:
-                                app(cmd_args, standalone_mode=False)
-                            except SystemExit:
-                                pass
-                            except Exception as e:
-                                console.print(f"[red]Error:[/red] {e}")
-
+                            _artist_workfile_menu(current_project_path or Path.cwd(), dcc_name, current_show_entry)
                             console.print()
                             console.print("[dim]Type 'projects' to work on another project[/dim]")
                             console.print()
@@ -651,9 +845,18 @@ def run_interactive():
                         elif 1 <= choice <= len(available_projects):
                             selected_project = available_projects[choice - 1]
                             current_project = selected_project.name
+                            current_project_path = selected_project
+                            current_show_code, current_show_entry = _resolve_show_for_project_path(selected_project)
 
                             console.print()
                             console.print(f"[green]✓ Project:[/green] [bold]{current_project}[/bold]")
+                            if current_show_code:
+                                console.print(f"[dim]Linked show:[/dim] {current_show_code}")
+                                try:
+                                    from pipeline_tools.cli import app
+                                    app(["shows", "use", "-c", current_show_code], standalone_mode=False)
+                                except Exception:
+                                    pass
                             console.print()
 
                             # Show DCC menu

@@ -38,6 +38,7 @@ htmlcov/
 *.temp
 *.bak
 *.backup
+05_WORK/
 *_backup
 """
 
