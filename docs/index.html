@@ -98,77 +98,43 @@
         </div>
     </section>
 
-    <!-- Workflow Section -->
-    <section id="workflow" class="code-example" style="padding-top: 4rem;">
-        <div class="container">
-            <h2 class="section-title scroll-animate">Workflow Demo</h2>
-            <p class="section-subtitle scroll-animate">A quick path from empty project to tasks and versions</p>
-
-            <div class="code-block scroll-scale">
-<pre><code><span class="code-comment"># 1) Launch interactive (pick project/app)</span>
-<span class="code-command">pipely</span>
-
-<span class="code-comment"># 2) Create/show (first time)</span>
-<span class="code-command">pipely shows create DMO "Demo" animation_short</span>
-<span class="code-command">pipely shows use -c DMO</span>
-
-<span class="code-comment"># 3) Shot + tasks</span>
-<span class="code-command">pipely shots add SH010 First shot</span>
-<span class="code-command">pipely tasks add DMO_SH010 Layout</span>
-<span class="code-command">pipely tasks add DMO_SH010 Blocking</span>
-<span class="code-command">pipely tasks status DMO_SH010 Layout in_progress</span>
-
-<span class="code-comment"># 4) Asset + tag</span>
-<span class="code-command">pipely assets add -t CH -n Hero</span>
-<span class="code-command">pipely assets tag DMO_CH_Hero hero</span>
-
-<span class="code-comment"># 5) Versioning</span>
-<span class="code-command">pipely versions new DMO_SH010 anim</span>
-<span class="code-command">pipely versions latest --shot DMO_SH010 --kind anim</span>
-
-<span class="code-comment"># 6) Check progress</span>
-<span class="code-command">pipely shots list DMO</span>
-<span class="code-command">pipely tasks list DMO_SH010</span>
-<span class="code-command">pipely assets list -c DMO</span>
-<span class="code-command">pipely versions list --shot DMO_SH010</span></code></pre>
-            </div>
-        </div>
-    </section>
-
     <!-- Artist Workflow Guide -->
     <section id="artist-workflow" class="features" style="padding-top: 2rem;">
         <div class="container">
             <h2 class="section-title scroll-animate">Artist Workflow (DMO example)</h2>
-            <p class="section-subtitle scroll-animate">Copy/paste inside the interactive prompt—no file browsing needed.</p>
+            <p class="section-subtitle scroll-animate">Launch the interactive menu, then copy/paste commands at the <code>pipely&gt;</code> prompt—no file browsing needed.</p>
             <div class="code-block scroll-scale" style="max-width: 900px;">
-<pre><code><span class="code-comment"># Create and select the show</span>
+<pre><code><span class="code-comment"># 1. Launch Pipely interactive mode</span>
+<span class="code-command">pipely</span>
+
+<span class="code-comment"># 2. At the pipely&gt; prompt, create and select your show:</span>
 <span class="code-command">shows create DMO "Demo" animation_short</span>
 <span class="code-command">shows use -c DMO</span>
 
-<span class="code-comment"># Create the animation bible in 01_ADMIN (Pipely-only)</span>
+<span class="code-comment"># 3. Create the animation bible in 01_ADMIN</span>
 <span class="code-command">admin create --name DMO_animation_bible.md --content "Start your bible here"</span>
-<span class="code-comment"># Or use the bundled template (if available)</span>
+<span class="code-comment"># Or use the bundled template:</span>
 <span class="code-command">admin template -t animation_bible --name DMO_animation_bible.md</span>
-<span class="code-command">admin files --open DMO_animation_bible.md   # open from Pipely</span>
+<span class="code-command">admin files --open DMO_animation_bible.md</span>
 
-<span class="code-comment"># Shots (one per beat)</span>
+<span class="code-comment"># 4. Add shots (one per beat)</span>
 <span class="code-command">shots add SH010 First beat</span>
 <span class="code-command">shots add SH020 Second beat</span>
 <span class="code-command">shots add SH030 Third beat</span>
 
-<span class="code-comment"># Characters</span>
+<span class="code-comment"># 5. Add characters</span>
 <span class="code-command">assets add -t CH -n Hero</span>
 <span class="code-command">assets add -t CH -n Supporting_A</span>
 <span class="code-command">assets add -t CH -n Supporting_B</span>
 
-<span class="code-comment"># Environment &amp; props (use PR for FX beats)</span>
+<span class="code-comment"># 6. Add environment &amp; props (use PR for FX beats)</span>
 <span class="code-command">assets add -t ENV -n Main_Set</span>
 <span class="code-command">assets add -t ENV -n Set_Dressing_A</span>
 <span class="code-command">assets add -t ENV -n Set_Dressing_B</span>
 <span class="code-command">assets add -t PR  -n Hero_Prop_A</span>
-<span class="code-command">assets add -t PR  -n FX_Placeholder_A   # FX placeholder using PR</span>
+<span class="code-command">assets add -t PR  -n FX_Placeholder_A</span>
 
-<span class="code-comment"># Tasks (design/layout)</span>
+<span class="code-comment"># 7. Add tasks (design/layout)</span>
 <span class="code-command">tasks add DMO_CH_Hero Design</span>
 <span class="code-command">tasks add DMO_CH_Supporting_A Design</span>
 <span class="code-command">tasks add DMO_ENV_Main_Set Design</span>
@@ -176,23 +142,25 @@
 <span class="code-command">tasks add DMO_SH020 Layout</span>
 <span class="code-command">tasks add DMO_SH030 Layout</span>
 
-<span class="code-comment"># Workfiles (kept in 05_WORK) and open in Krita</span>
+<span class="code-comment"># 8. Create workfiles and open in Krita</span>
 <span class="code-command">workfiles add DMO_CH_Hero --kind krita --open</span>
 <span class="code-command">workfiles add DMO_SH010 --kind krita</span>
 
-<span class="code-comment"># Versions</span>
+<span class="code-comment"># 9. Create versions</span>
 <span class="code-command">versions new DMO_CH_Hero design</span>
 <span class="code-command">versions new DMO_SH010 layout</span>
 
-<span class="code-comment"># Check progress</span>
+<span class="code-comment"># 10. Check progress</span>
 <span class="code-command">shots list DMO</span>
 <span class="code-command">tasks list DMO_CH_Hero</span>
 <span class="code-command">tasks list DMO_SH010</span>
 <span class="code-command">assets list -c DMO</span>
 <span class="code-command">versions list --shot DMO_SH010</span>
 
-<span class="code-comment"># Open a DCC against your project context</span>
-<span class="code-command">open krita --project AN_DMO_Demo</span></code></pre>
+<span class="code-comment"># 💡 TIP: To quickly open your project in an app:</span>
+<span class="code-comment"># Just type 'quit' or Ctrl+C to exit, then run 'pipely' again.</span>
+<span class="code-comment"># The interactive menu lets you pick your project by number,</span>
+<span class="code-comment"># then pick Krita/Blender/PureRef, and browse your workfiles!</span></code></pre>
             </div>
         </div>
     </section>
