@@ -56,16 +56,32 @@ pipx install https://github.com/Sreyeesh/pipeline-tools/releases/latest/download
 pip install --user https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-0.1.10.3-py3-none-any.whl
 ```
 
-### Use the interactive shell
-- Run `pipely` (no args) to open the prompt.
-- Step 1: pick a project by number (or type `projects` to refresh).
-- Step 2: pick an app by number (`open` auto-adds `--project` for you).
-- Step 3: run the same commands as the CLI without leaving the prompt:
-  - Tasks: `tasks add DMO_SH010 Layout`, `tasks list DMO_SH010`, `tasks status DMO_SH010 Layout in_progress`
-  - Assets/shots/shows/versions: `assets list -c DMO`, `shows info -c DMO`, `versions latest --shot DMO_SH010 --kind anim`
-- Use the asset/shot IDs (e.g., `DMO_CH_Hero`, `DMO_SH010`) when adding tasks/versions.
-- Docs stay inside Pipely: `admin template -t animation_bible --name DMO_animation_bible.md`, then `admin files --open DMO_animation_bible.md`.
-- Workfiles stay in the project: `workfiles add DMO_CH_Hero --kind krita --open` (creates in `05_WORK/...` and launches Krita), later `workfiles open --target-id DMO_CH_Hero --kind krita`.
+### Use the interactive shell - Artist Workflow
+Run `pipely` (no args) to open the interactive prompt:
+
+#### Step 1: Pick Your Project
+- Type a number to select from existing projects
+- Type `projects` to refresh the list
+- Type `info` to view current project details (branch, status) without opening an app
+
+#### Step 2: Pick Your App
+- Select Blender, Krita, PureRef, or other installed DCCs by number
+- Or type the app name directly (e.g., `blender`, `krita`)
+
+#### Step 3: Pick Your File (New Interactive Picker!)
+After selecting an app, you get an interactive workfile menu:
+- **Browse existing files**: See all your workfiles for this app with timestamps
+- **Open by number**: Type `1`, `2`, etc. to open that file
+- **Create new version**: Type `n` to create a new versioned workfile (e.g., `PKU_CH_Poku_Main_blender_w001.blend`)
+- **Open app without file**: Type `o` to open the app without loading a file
+- **Go back**: Press Enter to return to app selection
+
+**Auto-save magic** (Blender): When you create a new file, press Ctrl+S and it automatically saves to the correct versioned filename in `05_WORK/` - no "Save As" dialog needed!
+
+#### Other Commands
+- Tasks: `tasks add DMO_SH010 Layout`, `tasks list DMO_SH010`, `tasks status DMO_SH010 Layout in_progress`
+- Assets/shots/shows: `assets list -c DMO`, `shows info -c DMO`, `shots list -c DMO`
+- Admin docs: `admin template -t animation_bible`, then `admin files --open animation_bible.md`
 
 ### If you prefer direct CLI
 ```sh
@@ -79,6 +95,18 @@ pipely doctor --json                             # Health check
 pipely admin template -t animation_bible         # Drop the animation bible into 01_ADMIN
 pipely workfiles add DMO_SH010 --kind krita      # Create a Krita workfile under 05_WORK
 ```
+
+### Supported Workfile Types
+Pipely creates **valid, openable files** for these formats:
+- **Blender** (`.blend`) - Creates proper Blender files, auto-saves to versioned filename
+- **Krita** (`.kra`) - Creates valid ZIP-based Krita documents with layer data and color profile
+- **PureRef** (`.pur`) - Creates PureRef board files
+- **Photoshop** (`.psd`) - Creates Photoshop documents
+- **After Effects** (`.aep`) - Creates After Effects projects
+- **Fountain** (`.fountain`) - Screenplay/script files
+- **Markdown** (`.md`) - Documentation and notes
+
+All workfiles are automatically versioned (e.g., `_w001`, `_w002`) and organized by target (asset/shot) in `05_WORK/`.
 
 ---
 
