@@ -446,7 +446,9 @@ print("=" * 60)
                     if dcc_name_lower == "blender":
                         cmd.extend(["--python", windows_script_path])
                     elif dcc_name_lower == "krita":
-                        cmd.extend(["--python-script", windows_script_path])
+                        # Note: Not all Krita versions support --python-script
+                        # Skip for now to ensure Krita launches successfully
+                        pass  # cmd.extend(["--python-script", windows_script_path])
                 except Exception as e:
                     # Debug: print error
                     import sys
