@@ -165,45 +165,54 @@ make install-hooks                              # Install commit-msg hook
 ```
 
 ---
-## Release Flow (GitHub Assets)
+## Release Flow (Fully Automated)
 
-Pipely releases are distributed via GitHub releases (PyPI is optional).
+Pipely uses **release-please** for fully automated releases. Just commit with conventional commits and merge to main!
 
-### Release Process
+### Automated Release Process
 
-1. **Set up GitHub token** (for release automation):
-   ```sh
-   # Copy example and add your token
-   cp .envrc.example .envrc
-   # Edit .envrc and set GITHUB_TOKEN
-   direnv allow
-   ```
+**What happens automatically:**
+1. 🤖 **release-please** analyzes your commits and determines the next version
+2. 🤖 Creates a "Release PR" with version bumps and CHANGELOG updates
+3. 👤 **You review and merge** the Release PR
+4. 🤖 Automatically creates a GitHub release with the new tag
+5. 🤖 Runs tests, builds packages, uploads artifacts
+6. 🤖 Updates website changelog
 
-2. **Bump version:**
-   ```sh
-   make set-version VERSION=0.1.13
-   git add pyproject.toml
-   git commit -m "chore: bump version to 0.1.13"
-   git push origin main
-   ```
+**What you do:**
+```sh
+# 1. Make your changes and commit with conventional commits
+git add .
+git commit -m "feat: add awesome new feature"
+git commit -m "fix: resolve critical bug"
+git push origin main
 
-3. **Create and push tag:**
-   ```sh
-   git tag v0.1.13
-   git push origin v0.1.13
-   ```
+# 2. Wait for release-please to create a Release PR
+# 3. Review and merge the Release PR
+# 4. Done! Release is automatic after merge
+```
 
-4. **Upload artifacts to GitHub release:**
-   ```sh
-   ALLOW_NON_MONDAY=true make release-ansible VERSION=v0.1.13 REPO=Sreyeesh/pipeline-tools
-   ```
+### Conventional Commit Format
+- `feat:` - New features (minor version bump)
+- `fix:` - Bug fixes (patch version bump)
+- `feat!:` or `BREAKING CHANGE:` - Breaking changes (major version bump)
+- `docs:`, `chore:`, `refactor:`, `test:` - No version bump
 
-5. **Install latest release locally:**
-   ```sh
-   make release-local
-   # If apt needs sudo:
-   ANSIBLE_PLAYBOOK="ansible-playbook -K" make release-local
-   ```
+### Manual Release (if needed)
+```sh
+# Bump version manually
+make set-version VERSION=0.1.13
+
+# Create tag and push
+git add pyproject.toml src/pipeline_tools/__init__.py
+git commit -m "chore: bump version to 0.1.13"
+git push origin main
+git tag v0.1.13
+git push origin v0.1.13
+
+# Install locally
+make release-local
+```
 
 ### GitHub Actions CI/CD
 Automated workflows in `.github/workflows/`:
