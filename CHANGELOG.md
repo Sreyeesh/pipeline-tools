@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.13] - 2025-12-05
+### :bug: Bug Fixes
+- [`d8a93a3`](https://github.com/Sreyeesh/pipeline-tools/commit/d8a93a3ac2c61c4741224f0f1dc914cd4205b593) - remove unsupported --python-script flag for Krita launcher *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+### :wrench: Chores
+- [`bc3d23b`](https://github.com/Sreyeesh/pipeline-tools/commit/bc3d23bea270ea016e93b0ec92596455e8e461ff) - bump version to 0.1.13 *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+
 ## [v0.1.12] - 2025-12-05
 ### :bug: Bug Fixes
 - Fix interactive workflow crash when creating new workfiles: show code is now properly passed to target filtering, allowing tagged assets and shots to be displayed correctly.
@@ -249,3 +257,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.1.8.2]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8.1...v0.1.8.2
 [v0.1.8]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.7...v0.1.8
 [v0.1.8.1]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8...v0.1.8.1
+[v0.1.13]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.12...v0.1.13
