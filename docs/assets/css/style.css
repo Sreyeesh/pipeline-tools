@@ -321,11 +321,19 @@
             list-style: disc;
             padding-left: 1.2rem;
             color: var(--text-secondary);
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
         .changelog-list li {
-            margin-bottom: 0.4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        [data-theme="dark"] .changelog-list {
+            color: var(--text-secondary);
+        }
+
+        [data-theme="dark"] .changelog-date {
+            color: var(--text-tertiary);
         }
 
         .changelog-section {
@@ -507,13 +515,14 @@
 
         .hero .tagline {
             font-size: 1.5rem;
-            color: rgba(255, 255, 255, 0.95);
+            color: rgba(255, 255, 255, 0.98);
             margin-bottom: 3rem;
             font-weight: 400;
             line-height: 1.6;
             max-width: 700px;
             margin-left: auto;
             margin-right: auto;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .cta-buttons {
@@ -819,16 +828,34 @@
         }
 
         .code-example .section-subtitle {
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        [data-theme="dark"] .code-example .section-title {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .code-example .section-subtitle {
+            color: var(--text-secondary);
         }
 
         [data-theme="dark"] .code-example {
             background: var(--bg-secondary);
+            color: var(--text-primary);
         }
 
         @media (prefers-color-scheme: dark) {
             :root:not([data-theme="light"]) .code-example {
                 background: var(--bg-secondary);
+                color: var(--text-primary);
+            }
+
+            :root:not([data-theme="light"]) .code-example .section-title {
+                color: var(--text-primary);
+            }
+
+            :root:not([data-theme="light"]) .code-example .section-subtitle {
+                color: var(--text-secondary);
             }
         }
 
@@ -865,11 +892,26 @@
         .code-comment {
             color: var(--text-tertiary);
             font-style: italic;
+            opacity: 0.9;
         }
 
         .code-command {
             color: var(--primary-light);
             font-weight: 500;
+        }
+
+        [data-theme="dark"] .code-block {
+            background: var(--surface-1);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .code-comment {
+            color: var(--text-secondary);
+            opacity: 1;
+        }
+
+        [data-theme="dark"] .code-command {
+            color: var(--primary);
         }
 
         /* CTA Section */
@@ -945,7 +987,7 @@
         }
 
         .footer-section a {
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(255, 255, 255, 0.8);
             text-decoration: none;
             transition: color 0.3s;
         }
@@ -958,7 +1000,7 @@
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             padding-top: 2rem;
             text-align: center;
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.75);
         }
 
         /* Responsive */
