@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0](https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.13...v0.2.0) (2025-12-05)
+
+
+### Features
+
+* add release-please for fully automated releases ([6f07ed7](https://github.com/Sreyeesh/pipeline-tools/commit/6f07ed7dfc2e48bb8b98a99ca0f261e59a5e587b))
+* automate website changelog updates in GitHub Actions ([21dcd87](https://github.com/Sreyeesh/pipeline-tools/commit/21dcd875b8d6e434d19d5767c98aa5e485eb8155))
+
+
+### Documentation
+
+* add v0.1.13 to website changelog ([5eaf3a7](https://github.com/Sreyeesh/pipeline-tools/commit/5eaf3a7429afed66049d98221965a489fd8ee94d))
+* update CHANGELOG.md for v0.1.13 [skip ci] ([63cdfa5](https://github.com/Sreyeesh/pipeline-tools/commit/63cdfa5e12584ae8f7793273fb0ac022107cbe2c))
+* update installation commands to v0.1.13 ([d44218c](https://github.com/Sreyeesh/pipeline-tools/commit/d44218ce5c0e780da28092595903081cd0347017))
+* update README with fully automated release-please workflow ([1e73573](https://github.com/Sreyeesh/pipeline-tools/commit/1e73573de757cf4400fd18f963d5549a8fed7f95))
+
 ## [v0.1.13] - 2025-12-05
 ### :bug: Bug Fixes
 - [`d8a93a3`](https://github.com/Sreyeesh/pipeline-tools/commit/d8a93a3ac2c61c4741224f0f1dc914cd4205b593) - remove unsupported --python-script flag for Krita launcher *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
