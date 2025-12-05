@@ -1,0 +1,111 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: python
+          package-name: pipely
+
+      # These steps only run if release-please created a release
+      - name: Checkout code
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt build
+
+      - name: Run tests
+        if: ${{ steps.release.outputs.release_created }}
+        run: python -m pytest
+
+      - name: Build packages
+        if: ${{ steps.release.outputs.release_created }}
+        run: python -m build
+
+      - name: Upload artifacts to release
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ steps.release.outputs.tag_name }} dist/*.whl dist/*.tar.gz
+
+      - name: Update website changelog
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          VERSION="${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}"
+
+          # Get the release body as summary
+          SUMMARY=$(gh release view ${{ steps.release.outputs.tag_name }} --json body -q .body | head -n 100 | tr '\n' ' ' | sed 's/"/\\"/g')
+
+          python3 << 'EOF'
+          import re
+          import sys
+
+          version = "$VERSION"
+          summary = """$SUMMARY"""
+
+          # Clean up summary - take first meaningful line
+          lines = [line.strip() for line in summary.split('\n') if line.strip() and not line.startswith('#')]
+          summary_text = lines[0] if lines else f"Release {version}"
+
+          # Limit length
+          if len(summary_text) > 150:
+              summary_text = summary_text[:147] + "..."
+
+          try:
+              with open("docs/index.html", "r") as f:
+                  content = f.read()
+          except FileNotFoundError:
+              print("docs/index.html not found, skipping")
+              sys.exit(0)
+
+          # Create new changelog entry
+          new_entry = f'''                <div class="use-case scroll-fade-left">
+                      <h3>{version}</h3>
+                      <p>{summary_text}</p>
+                  </div>'''
+
+          # Find changelog section and insert
+          pattern = r'(<!-- Changelog Section -->.*?<div class="use-cases-grid">)'
+          if re.search(pattern, content, re.DOTALL):
+              replacement = r'\1\n' + new_entry
+              content = re.sub(pattern, replacement, content, count=1, flags=re.DOTALL)
+
+              with open("docs/index.html", "w") as f:
+                  f.write(content)
+              print(f"Added {version} to website changelog")
+          else:
+              print("Changelog section not found in docs/index.html")
+          EOF
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit website changes
+        if: ${{ steps.release.outputs.release_created }}
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'docs: update website changelog for ${{ steps.release.outputs.tag_name }} [skip ci]'
+          file_pattern: docs/index.html
