@@ -262,7 +262,7 @@ def _render_target_table(target_ids: Iterable[str]) -> None:
     console.print(table)
 
 
-def _artist_workfile_menu(project_path: Path, dcc_name: str, show_entry: dict | None) -> None:
+def _artist_workfile_menu(project_path: Path, dcc_name: str, show_code: str | None) -> None:
     """
     Artist-friendly menu: pick/open existing workfile, or create + open a new one.
     """
@@ -273,13 +273,12 @@ def _artist_workfile_menu(project_path: Path, dcc_name: str, show_entry: dict | 
     files = _iter_workfiles_for_kind(work_root, dcc_name)
 
     target_ids: list[str] = []
-    if show_entry:
-        code = show_entry.get("code")
+    if show_code:
         data = db.load_db()
         target_ids = sorted([
-            a["id"] for a in data.get("assets", {}).values() if a.get("show_code") == code
+            a["id"] for a in data.get("assets", {}).values() if a.get("show_code") == show_code
         ] + [
-            s["id"] for s in data.get("shots", {}).values() if s.get("show_code") == code
+            s["id"] for s in data.get("shots", {}).values() if s.get("show_code") == show_code
         ])
 
     console.print()
@@ -799,7 +798,7 @@ def run_interactive():
                             dcc_name = available_dccs[choice - 1]
 
                             console.print()
-                            _artist_workfile_menu(current_project_path or Path.cwd(), dcc_name, current_show_entry)
+                            _artist_workfile_menu(current_project_path or Path.cwd(), dcc_name, current_show_code)
                             console.print()
                             console.print("[dim]Type 'projects' to work on another project[/dim]")
                             console.print()

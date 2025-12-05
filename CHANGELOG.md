@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.12] - 2025-12-05
+### :bug: Bug Fixes
+- Fix interactive workflow crash when creating new workfiles: show code is now properly passed to target filtering, allowing tagged assets and shots to be displayed correctly.
+
 ## [v0.1.11] - 2025-12-04
 ### :sparkles: New Features
 - Krita now has auto-save support: Press Ctrl+S and it automatically saves to the correct versioned filename.
