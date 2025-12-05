@@ -54,3 +54,4 @@ Thumbs.db
 *.tmp
 .ansible-venv/
 .ansible/
+CLAUDE.md
