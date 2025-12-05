@@ -69,10 +69,42 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Commit CHANGELOG.md
+      - name: Update website changelog
+        if: steps.changelog.outputs.changes != ''
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION_NUM="${VERSION#v}"  # Remove 'v' prefix
+          CHANGES="${{ steps.changelog.outputs.changes }}"
+          SUMMARY=$(echo "$CHANGES" | head -n 3 | tail -n 1 | sed 's/^[*-] //' | cut -c 1-120)
+
+          # Update docs/index.html changelog section
+          python3 << 'EOF'
+          import re
+          version = "$VERSION_NUM"
+          summary = "$SUMMARY"
+
+          with open("docs/index.html", "r") as f:
+              content = f.read()
+
+          # Find the changelog grid and add new entry at the top
+          new_entry = f'''                <div class="use-case scroll-fade-left">
+                      <h3>{version}</h3>
+                      <p>{summary}</p>
+                  </div>'''
+
+          # Insert after the first <div class="use-cases-grid">
+          pattern = r'(<div class="use-cases-grid">)'
+          replacement = r'\1\n' + new_entry
+          content = re.sub(pattern, replacement, content, count=1)
+
+          with open("docs/index.html", "w") as f:
+              f.write(content)
+          EOF
+
+      - name: Commit CHANGELOG.md and website
         if: steps.changelog.outputs.changes != ''
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           branch: main
-          commit_message: 'docs: update CHANGELOG.md for ${{ github.ref_name }} [skip ci]'
-          file_pattern: CHANGELOG.md
+          commit_message: 'docs: update CHANGELOG.md and website for ${{ github.ref_name }} [skip ci]'
+          file_pattern: CHANGELOG.md docs/index.html
