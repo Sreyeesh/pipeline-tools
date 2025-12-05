@@ -914,6 +914,144 @@
             color: var(--primary);
         }
 
+        /* Interactive Workflow Section */
+        #interactive-workflow {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 6rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #interactive-workflow::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.3;
+        }
+
+        #interactive-workflow .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        #interactive-workflow .section-title {
+            color: var(--white);
+        }
+
+        #interactive-workflow .section-subtitle {
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        #interactive-workflow .use-case {
+            background: rgba(255, 255, 255, 0.98);
+            padding: 2rem;
+            border-radius: 1.25rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        #interactive-workflow .use-case:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        #interactive-workflow .use-case h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        #interactive-workflow .use-case p,
+        #interactive-workflow .use-case ul {
+            color: #334155;
+            line-height: 1.8;
+        }
+
+        #interactive-workflow .use-case ul {
+            list-style: disc;
+            padding-left: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        #interactive-workflow .use-case ul li {
+            margin-bottom: 0.75rem;
+        }
+
+        #interactive-workflow .use-case code {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.375rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            color: #667eea;
+        }
+
+        #interactive-workflow .use-case strong {
+            color: #764ba2;
+            font-weight: 700;
+        }
+
+        .workflow-info-box {
+            margin-top: 3rem;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 1.25rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .workflow-info-box h3 {
+            color: var(--white);
+            margin-bottom: 1.5rem;
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .workflow-file-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+            color: var(--white);
+            margin-bottom: 1.5rem;
+        }
+
+        .workflow-file-types div {
+            font-size: 1.05rem;
+            font-weight: 500;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .workflow-file-types div:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .workflow-info-box p {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
+        /* Dark mode adjustments for interactive workflow */
+        [data-theme="dark"] #interactive-workflow {
+            background: linear-gradient(135deg, #4c51bf 0%, #5b3a8f 100%);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) #interactive-workflow {
+                background: linear-gradient(135deg, #4c51bf 0%, #5b3a8f 100%);
+            }
+        }
+
         /* CTA Section */
         .cta-section {
             padding: 8rem 0;
