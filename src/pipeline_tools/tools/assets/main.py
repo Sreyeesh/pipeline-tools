@@ -11,7 +11,17 @@ from pipeline_tools.core.cli import FriendlyArgumentParser
 from pipeline_tools.core.fs_utils import create_folders
 from pipeline_tools.core.paths import make_show_root
 
-ASSET_TYPE_DIRS = {"CH": "characters", "ENV": "environments", "PR": "props"}
+ASSET_TYPE_DIRS = {
+    "CH": "characters",
+    "ENV": "environments",
+    "PR": "props",
+    "SC": "script",  # Pre-production: screenplays/scripts
+    "FX": "fx",  # Effects and animation helpers
+    "DES": "designs",  # Design sheets
+    "BLN": "blender",  # Blender project files
+    "SND": "sound",  # Sound/audio assets
+    "RND": "renders",  # Render outputs
+}
 DEFAULT_STATUS = "design"
 
 
@@ -41,6 +51,9 @@ def _asset_id(show_code: str, asset_type: str, name: str) -> str:
 def _asset_path(show_root: Path, asset_type: str, name: str) -> Path:
     clean_name = "".join(name.split())
     type_dir = ASSET_TYPE_DIRS[asset_type.upper()]
+    # Scripts go in pre-production folder, other assets in 03_ASSETS
+    if asset_type.upper() == "SC":
+        return show_root / "02_PREPRO" / type_dir / clean_name
     return show_root / "03_ASSETS" / type_dir / clean_name
 
 

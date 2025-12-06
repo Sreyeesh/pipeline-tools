@@ -90,6 +90,28 @@ DCC_PATHS = {
             "pureref",
         ],
     },
+    "vscode": {
+        "Linux": [
+            "/usr/bin/code",
+            "/usr/local/bin/code",
+            "/snap/bin/code",
+            "code",  # WSL integration uses PATH
+        ],
+        "Windows": [
+            r"C:/Program Files/Microsoft VS Code/Code.exe",
+            r"C:\Program Files\Microsoft VS Code\Code.exe",
+            r"C:/Users/*/AppData/Local/Programs/Microsoft VS Code/Code.exe",
+            r"C:\Users\*\AppData\Local\Programs\Microsoft VS Code\Code.exe",
+            "code.cmd",
+            "code.exe",
+            "code",
+        ],
+        "Darwin": [
+            "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code",
+            "/usr/local/bin/code",
+            "code",
+        ],
+    },
 }
 
 
@@ -194,6 +216,34 @@ def launch_dcc(
         os.path.exists("/mnt/c") and
         executable.startswith("/mnt/c")
     )
+
+    # Special handling for VSCode - open project folder directly
+    if dcc_name.lower() == "vscode" and project_root:
+        if is_wsl_to_windows:
+            # Convert WSL path to Windows path for VSCode
+            windows_project = project_root.replace("/mnt/c/", "C:\\").replace("/", "\\")
+            cmd.append(windows_project)
+        else:
+            cmd.append(project_root)
+        # Launch VSCode and return early (no need for complex DCC handling)
+        if background:
+            if platform.system() == "Windows":
+                process = subprocess.Popen(
+                    cmd,
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+            else:
+                process = subprocess.Popen(
+                    cmd,
+                    start_new_session=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+        else:
+            process = subprocess.Popen(cmd)
+        return process
 
     # Note: File path handling disabled - just open the DCC without files
     file_arg = None
