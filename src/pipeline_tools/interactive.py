@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import List, Iterable
 from datetime import datetime
 
+from pipeline_tools import TASK_STATUS_VALUES
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.history import InMemoryHistory
@@ -535,6 +536,53 @@ def _interpret_natural_command(
         tokens.append(code)
         tokens.extend(desc.split())
         return tokens, "Interpreting request as: pipely " + " ".join(tokens)
+
+    # List tasks for a target
+    m = re.match(
+        r"^(list|show|see)\s+tasks\s+(?:for|on)\s+(?P<target>[A-Za-z0-9_-]+)$",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        target = m.group("target")
+        return ["tasks", "list", target], f"Interpreting request as: pipely tasks list {target}"
+
+    # Add task to a target
+    m = re.match(
+        r"^(add|create|new)\s+task\s+(?P<task>.+?)\s+(?:to|for|on)\s+(?P<target>[A-Za-z0-9_-]+)$",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        task_name = m.group("task").strip()
+        target = m.group("target")
+        return ["tasks", "add", target, task_name], f"Interpreting request as: pipely tasks add {target} \"{task_name}\""
+
+    # Update task status
+    m = re.match(
+        r"^(set|update|mark)\s+task\s+(?P<task>.+?)\s+(?:for|on)\s+(?P<target>[A-Za-z0-9_-]+)\s+(?:to\s+)?(?P<status>[A-Za-z_\\s]+)$",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        task_name = m.group("task").strip()
+        target = m.group("target")
+        status = m.group("status").strip().lower().replace(" ", "_")
+        if status not in TASK_STATUS_VALUES:
+            console.print(f"[red]Unknown status '{status}'. Allowed: {', '.join(sorted(TASK_STATUS_VALUES))}[/red]")
+            return None
+        return ["tasks", "status", target, task_name, status], f"Interpreting request as: pipely tasks status {target} \"{task_name}\" {status}"
+
+    # Delete task
+    m = re.match(
+        r"^(delete|remove)\s+task\s+(?P<task>.+?)\s+(?:for|from|on)\s+(?P<target>[A-Za-z0-9_-]+)$",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        task_name = m.group("task").strip()
+        target = m.group("target")
+        return ["tasks", "delete", target, task_name], f"Interpreting request as: pipely tasks delete {target} \"{task_name}\""
 
     # Switch show
     m = re.match(
