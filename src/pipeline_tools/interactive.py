@@ -43,7 +43,11 @@ def _split_user_commands(raw_text: str, passthrough_cmds: set[str]) -> list[str]
     - Within each chunk, if another known command token appears, start a new command.
     """
     # Keep natural phrases like "open project 1 with blender" together
-    if re.match(r"^(open|select|choose|use)\s+project\s+\d+", raw_text.strip(), flags=re.IGNORECASE):
+    if re.match(
+        r"^(open|select|choose|use)\s+project\s+\d+(?:\s+(?:with|using)\s+.+)?$",
+        raw_text.strip(),
+        flags=re.IGNORECASE,
+    ):
         return [raw_text.strip()]
 
     # Normalize common separators
