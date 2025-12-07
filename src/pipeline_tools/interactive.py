@@ -49,6 +49,9 @@ def _split_user_commands(raw_text: str, passthrough_cmds: set[str]) -> list[str]
         flags=re.IGNORECASE,
     ):
         return [raw_text.strip()]
+    # Keep simple list phrases together (list assets/shots/tasks ...)
+    if ";" not in raw_text and "\n" not in raw_text and raw_text.strip().lower().startswith("list "):
+        return [raw_text.strip()]
 
     # Normalize common separators
     normalized = raw_text.replace(";", "\n")
