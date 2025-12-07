@@ -216,6 +216,66 @@ def _project_structure(project_path: Path | None, max_depth: int = 2, max_entrie
     walk(project_path, 0)
     console.print()
 
+
+def _find_asset(query: str) -> tuple[str, dict] | None:
+    """Find an asset by id or name (case-insensitive, partial ok)."""
+    data = db.load_db()
+    assets = list(data.get("assets", {}).values())
+    if not assets:
+        console.print("[yellow]No assets found in DB.[/yellow]")
+        return None
+
+    query_lower = query.lower()
+    for a in assets:
+        if a.get("id", "").lower() == query_lower:
+            return a["id"], a
+    for a in assets:
+        if a.get("name", "").lower() == query_lower:
+            return a["id"], a
+    matches = [
+        a for a in assets if query_lower in a.get("id", "").lower() or query_lower in a.get("name", "").lower()
+    ]
+    if len(matches) == 1:
+        a = matches[0]
+        return a["id"], a
+    if len(matches) > 1:
+        console.print(f"[yellow]Multiple assets match '{query}'. Showing first:[/yellow] {matches[0]['id']}")
+        return matches[0]["id"], matches[0]
+
+    console.print(f"[red]Asset matching '{query}' not found.[/red]")
+    return None
+
+
+def _ensure_task_for_asset(asset_id: str, task_name: str, status: str = "in_progress") -> None:
+    """Add a task to an asset if missing; update status if present."""
+    data = db.load_db()
+    tasks = data.setdefault("tasks", {}).setdefault(asset_id, [])
+    existing = None
+    for t in tasks:
+        if t.get("name") == task_name:
+            existing = t
+            break
+    if existing:
+        existing["status"] = status
+        existing["updated_at"] = datetime.utcnow().isoformat()
+        action = "Updated"
+    else:
+        tasks.append({"name": task_name, "status": status, "updated_at": datetime.utcnow().isoformat()})
+        action = "Added"
+    db.save_db(data)
+    console.print(f"[green]{action} task[/green] '{task_name}' for {asset_id} → {status}")
+
+
+def _derive_show_root_from_asset_path(asset_path: Path) -> Path | None:
+    """Given an asset path, return the show root (parent of 03_ASSETS or 02_PREPRO)."""
+    parts = asset_path.parts
+    for idx, part in enumerate(parts):
+        if part in {"03_ASSETS", "02_PREPRO"}:
+            if idx == 0:
+                continue
+            return Path(*parts[:idx])
+    return None
+
 # All available commands and their subcommands
 COMMANDS = {
     "create": ["--interactive", "-c", "--show-code", "-n", "--name", "-t", "--template", "--git", "--git-lfs"],
@@ -864,6 +924,53 @@ def run_interactive():
                         parts = text.split()
 
                 if not text:
+                    continue
+
+                # One-shot: "work on <asset> in <dcc> [task <name>]"
+                m_work = re.match(
+                    r"^(work on|open|start)\s+(?:asset\s+)?(?P<asset>[\w\.-]+)(?:\s+(?:in|with)\s+(?P<dcc>krita|blender|photoshop|aftereffects|pureref))?(?:\s+task\s+(?P<task>.+))?$",
+                    text,
+                    flags=re.IGNORECASE,
+                )
+                if m_work:
+                    asset_query = m_work.group("asset")
+                    dcc_name = (m_work.group("dcc") or "").lower()
+                    task_name = m_work.group("task")
+                    result = _find_asset(asset_query)
+                    if not result:
+                        continue
+                    asset_id, asset_entry = result
+                    show_code = asset_entry.get("show_code")
+                    # Derive project path from asset path
+                    asset_path = Path(asset_entry.get("path", ""))
+                    show_root = _derive_show_root_from_asset_path(asset_path)
+                    if not show_root or not show_root.exists():
+                        console.print(f"[red]Could not locate project folder for asset {asset_id}[/red]")
+                        continue
+
+                    current_project = show_root.name
+                    current_project_path = show_root
+                    current_show_code = show_code
+
+                    # Set default task name if not provided
+                    task_label = task_name or (dcc_name.capitalize() + " work" if dcc_name else "Work")
+                    _ensure_task_for_asset(asset_id, task_label, status="in_progress")
+
+                    # Require a DCC to proceed to workfiles menu
+                    if not dcc_name:
+                        console.print("[yellow]Add a DCC: e.g., 'work on PKU_ENV_BG_Forest in krita'.[/yellow]")
+                        continue
+
+                    from pipeline_tools.tools.dcc_launcher.launcher import get_dcc_executable
+
+                    if not get_dcc_executable(dcc_name):
+                        console.print(f"[red]{dcc_name} not installed or not found.[/red]")
+                        continue
+
+                    console.print(f"[green]✓ Asset:[/green] {asset_id}  [dim]({show_root})[/dim]")
+                    _artist_workfile_menu(current_project_path, dcc_name, current_show_code)
+                    if workspace_summary_enabled:
+                        _workspace_summary()
                     continue
 
                 # Allow phrases like "open project 1" (optionally with a DCC) to act like selecting that project
