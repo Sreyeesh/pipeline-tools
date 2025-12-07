@@ -50,6 +50,12 @@ def get_creative_root() -> Path:
 
         conn = db.get_conn()
         cfg_root: Optional[str] = db.get_config(conn, "creative_root")
+        # Auto-set creative_root to Windows default when unset and path exists.
+        if not cfg_root:
+            candidate = Path("/mnt/c/Projects") if _is_wsl() else Path("C:/Projects")
+            if candidate.exists():
+                db.set_config(conn, "creative_root", str(candidate))
+                return candidate
         if cfg_root:
             return Path(cfg_root)
     except Exception:
