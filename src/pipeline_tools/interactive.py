@@ -82,7 +82,9 @@ def _split_user_commands(raw_text: str, passthrough_cmds: set[str]) -> list[str]
             is_sub_of_current = current_main in COMMANDS and tok in COMMANDS[current_main]
             # Allow natural phrases like "open project 1" to stay together
             is_open_project_phrase = current_main == "open" and tok == "project"
-            if current and tok in passthrough_cmds and not is_sub_of_current and not is_open_project_phrase:
+            # Keep "list assets/ shots/ tasks" together for natural phrasing
+            is_list_phrase = current_main == "list"
+            if current and tok in passthrough_cmds and not is_sub_of_current and not is_open_project_phrase and not is_list_phrase:
                 commands.append(" ".join(current))
                 current = [tok]
             else:
