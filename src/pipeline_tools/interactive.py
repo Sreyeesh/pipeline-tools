@@ -42,6 +42,10 @@ def _split_user_commands(raw_text: str, passthrough_cmds: set[str]) -> list[str]
     - Split on newlines (handles Windows CRLF).
     - Within each chunk, if another known command token appears, start a new command.
     """
+    # Keep natural phrases like "open project 1 with blender" together
+    if re.match(r"^(open|select|choose|use)\s+project\s+\d+", raw_text.strip(), flags=re.IGNORECASE):
+        return [raw_text.strip()]
+
     # Normalize common separators
     normalized = raw_text.replace(";", "\n")
 
@@ -72,7 +76,9 @@ def _split_user_commands(raw_text: str, passthrough_cmds: set[str]) -> list[str]
             current_main = current[0] if current else None
             # Avoid splitting when 'tok' is actually a subcommand/flag of the current main command
             is_sub_of_current = current_main in COMMANDS and tok in COMMANDS[current_main]
-            if current and tok in passthrough_cmds and not is_sub_of_current:
+            # Allow natural phrases like "open project 1" to stay together
+            is_open_project_phrase = current_main == "open" and tok == "project"
+            if current and tok in passthrough_cmds and not is_sub_of_current and not is_open_project_phrase:
                 commands.append(" ".join(current))
                 current = [tok]
             else:
@@ -159,6 +165,48 @@ def _workspace_summary(show_code: str | None = None) -> None:
     console.print(table)
     console.print()
 
+
+def _project_structure(project_path: Path | None, max_depth: int = 2, max_entries: int = 30) -> None:
+    """
+    Print a quick tree of the current project's folders/files (limited depth/entries).
+    """
+    if not project_path:
+        console.print("[yellow]No project selected. Type 'projects' to pick one.[/yellow]")
+        return
+    if not project_path.exists():
+        console.print(f"[red]Project path not found:[/red] {project_path}")
+        return
+
+    console.print()
+    console.print(f"[bold cyan]Project structure[/bold cyan] [dim]{project_path}[/dim]")
+
+    def walk(path: Path, depth: int) -> None:
+        if depth > max_depth:
+            return
+        try:
+            entries = sorted(path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
+        except PermissionError:
+            console.print("  " * depth + "[red]Permission denied[/red]")
+            return
+
+        if len(entries) > max_entries:
+            shown = entries[:max_entries]
+            extra = len(entries) - max_entries
+        else:
+            shown = entries
+            extra = 0
+
+        for entry in shown:
+            prefix = "📁" if entry.is_dir() else "📄"
+            console.print(f"{'  ' * depth}{prefix} {entry.name}")
+            if entry.is_dir() and depth < max_depth:
+                walk(entry, depth + 1)
+        if extra > 0:
+            console.print(f"{'  ' * (depth + 1)}… +{extra} more")
+
+    walk(project_path, 0)
+    console.print()
+
 # All available commands and their subcommands
 COMMANDS = {
     "create": ["--interactive", "-c", "--show-code", "-n", "--name", "-t", "--template", "--git", "--git-lfs"],
@@ -202,6 +250,243 @@ COMMAND_DESCRIPTIONS = {
     "exit": "Exit interactive mode",
     "quit": "Exit interactive mode",
 }
+
+ASSET_TYPE_ALIASES = {
+    "ch": "CH",
+    "char": "CH",
+    "character": "CH",
+    "characters": "CH",
+    "env": "ENV",
+    "environment": "ENV",
+    "environments": "ENV",
+    "bg": "ENV",
+    "prop": "PR",
+    "props": "PR",
+    "pr": "PR",
+    "fx": "FX",
+    "effect": "FX",
+    "effects": "FX",
+}
+
+
+def _render_quick_actions() -> None:
+    """Small visual menu of common actions for artists."""
+    table = Table(show_header=False, box=None, padding=(0, 2))
+    table.add_column("Action", style="bold", width=18)
+    table.add_column("Try typing", style="cyan")
+    table.add_row("🎬 Open project", "open project 1 with blender")
+    table.add_row("🧭 Switch show", "switch to show PKU")
+    table.add_row("🌳 Add asset", "add environment asset called BG_Forest for show PKU")
+    table.add_row("🎞 Add shot", "add shot SH010 Opening scene for show PKU")
+    table.add_row("🗂 Workspace", "show workspace")
+    table.add_row("🧾 Status", "what's the status")
+    table.add_row("🕑 Recent", "show recent assets")
+    console.print(table)
+    console.print()
+
+
+def _interpret_natural_command(
+    text: str,
+    current_project: str | None = None,
+    current_project_path: Path | None = None,
+    current_show_code: str | None = None,
+) -> tuple[list[str], str] | None:
+    """
+    Map simple natural-language phrases to real pipely commands so artists can type sentences.
+    """
+    cleaned = text.strip()
+
+    # Create project (interactive)
+    m = re.match(
+        r"^(create|make|new)\s+(?:a\s+)?(?:new\s+)?project(?:\s+(?:called|named)\s+(?P<name>.+))?$",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        name = (m.group("name") or "").strip()
+        args = ["create", "--interactive"]
+        if name:
+            args.extend(["-n", name])
+        return args, "Interpreting request as: pipely " + " ".join(args)
+
+    # Create show (code + optional name)
+    m = re.match(
+        r"^(create|make|new)\s+(?:a\s+)?(?:new\s+)?show\s+(?P<code>[A-Za-z0-9_-]+)"
+        r"(?:\s+(?:called|named)\s+(?P<name>.+))?$",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        code = m.group("code")
+        name = (m.group("name") or "").strip()
+        args = ["shows", "create", "-c", code]
+        if name:
+            args.extend(["-n", name])
+        return args, "Interpreting request as: pipely " + " ".join(args)
+
+    # Open a DCC
+    m = re.match(
+        r"^(open|launch|start)\s+(?P<dcc>krita|blender|photoshop|aftereffects|pureref)"
+        r"(?:\s+(?:for|in|on)\s+(?P<project>[\w\.-]+))?$",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        dcc = m.group("dcc").lower()
+        project = m.group("project") or current_project
+        args = ["open", dcc]
+        if project:
+            args.extend(["--project", project])
+        return args, "Interpreting request as: pipely " + " ".join(args)
+
+    # Git status
+    m = re.match(
+        r"^(what'?s|show|check)?\s*(?:the\s+)?(?:git\s+)?status(?:\s+(?:for|of|on)\s+(?P<project>[\w\.-]+))?$",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        project = m.group("project") or current_project
+        args = ["project", "status"]
+        if project:
+            args.append(project)
+        return args, "Interpreting request as: pipely " + " ".join(args)
+
+    # Commit changes
+    m = re.match(
+        r"^commit(?:\s+my)?(?:\s+changes)?(?:\s+(?:for|in)\s+(?P<project>[\w\.-]+))?"
+        r"(?:\s+with\s+(?:message|msg)\s+(?P<message>.+))?$",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        project = m.group("project") or current_project
+        message = (m.group("message") or "").strip()
+        args = ["project", "commit"]
+        if project:
+            args.append(project)
+        if message:
+            args.extend(["-m", message])
+        return args, "Interpreting request as: pipely " + " ".join(args)
+
+    # List entities
+    m = re.match(r"^list(?:\s+all)?\s+(?P<target>shows|assets|shots|projects)$", cleaned, flags=re.IGNORECASE)
+    if m:
+        target = m.group("target").lower()
+        if target == "projects":
+            return ["projects"], "Interpreting request as: pipely projects"
+        return [target, "list"], "Interpreting request as: pipely " + target + " list"
+
+    # Recent assets
+    m = re.match(
+        r"^(show|list|see|display|what(?:'s)?)\s+(?:the\s+)?(?:(?:recent|recently\s+added)\s+assets)(?:\s+(?P<num>\d+))?$",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        num = m.group("num")
+        args = ["assets", "recent"]
+        if num:
+            args.extend(["--limit", num])
+        return args, "Interpreting request as: pipely " + " ".join(args)
+
+    # List shows
+    m = re.match(r"^(list|show|see)\s+shows$", cleaned, flags=re.IGNORECASE)
+    if m:
+        return ["shows", "list"], "Interpreting request as: pipely shows list"
+
+    # List assets (optional type/show)
+    m = re.match(
+        r"^(list|show|see)\s+(?:(?P<type>characters?|assets?|props?|fx|environments?|env|bg)\s+)?assets(?:\s+for\s+show\s+(?P<show>[A-Za-z0-9_-]+))?$",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        asset_type = m.group("type")
+        show = m.group("show")
+        args = ["assets", "list"]
+        if show:
+            args.extend(["-c", show])
+        if asset_type:
+            type_code = ASSET_TYPE_ALIASES.get(asset_type.lower())
+            if type_code:
+                args.extend(["-t", type_code])
+        return args, "Interpreting request as: pipely " + " ".join(args)
+
+    # Asset info
+    m = re.match(r"^(show|see|get)\s+asset\s+(?P<asset>[A-Za-z0-9_-]+)$", cleaned, flags=re.IGNORECASE)
+    if m:
+        asset = m.group("asset")
+        return ["assets", "info", asset], f"Interpreting request as: pipely assets info {asset}"
+
+    # Add asset
+    m = re.match(
+        r"^(add|create|new)\s+(?P<type>characters?|ch|env|environment|environments|bg|props?|pr|fx|effects?)\s+asset\s+(?:called|named\s+)?(?P<name>[A-Za-z0-9._-]+)"
+        r"(?:\s+(?:for|in)\s+show\s+(?P<show>[A-Za-z0-9_-]+))?$",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        type_code = ASSET_TYPE_ALIASES.get(m.group("type").lower())
+        if not type_code:
+            return None
+        name = m.group("name")
+        show = m.group("show")
+        args = ["assets", "add", "-t", type_code, "-n", name]
+        if show:
+            args.extend(["-c", show])
+        return args, "Interpreting request as: pipely " + " ".join(args)
+
+    # List shots
+    m = re.match(
+        r"^(list|show|see)\s+shots(?:\s+for\s+show\s+(?P<show>[A-Za-z0-9_-]+))?$",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        show = m.group("show")
+        args = ["shots", "list"]
+        if show:
+            args.extend(["-c", show])
+        return args, "Interpreting request as: pipely " + " ".join(args)
+
+    # Add shot
+    m = re.match(
+        r"^(add|create|new)\s+shot\s+(?P<code>SH[A-Za-z0-9_-]+)\s+(?P<desc>.+?)(?:\s+(?:for|in)\s+show\s+(?P<show>[A-Za-z0-9_-]+))?$",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        code = m.group("code")
+        desc = m.group("desc").strip()
+        show = m.group("show")
+        tokens = ["shots", "add"]
+        if show:
+            tokens.extend(["-c", show])
+        tokens.append(code)
+        tokens.extend(desc.split())
+        return tokens, "Interpreting request as: pipely " + " ".join(tokens)
+
+    # Switch show
+    m = re.match(
+        r"^(switch|change|use)\s+(?:to\s+)?show\s+(?P<code>[A-Za-z0-9_-]+)$",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        code = m.group("code")
+        return ["shows", "use", "-c", code], "Interpreting request as: pipely shows use -c " + code
+
+    # Show workspace/structure
+    m = re.match(
+        r"^(show|display|view|see|open)\s+(?:the\s+)?(?:(?:project\s+)?structure|workspace|files|folders)$",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if m or cleaned.lower() in {"structure", "project structure", "workspace structure", "workspace"}:
+        return ["structure"], "Interpreting request as: show project structure"
+
+    return None
 
 
 def _resolve_show_for_project_path(project_path: Path) -> tuple[str | None, dict | None]:
@@ -469,8 +754,10 @@ def run_interactive():
     console.print("│                                                        │")
     console.print("│  [bold green]💡 Press TAB to see all options[/bold green]                │")
     console.print("│  [dim]Quick: 'status' | 'commit' | 'projects'[/dim]            │")
+    console.print("│  [dim]Or just type: 'create a project named Demo'[/dim]        │")
     console.print("╰────────────────────────────────────────────────────────╯", style="cyan")
     console.print()
+    _render_quick_actions()
 
     # Track available projects and DCCs for number selection
     available_projects = []
@@ -570,8 +857,108 @@ def run_interactive():
                 if not text:
                     continue
 
-                parts = _normalize_shorthand_command(parts)
-                text = " ".join(parts)
+                # Allow phrases like "open project 1" (optionally with a DCC) to act like selecting that project
+                m_proj_select = re.match(
+                    r"^(open|select|choose|use)\s+project\s+(?P<num>\d+)(?:\s+(?:with|using)\s+(?P<dcc>krita|blender|photoshop|aftereffects|pureref))?$",
+                    text,
+                    flags=re.IGNORECASE,
+                )
+                if m_proj_select and available_projects:
+                    choice = int(m_proj_select.group("num"))
+                    chosen_dcc = m_proj_select.group("dcc").lower() if m_proj_select.group("dcc") else None
+                    create_option_num = len(available_projects) + 1
+
+                    if choice == create_option_num:
+                        console.print()
+                        console.print("[bold cyan]🆕 Create New Project[/bold cyan]")
+                        console.print()
+                        from pipeline_tools.cli import app
+                        try:
+                            app(["create", "--interactive"], standalone_mode=False)
+                        except SystemExit:
+                            pass
+                        except Exception as e:
+                            console.print(f"[red]Error:[/red] {e}")
+                        console.print()
+                        console.print("[dim]Type 'projects' to see your new project[/dim]")
+                        console.print()
+                        continue
+
+                    if 1 <= choice <= len(available_projects):
+                        selected_project = available_projects[choice - 1]
+                        current_project = selected_project.name
+                        current_project_path = selected_project
+                        current_show_code, current_show_entry = _resolve_show_for_project_path(selected_project)
+
+                        console.print(f"[dim]Selecting project #{choice}: {current_project}[/dim]")
+                        console.print(f"[green]✓ Project:[/green] [bold]{current_project}[/bold]")
+                        if current_show_code:
+                            console.print(f"[dim]Linked show:[/dim] {current_show_code}")
+                            try:
+                                from pipeline_tools.cli import app
+                                app(["shows", "use", "-c", current_show_code], standalone_mode=False)
+                            except Exception:
+                                pass
+                        console.print()
+
+                        if chosen_dcc:
+                            _artist_workfile_menu(current_project_path or Path.cwd(), chosen_dcc, current_show_code)
+                            console.print()
+                            console.print("[dim]Type 'projects' to work on another project[/dim]")
+                            console.print()
+                            show_dcc_menu = False
+                            available_dccs = []
+                            completer.update_context(dccs=[], show_dcc_menu=False)
+                            if workspace_summary_enabled:
+                                _workspace_summary()
+                            continue
+
+                        from pipeline_tools.tools.dcc_launcher.launcher import DCC_PATHS, get_dcc_executable
+                        from rich.table import Table
+
+                        installed_dccs = []
+                        for dcc in sorted(DCC_PATHS.keys()):
+                            if get_dcc_executable(dcc):
+                                installed_dccs.append(dcc)
+
+                        if not installed_dccs:
+                            console.print("[yellow]⚠ No DCCs found installed[/yellow]")
+                            console.print()
+                            continue
+
+                        available_dccs = installed_dccs
+                        show_dcc_menu = True
+                        completer.update_context(dccs=available_dccs, show_dcc_menu=True)
+
+                        table = Table(show_header=False, box=None, padding=(0, 2))
+                        table.add_column("Number", style="cyan bold", width=8)
+                        table.add_column("Application", style="bold")
+
+                        for idx, dcc in enumerate(installed_dccs, 1):
+                            table.add_row(f"[cyan]{idx}[/cyan]", dcc.capitalize())
+
+                        console.print("[bold cyan]STEP 2: Pick Your App[/bold cyan]")
+                        console.print()
+                        console.print(table)
+                        console.print()
+                        console.print("[dim]→ Type a number or press TAB to see all options[/dim]")
+                        console.print()
+                        continue
+                    else:
+                        console.print()
+                        console.print(f"[red]❌ Invalid selection. Choose 1-{create_option_num}[/red]")
+                        console.print()
+                        continue
+
+                # Friendly natural-language intents
+                natural = _interpret_natural_command(text, current_project, current_project_path, current_show_code)
+                if natural:
+                    parts, note = natural
+                    text = " ".join(parts)
+                    console.print(f"[dim]{note}[/dim]")
+                else:
+                    parts = _normalize_shorthand_command(parts)
+                    text = " ".join(parts)
 
                 # Workspace summary toggles
                 if text == "workspace" or text == "workspace show":
@@ -585,6 +972,10 @@ def run_interactive():
                 if text == "workspace off":
                     workspace_summary_enabled = False
                     console.print("[yellow]Workspace summary disabled.[/yellow]")
+                    continue
+
+                if text in {"structure", "project structure", "workspace structure", "show structure"}:
+                    _project_structure(current_project_path)
                     continue
 
                 # Handle special commands
@@ -920,12 +1311,7 @@ def run_interactive():
                 else:
                     console.print()
                     console.print("[yellow]Not sure what to do?[/yellow]")
-                    console.print("  • Type [bold cyan]'projects'[/bold cyan] to see all your projects")
-                    console.print("  • Type [bold cyan]'status'[/bold cyan] to check git status")
-                    console.print("  • Type [bold cyan]'commit'[/bold cyan] to commit changes")
-                    console.print("  • Type [bold cyan]a number[/bold cyan] to select from the menu")
-                    console.print("  • Type [bold cyan]'help'[/bold cyan] for advanced commands")
-                    console.print()
+                    _render_quick_actions()
 
                 if workspace_summary_enabled:
                     _workspace_summary()
