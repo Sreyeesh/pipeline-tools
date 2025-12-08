@@ -1,9 +1,14 @@
+"""
+Test setup helpers.
+
+We add the user site-packages path to sys.path so that locally installed
+dependencies (e.g., typer, prompt_toolkit, rich) are available even when running
+inside an isolated venv that lacks network access.
+"""
+
+import site
 import sys
-from pathlib import Path
 
-
-# Ensure local source tree is importable ahead of any globally installed package.
-ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "src"
-if str(SRC) not in sys.path:
-    sys.path.insert(0, str(SRC))
+USER_SITE = site.getusersitepackages()
+if USER_SITE not in sys.path:
+    sys.path.append(USER_SITE)
