@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pipely"
-version = "0.1.15"
+version = "0.1.16"
 description = "Pipeline management made lovely - Artist-friendly CLI for creative production workflows."
 readme = "README.md"
 requires-python = ">=3.8"
