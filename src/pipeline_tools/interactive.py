@@ -526,7 +526,7 @@ def _interpret_natural_command(
     if m:
         type_code = ASSET_TYPE_ALIASES.get(m.group("type").lower())
         if not type_code:
-            return None
+            type_code = "ENV"
         name = m.group("name")
         show = m.group("show")
         args = ["assets", "add", "-t", type_code, "-n", name]
