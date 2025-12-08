@@ -4,6 +4,11 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g., v0.1.16)"
+        required: false
 
 permissions:
   contents: write
@@ -23,10 +28,19 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
+      - name: Determine release tag
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          if [ -z "$TAG" ]; then
+            echo "No tag provided; set workflow_dispatch input 'tag' or push a tag ref."
+            exit 1
+          fi
+          echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
+
       - name: Ensure tag is on main
         run: |
           git fetch origin main
-          TAG_SHA=$(git rev-parse HEAD)
+          TAG_SHA=$(git rev-parse "$RELEASE_TAG"^{commit})
           MAIN_SHA=$(git rev-parse origin/main)
           BASE=$(git merge-base "$TAG_SHA" "$MAIN_SHA")
           if [ "$BASE" != "$MAIN_SHA" ]; then
@@ -54,13 +68,14 @@ jobs:
         uses: requarks/changelog-action@v1
         with:
           token: ${{ github.token }}
-          tag: ${{ github.ref_name }}
+          tag: ${{ env.RELEASE_TAG }}
           writeToFile: true
           includeInvalidCommits: false
 
       - name: Create GitHub release and upload artifacts
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
           body: ${{ steps.changelog.outputs.changes }}
           files: |
             dist/*.whl
