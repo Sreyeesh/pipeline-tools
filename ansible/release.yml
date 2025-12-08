@@ -62,6 +62,8 @@
       ansible.builtin.command: "{{ python_bin }} -m pytest"
       args:
         chdir: "{{ repo_root }}"
+      environment:
+        PYTHONPATH: "{{ repo_root }}/src"
 
     - name: Build artifacts
       ansible.builtin.command: "{{ python_bin }} -m build"
