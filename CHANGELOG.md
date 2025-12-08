@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0](https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.13...v0.2.0) (2025-12-08)
+
+
+### Features
+
+* add asset wizard intent for interactive ([bac6f86](https://github.com/Sreyeesh/pipeline-tools/commit/bac6f8630a22ebfc7376f7eace4ed558765ab525))
+* add release-please for fully automated releases ([6f07ed7](https://github.com/Sreyeesh/pipeline-tools/commit/6f07ed7dfc2e48bb8b98a99ca0f261e59a5e587b))
+* add task CRUD intents to interactive ([0ec8e87](https://github.com/Sreyeesh/pipeline-tools/commit/0ec8e87f141358680f0f1cf04a576fcecd544385))
+* add VSCode support, new asset types, and auto git init ([38f4844](https://github.com/Sreyeesh/pipeline-tools/commit/38f48449f96c5f35c5cc5b4ec54cce4f03afc410))
+* automate website changelog updates in GitHub Actions ([21dcd87](https://github.com/Sreyeesh/pipeline-tools/commit/21dcd875b8d6e434d19d5767c98aa5e485eb8155))
+* expand interactive ux for artists ([66eee5f](https://github.com/Sreyeesh/pipeline-tools/commit/66eee5f81a855fccf13f62020f557c4eef92f81c))
+* format assets list as a table ([fca4527](https://github.com/Sreyeesh/pipeline-tools/commit/fca45271da0d624b12109379648296efc270510d))
+* one-shot 'work on &lt;asset&gt; in &lt;dcc&gt;' helper ([af44486](https://github.com/Sreyeesh/pipeline-tools/commit/af4448657516719de2e449cc1cb23d61bc49ed71))
+
+
+### Bug Fixes
+
+* default creative root to windows projects when available ([35976c0](https://github.com/Sreyeesh/pipeline-tools/commit/35976c02a4fae121905332babe3dee4f5d4151ff))
+* honor creative_root override and avoid hijacking open commands ([6ae9c0c](https://github.com/Sreyeesh/pipeline-tools/commit/6ae9c0ccc22a53196c10c57a69c95f2685d8a717))
+* keep list commands together in interactive ([d2ec969](https://github.com/Sreyeesh/pipeline-tools/commit/d2ec969e02de019e75d55609b01a87abd4940f5e))
+* keep list phrases intact in interactive parser ([c8d222a](https://github.com/Sreyeesh/pipeline-tools/commit/c8d222ab51444d8ddb9be23c9e45d3efebdec257))
+* keep open project with dcc together ([93036d4](https://github.com/Sreyeesh/pipeline-tools/commit/93036d427115309cc222f608c6685f771c843f38))
+* prefer DB creative_root and handle environment asset phrase ([78f5e88](https://github.com/Sreyeesh/pipeline-tools/commit/78f5e88f01af4a5c9d1e90acf25868f3ba9d57ca))
+* prioritize PIPELINE_TOOLS_ROOT before DB/default ([e715f2c](https://github.com/Sreyeesh/pipeline-tools/commit/e715f2cedfb3b18afbadc13129ae509d8147a2e8))
+* regex for add asset intent and prioritize CREATIVE_ROOT in get_creative_root ([c61f7e9](https://github.com/Sreyeesh/pipeline-tools/commit/c61f7e9b51a0821ef3fe11c2f93d14305ab9e948))
+* respect creative_root override before auto-setting default ([32b3bc2](https://github.com/Sreyeesh/pipeline-tools/commit/32b3bc285235581c76db9fb31460439bf49155e8))
+* respect DB creative_root; default asset intent to ENV ([9c87716](https://github.com/Sreyeesh/pipeline-tools/commit/9c87716e663ae94132c28c1af95d46bbcab3d0e1))
+* use env then explicit override before DB for creative root ([bfac175](https://github.com/Sreyeesh/pipeline-tools/commit/bfac175a97339d0757c7fdc4afb44e43473f083e))
+
+
+### Documentation
+
+* add RELEASE.md developer workflow documentation ([9f5d43c](https://github.com/Sreyeesh/pipeline-tools/commit/9f5d43c346c7262101c916ab3a6ab809b257f322))
+* add v0.1.13 to website changelog ([5eaf3a7](https://github.com/Sreyeesh/pipeline-tools/commit/5eaf3a7429afed66049d98221965a489fd8ee94d))
+* update CHANGELOG.md for v0.1.13 [skip ci] ([63cdfa5](https://github.com/Sreyeesh/pipeline-tools/commit/63cdfa5e12584ae8f7793273fb0ac022107cbe2c))
+* update installation commands to v0.1.13 ([d44218c](https://github.com/Sreyeesh/pipeline-tools/commit/d44218ce5c0e780da28092595903081cd0347017))
+* update README with fully automated release-please workflow ([1e73573](https://github.com/Sreyeesh/pipeline-tools/commit/1e73573de757cf4400fd18f963d5549a8fed7f95))
+
 ## [v0.1.13] - 2025-12-05
 ### :bug: Bug Fixes
 - [`d8a93a3`](https://github.com/Sreyeesh/pipeline-tools/commit/d8a93a3ac2c61c4741224f0f1dc914cd4205b593) - remove unsupported --python-script flag for Krita launcher *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
