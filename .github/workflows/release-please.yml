@@ -18,7 +18,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: python
-          package-name: pipely
+          skip-github-pull-request: true
 
       # These steps only run if release-please created a release
       - name: Checkout code
