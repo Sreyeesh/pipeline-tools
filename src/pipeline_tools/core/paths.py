@@ -48,6 +48,10 @@ def get_creative_root() -> Path:
     env_root = os.environ.get("PIPELINE_TOOLS_ROOT")
     if env_root:
         return Path(env_root)
+
+    env_root = os.environ.get("PIPELINE_TOOLS_ROOT")
+    if env_root:
+        return Path(env_root)
     try:
         # Lazy import to avoid cycles for core utilities.
         from pipeline_tools.core import db
