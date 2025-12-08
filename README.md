@@ -2,7 +2,7 @@
 
 Artist-friendly CLI for creating and managing pipeline folder structures for creative production workflows (animation, game dev, drawing projects).
 
-**Version:** 0.1.13 | **License:** MIT | **Python:** 3.8+
+**Version:** 0.1.16 | **License:** MIT | **Python:** 3.8+
 
 🌐 **[Visit the Official Website](https://sreyeesh.github.io/pipeline-tools/)** | 📦 **[Download Latest Release](https://github.com/Sreyeesh/pipeline-tools/releases/latest)**
 
@@ -46,7 +46,7 @@ Projects follow convention: `{PREFIX}_{SHOW_CODE}_{PROJECT_NAME}`
 
 ---
 
-## Quick Start for Artists
+## Quick Start for Artists (Natural Language Friendly)
 
 ### Install
 Use the latest GitHub release (pipx recommended):
@@ -57,7 +57,7 @@ pip install --user https://github.com/Sreyeesh/pipeline-tools/releases/latest/do
 ```
 
 ### Use the interactive shell - Artist Workflow
-Run `pipely` (no args) to open the interactive prompt:
+Run `pipely` (no args) to open the interactive prompt with quick actions and natural phrases:
 
 #### Step 1: Pick Your Project
 - Type a number to select from existing projects
@@ -77,6 +77,15 @@ After selecting an app, you get an interactive workfile menu:
 - **Go back**: Press Enter to return to app selection
 
 **Auto-save magic** (Blender): When you create a new file, press Ctrl+S and it automatically saves to the correct versioned filename in `05_WORK/` - no "Save As" dialog needed!
+
+#### Natural phrases you can use
+- “open project 1 with blender” (or krita)  
+- “add environment asset called Forest_BG for show DMO”  
+- “add shot SH010 Opening scene for show DMO”  
+- “work on Forest_BG in krita” (adds/updates a task and opens workfiles)  
+- “add task Paint for DMO_ENV_Forest_BG”; “mark task Paint for DMO_ENV_Forest_BG done”  
+- “list assets for show DMO”; “list tasks for DMO_ENV_Forest_BG”  
+- “show workspace”; “show project structure”
 
 #### Other Commands
 - Tasks: `tasks add DMO_SH010 Layout`, `tasks list DMO_SH010`, `tasks status DMO_SH010 Layout in_progress`
