@@ -1,14 +1,21 @@
 """
 Test setup helpers.
 
-We add the user site-packages path to sys.path so that locally installed
-dependencies (e.g., typer, prompt_toolkit, rich) are available even when running
-inside an isolated venv that lacks network access.
+Ensure dependencies and project imports resolve in CI and offline venvs:
+- add user site-packages (for locally installed deps)
+- add project root and src/ to sys.path so `import pipeline_tools` works without install
 """
 
 import site
 import sys
+from pathlib import Path
 
 USER_SITE = site.getusersitepackages()
 if USER_SITE not in sys.path:
     sys.path.append(USER_SITE)
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+for path in (ROOT, SRC):
+    if str(path) not in sys.path:
+        sys.path.append(str(path))
