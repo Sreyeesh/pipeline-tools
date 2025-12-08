@@ -50,11 +50,16 @@ def get_creative_root() -> Path:
 
         conn = db.get_conn()
         cfg_root: Optional[str] = db.get_config(conn, "creative_root")
-        if cfg_root:
-            return Path(cfg_root)
     except Exception:
         # If config cannot be read, keep going with defaults.
-        pass
+        cfg_root = None
+
+    # Explicit override in code/config should win over stored config
+    if CREATIVE_ROOT:
+        return Path(CREATIVE_ROOT)
+    if cfg_root:
+        return Path(cfg_root)
+
     if CREATIVE_ROOT:
         return Path(CREATIVE_ROOT)
     # Auto-set creative_root to Windows default when unset and path exists.

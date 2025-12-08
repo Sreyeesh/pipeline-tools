@@ -534,6 +534,20 @@ def _interpret_natural_command(
             args.extend(["-c", show])
         return args, "Interpreting request as: pipely " + " ".join(args)
 
+    # Generic add asset without explicit type defaults to ENV
+    m = re.match(
+        r"^(add|create|new)\s+asset\s+(?:called|named\s+)?(?P<name>[A-Za-z0-9._-]+)(?:\s+(?:for|in)\s+show\s+(?P<show>[A-Za-z0-9_-]+))?$",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        name = m.group("name")
+        show = m.group("show")
+        args = ["assets", "add", "-t", "ENV", "-n", name]
+        if show:
+            args.extend(["-c", show])
+        return args, "Interpreting request as: pipely " + " ".join(args)
+
     # List shots
     m = re.match(
         r"^(list|show|see)\s+shots(?:\s+for\s+show\s+(?P<show>[A-Za-z0-9_-]+))?$",
@@ -1013,7 +1027,7 @@ def run_interactive():
 
                 # One-shot: "work on <asset> in <dcc> [task <name>]"
                 m_work = re.match(
-                    r"^(work on|open|start)\s+(?:asset\s+)?(?P<asset>[\w\.-]+)(?:\s+(?:in|with)\s+(?P<dcc>krita|blender|photoshop|aftereffects|pureref))?(?:\s+task\s+(?P<task>.+))?$",
+                    r"^(work on|start)\s+(?:asset\s+)?(?P<asset>[\w\.-]+)(?:\s+(?:in|with)\s+(?P<dcc>krita|blender|photoshop|aftereffects|pureref))?(?:\s+task\s+(?P<task>.+))?$",
                     text,
                     flags=re.IGNORECASE,
                 )
