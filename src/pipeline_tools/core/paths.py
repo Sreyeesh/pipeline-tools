@@ -41,37 +41,27 @@ _PREFIX_BY_TEMPLATE = {
 
 
 def get_creative_root() -> Path:
-    # Explicit override in code/config should win first (helps tests/monkeypatch)
-    if CREATIVE_ROOT:
-        return Path(CREATIVE_ROOT)
-
+    # Order: env override -> explicit code override -> DB config -> auto/default
     env_root = os.environ.get("PIPELINE_TOOLS_ROOT")
     if env_root:
         return Path(env_root)
 
-    env_root = os.environ.get("PIPELINE_TOOLS_ROOT")
-    if env_root:
-        return Path(env_root)
+    explicit_override = CREATIVE_ROOT if CREATIVE_ROOT and CREATIVE_ROOT != _CREATIVE_ROOT_DEFAULT else None
+
+    cfg_root: Optional[str] = None
     try:
-        # Lazy import to avoid cycles for core utilities.
         from pipeline_tools.core import db
 
         conn = db.get_conn()
-        cfg_root: Optional[str] = db.get_config(conn, "creative_root")
+        cfg_root = db.get_config(conn, "creative_root")
     except Exception:
-        # If config cannot be read, keep going with defaults.
         cfg_root = None
 
-    # Order: explicit env override -> explicit code override -> DB config -> auto/default
-    if CREATIVE_ROOT:
-        return Path(CREATIVE_ROOT)
+    if explicit_override:
+        return Path(explicit_override)
     if cfg_root:
         return Path(cfg_root)
-    if CREATIVE_ROOT:
-        return Path(CREATIVE_ROOT)
 
-    if CREATIVE_ROOT:
-        return Path(CREATIVE_ROOT)
     # Auto-set creative_root to Windows default when unset and path exists.
     try:
         from pipeline_tools.core import db
