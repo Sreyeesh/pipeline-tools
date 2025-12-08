@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [v0.1.16] - 2025-12-08
+### :bug: Bug Fixes
+- [`2b8c13b`](https://github.com/Sreyeesh/pipeline-tools/commit/2b8c13b63046c3d15c9787c2abf94b6e574cb7bf) - package admin templates and isolate tests from user DB paths *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
 ### :memo: Documentation
 - [`2049cb0`](https://github.com/Sreyeesh/pipeline-tools/commit/2049cb0a5d146de41a34d6101b94f82a0dd7c684) - add natural language quick-start examples to README *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
 
