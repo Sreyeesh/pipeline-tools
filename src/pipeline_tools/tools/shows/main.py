@@ -1,4 +1,5 @@
 import argparse
+import subprocess
 import sys
 import shutil
 from pathlib import Path
@@ -10,6 +11,49 @@ from pipeline_tools.core.fs_utils import create_folders
 from pipeline_tools.core.paths import make_show_root
 from pipeline_tools.tools.project_creator.templates import TEMPLATES
 from datetime import datetime, timezone
+
+
+# Default .gitignore for animation/VFX projects
+DEFAULT_GITIGNORE = """\
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Autosave files
+*.blend1
+*.blend2
+*.kra~
+*.psd~
+
+# Render outputs (optional - uncomment if you don't want to track renders)
+# 06_DELIVERY/
+# **/renders/
+
+# Cache directories
+__pycache__/
+*.pyc
+.cache/
+
+# IDE/Editor
+.vscode/
+.idea/
+*.sublime-*
+
+# Logs
+*.log
+
+# Temp folder contents (keep folder, ignore contents)
+z_TEMP/*
+!z_TEMP/.gitkeep
+"""
 
 
 def _get_show_or_exit(show_code: str, data: dict) -> dict:
@@ -47,6 +91,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "Folder template key to use. Available: "
             f"{', '.join(sorted(TEMPLATES.keys()))} (default: animation_short)"
         ),
+    )
+    c_create.add_argument(
+        "--no-git",
+        action="store_true",
+        help="Skip git initialization (git is initialized by default).",
     )
 
     c_list = sub.add_parser("list", help="List shows in the DB.")
@@ -86,6 +135,51 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def _init_git(show_root: Path, show_name: str) -> bool:
+    """Initialize git repository in the show folder."""
+    try:
+        # Create .gitignore
+        gitignore_path = show_root / ".gitignore"
+        gitignore_path.write_text(DEFAULT_GITIGNORE)
+
+        # Create .gitkeep in z_TEMP to keep the folder but ignore contents
+        temp_gitkeep = show_root / "z_TEMP" / ".gitkeep"
+        if temp_gitkeep.parent.exists():
+            temp_gitkeep.touch()
+
+        # Initialize git repo
+        subprocess.run(
+            ["git", "init"],
+            cwd=str(show_root),
+            check=True,
+            capture_output=True,
+        )
+
+        # Add all files
+        subprocess.run(
+            ["git", "add", "."],
+            cwd=str(show_root),
+            check=True,
+            capture_output=True,
+        )
+
+        # Initial commit
+        subprocess.run(
+            ["git", "commit", "-m", f"Initial project setup for {show_name}"],
+            cwd=str(show_root),
+            check=True,
+            capture_output=True,
+        )
+
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"Warning: Git initialization failed: {e}")
+        return False
+    except Exception as e:
+        print(f"Warning: Git initialization failed: {e}")
+        return False
+
+
 def cmd_create(args: argparse.Namespace) -> None:
     template_key = args.template
     if template_key not in TEMPLATES:
@@ -110,12 +204,21 @@ def cmd_create(args: argparse.Namespace) -> None:
     print(f"Creating show at: {show_root}")
     create_folders(show_root, TEMPLATES[template_key])
 
+    # Initialize git by default (unless --no-git is passed)
+    git_initialized = False
+    if not getattr(args, "no_git", False):
+        print("Initializing git repository...")
+        git_initialized = _init_git(show_root, args.name)
+        if git_initialized:
+            print("Git repository initialized with initial commit.")
+
     now = datetime.now(timezone.utc).isoformat()
     data["shows"][show_code] = {
         "code": show_code,
         "name": args.name,
         "template": template_key,
         "root": str(show_root),
+        "git_enabled": git_initialized,
         "created_at": now,
         "updated_at": now,
     }

@@ -111,8 +111,10 @@ def _render_examples() -> None:
         ("Create a new show", 'shows create -c PKU -n "My Show"'),
         ("Add a character", 'assets add -c PKU -t CH -n Hero'),
         ("Add a shot", 'shots add PKU_SH010 "Opening scene"'),
+        ("Delete a show", 'shows delete -c PKU --delete-folders'),
+        ("Delete an asset", 'assets delete PKU_CH_Hero'),
+        ("Delete a shot", 'shots delete PKU_SH010'),
         ("Launch Krita", 'open krita'),
-        ("Launch Blender in background", 'open blender -b'),
         ("List your tasks", 'tasks list'),
     ]
 
@@ -261,31 +263,31 @@ def admin(ctx: typer.Context) -> None:
 
 @app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def shows(ctx: typer.Context) -> None:
-    """Show-level commands (create/list/use/info/etc.)."""
+    """Show-level commands (create/list/use/info/delete/rename)."""
     _passthrough(ctx, shows_main.main, "shows")
 
 
 @app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def assets(ctx: typer.Context) -> None:
-    """Asset-level commands (add/list/info/status/etc.)."""
+    """Asset-level commands (add/list/info/status/delete/rename)."""
     _passthrough(ctx, assets_main.main, "assets")
 
 
 @app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def shots(ctx: typer.Context) -> None:
-    """Shot-level commands (add/list/info/status/etc.)."""
+    """Shot-level commands (add/list/info/status/delete)."""
     _passthrough(ctx, shots_main.main, "shots")
 
 
 @app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def tasks(ctx: typer.Context) -> None:
-    """Task commands for assets/shots."""
+    """Task commands (add/list/status/delete) for assets/shots."""
     _passthrough(ctx, tasks_main.main, "tasks")
 
 
 @app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def versions(ctx: typer.Context) -> None:
-    """Version tracking commands."""
+    """Version tracking commands (new/list/latest/tag/delete)."""
     _passthrough(ctx, versions_main.main, "versions")
 
 
