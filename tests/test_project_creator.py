@@ -40,6 +40,8 @@ def test_create_folders_makes_structure(tmp_path: Path) -> None:
 
 
 def test_cli_happy_path_creates_template(monkeypatch, tmp_path: Path, capsys) -> None:
+    db_path = tmp_path / "db.sqlite3"
+    monkeypatch.setenv("PIPELINE_TOOLS_DB", str(db_path))
     # Point CLI to a temp creative root to avoid touching real paths.
     monkeypatch.setattr(paths, "CREATIVE_ROOT", tmp_path)
     monkeypatch.setattr(
@@ -60,6 +62,8 @@ def test_cli_happy_path_creates_template(monkeypatch, tmp_path: Path, capsys) ->
 
 
 def test_character_thumbnails_default_assets(monkeypatch, tmp_path: Path, capsys) -> None:
+    db_path = tmp_path / "db.sqlite3"
+    monkeypatch.setenv("PIPELINE_TOOLS_DB", str(db_path))
     monkeypatch.setattr(paths, "CREATIVE_ROOT", tmp_path)
     monkeypatch.setattr(ct_main.paths, "CREATIVE_ROOT", tmp_path)
 
@@ -84,6 +88,8 @@ def test_character_thumbnails_default_assets(monkeypatch, tmp_path: Path, capsys
 
 
 def test_character_thumbnails_prepro(monkeypatch, tmp_path: Path) -> None:
+    db_path = tmp_path / "db.sqlite3"
+    monkeypatch.setenv("PIPELINE_TOOLS_DB", str(db_path))
     monkeypatch.setattr(paths, "CREATIVE_ROOT", tmp_path)
     monkeypatch.setattr(ct_main.paths, "CREATIVE_ROOT", tmp_path)
 

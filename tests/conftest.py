@@ -16,6 +16,7 @@ if USER_SITE not in sys.path:
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
-for path in (ROOT, SRC):
+# Prefer local sources over any globally installed package.
+for path in (SRC, ROOT):
     if str(path) not in sys.path:
-        sys.path.append(str(path))
+        sys.path.insert(0, str(path))
