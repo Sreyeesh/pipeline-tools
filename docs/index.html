@@ -98,6 +98,71 @@
         </div>
     </section>
 
+    <!-- Artist Workflow (DMO) -->
+    <section id="dmo-workflow" class="code-example" style="padding-top: 3rem;">
+        <div class="container">
+            <h2 class="section-title scroll-animate">Artist Workflow (DMO example)</h2>
+            <p class="section-subtitle scroll-animate">Launch the interactive menu, then copy/paste at <code>pipely&gt;</code>—no file browsing needed.</p>
+            <div class="code-block scroll-scale">
+<pre><code><span class="code-comment"># 1. Launch Pipely interactive mode</span>
+<span class="code-command">pipely</span>
+
+<span class="code-comment"># 2. At the pipely&gt; prompt, create and select your show:</span>
+<span class="code-command">shows create DMO "Demo" animation_short</span>
+<span class="code-command">shows use -c DMO</span>
+
+<span class="code-comment"># 3. Create the animation bible in 01_ADMIN</span>
+<span class="code-command">admin create --name DMO_animation_bible.md --content "Start your bible here"</span>
+<span class="code-comment"># Or use the bundled template:</span>
+<span class="code-command">admin template -t animation_bible --name DMO_animation_bible.md</span>
+<span class="code-command">admin files --open DMO_animation_bible.md</span>
+
+<span class="code-comment"># 4. Add shots (one per beat)</span>
+<span class="code-command">shots add SH010 First beat</span>
+<span class="code-command">shots add SH020 Second beat</span>
+<span class="code-command">shots add SH030 Third beat</span>
+
+<span class="code-comment"># 5. Add characters</span>
+<span class="code-command">assets add -t CH -n Hero</span>
+<span class="code-command">assets add -t CH -n Supporting_A</span>
+<span class="code-command">assets add -t CH -n Supporting_B</span>
+
+<span class="code-comment"># 6. Add environment & props (use PR for FX beats)</span>
+<span class="code-command">assets add -t ENV -n Main_Set</span>
+<span class="code-command">assets add -t ENV -n Set_Dressing_A</span>
+<span class="code-command">assets add -t ENV -n Set_Dressing_B</span>
+<span class="code-command">assets add -t PR  -n Hero_Prop_A</span>
+<span class="code-command">assets add -t PR  -n FX_Placeholder_A</span>
+
+<span class="code-comment"># 7. Add tasks (design/layout)</span>
+<span class="code-command">tasks add DMO_CH_Hero Design</span>
+<span class="code-command">tasks add DMO_CH_Supporting_A Design</span>
+<span class="code-command">tasks add DMO_ENV_Main_Set Design</span>
+<span class="code-command">tasks add DMO_SH010 Layout</span>
+<span class="code-command">tasks add DMO_SH020 Layout</span>
+<span class="code-command">tasks add DMO_SH030 Layout</span>
+
+<span class="code-comment"># 8. Create workfiles and open in Krita</span>
+<span class="code-command">workfiles add DMO_CH_Hero --kind krita --open</span>
+<span class="code-command">workfiles add DMO_SH010 --kind krita</span>
+
+<span class="code-comment"># 9. Create versions</span>
+<span class="code-command">versions new DMO_CH_Hero design</span>
+<span class="code-command">versions new DMO_SH010 layout</span>
+
+<span class="code-comment"># 10. Check progress</span>
+<span class="code-command">shots list DMO</span>
+<span class="code-command">tasks list DMO_CH_Hero</span>
+<span class="code-command">tasks list DMO_SH010</span>
+<span class="code-command">assets list -c DMO</span>
+<span class="code-command">versions list --shot DMO_SH010</span>
+
+<span class="code-comment"># 💡 TIP: To quickly open your project in an app:</span>
+<span class="code-command"># Quit or Ctrl+C, run "pipely" again, pick your project and app by number.</span></code></pre>
+            </div>
+        </div>
+    </section>
+
     <!-- Artist Workflow Guide -->
     <section id="artist-workflow" class="features" style="padding-top: 2rem;">
         <div class="container">
