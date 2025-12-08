@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.16] - 2025-12-08
+### :memo: Documentation
+- [`2049cb0`](https://github.com/Sreyeesh/pipeline-tools/commit/2049cb0a5d146de41a34d6101b94f82a0dd7c684) - add natural language quick-start examples to README *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+### :wrench: Chores
+- [`69004e2`](https://github.com/Sreyeesh/pipeline-tools/commit/69004e29d65bae9d61c9797e6a1be7f64db2e779) - let changelog action auto-detect latest tag *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`15e1578`](https://github.com/Sreyeesh/pipeline-tools/commit/15e15783a2141463185fda79ca9ea6ae7ddf828d) - skip release-please PR creation to avoid permission failures *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`df0ffbd`](https://github.com/Sreyeesh/pipeline-tools/commit/df0ffbd81081e124ce90d1ee532ea1a081341a4c) - bump version to 0.1.16 *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+### :test_tube: Tests
+- [`43b6141`](https://github.com/Sreyeesh/pipeline-tools/commit/43b61412f7379b86127658dd6ca05be4c482502f) - ensure project root and src are on `sys.path` during CI imports *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+
+## [v0.1.15] - 2025-12-08
+### :bug: Bug Fixes
+- [`bfac175`](https://github.com/Sreyeesh/pipeline-tools/commit/bfac175a97339d0757c7fdc4afb44e43473f083e) - respect env overrides for creative root before DB/default *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`e715f2c`](https://github.com/Sreyeesh/pipeline-tools/commit/e715f2cedfb3b18afbadc13129ae509d8147a2e8) - prioritize `PIPELINE_TOOLS_ROOT` before DB/default *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`c61f7e9`](https://github.com/Sreyeesh/pipeline-tools/commit/c61f7e9b51a0821ef3fe11c2f93d14305ab9e948) - tighten add-asset intent regex and creative root precedence *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`78f5e88`](https://github.com/Sreyeesh/pipeline-tools/commit/78f5e88f01af4a5c9d1e90acf25868f3ba9d57ca) - prefer DB creative root and handle environment asset phrasing *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`9c87716`](https://github.com/Sreyeesh/pipeline-tools/commit/9c87716e663ae94132c28c1af95d46bbcab3d0e1) - default add-asset intent to ENV when type omitted *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`6ae9c0c`](https://github.com/Sreyeesh/pipeline-tools/commit/6ae9c0ccc22a53196c10c57a69c95f2685d8a717) - honor creative root overrides without hijacking open commands *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`32b3bc2`](https://github.com/Sreyeesh/pipeline-tools/commit/32b3bc285235581c76db9fb31460439bf49155e8) - avoid auto-setting default creative root when override is set *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+### :wrench: Chores
+- [`6d16823`](https://github.com/Sreyeesh/pipeline-tools/commit/6d16823080f0d952672c52a988b3671a3aa315f0) - bump version to 0.1.15 *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+### :test_tube: Tests
+- [`916a932`](https://github.com/Sreyeesh/pipeline-tools/commit/916a9325874d4225054a6b81efd315d0eef31edc) - expose user site-packages in pytest to fix import errors *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+
+## [v0.1.14] - 2025-12-08
+### :sparkles: New Features
+- [`0ec8e87`](https://github.com/Sreyeesh/pipeline-tools/commit/0ec8e87f141358680f0f1cf04a576fcecd544385) - add task CRUD intents to the interactive shell *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`bac6f86`](https://github.com/Sreyeesh/pipeline-tools/commit/bac6f8630a22ebfc7376f7eace4ed558765ab525) - add natural language asset wizard in interactive *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+### :test_tube: Tests
+- [`9a5047c`](https://github.com/Sreyeesh/pipeline-tools/commit/9a5047cb3a5127e83622de4c436a2b17f538952b) - cover interactive NLP helpers and task intents *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+### :wrench: Chores
+- [`cb361c1`](https://github.com/Sreyeesh/pipeline-tools/commit/cb361c1d330a0b91416cb1a3cfea5358a7786336) - rollback version to 0.1.14 *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
 ## [v0.1.13] - 2025-12-05
 ### :bug: Bug Fixes
 - [`d8a93a3`](https://github.com/Sreyeesh/pipeline-tools/commit/d8a93a3ac2c61c4741224f0f1dc914cd4205b593) - remove unsupported --python-script flag for Krita launcher *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
