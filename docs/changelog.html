@@ -66,27 +66,38 @@
             <div class="changelog-grid">
                 <div class="changelog-card scroll-fade-left">
                     <div class="changelog-meta">
-                        <span class="version-badge">0.1.10.3</span>
+                        <span class="version-badge">0.1.16</span>
                         <span class="pill hotfix">Hotfix</span>
                     </div>
-                    <p class="changelog-date">2025-12-04</p>
+                    <p class="changelog-date">2025-12-08</p>
                     <ul class="changelog-list">
-                        <li>Fix Blender workfile crash caused by undefined variable.</li>
-                        <li>Create valid Krita files with proper structure and layer data.</li>
-                        <li>Add 'info' command to view project details.</li>
-                        <li>Blender auto-saves to correct versioned filename on Ctrl+S.</li>
+                        <li>Natural language quick-starts for artists (open, add assets, tasks, workspace).</li>
+                        <li>Release pipeline hardened; packaged admin templates ship with installs.</li>
+                        <li>Tests/build use local sources to ensure shipped artifacts match the code.</li>
                     </ul>
                 </div>
                 <div class="changelog-card scroll-fade-right">
                     <div class="changelog-meta">
-                        <span class="version-badge">0.1.10.2</span>
+                        <span class="version-badge">0.1.15</span>
                         <span class="pill hotfix">Hotfix</span>
                     </div>
-                    <p class="changelog-date">2025-12-03</p>
+                    <p class="changelog-date">2025-12-08</p>
                     <ul class="changelog-list">
-                        <li>Interactive workfile picker: browse existing files, open by number, or create new versions.</li>
-                        <li>Add Fountain and Markdown workfile kinds for scripts and docs.</li>
-                        <li>Projects always get .gitignore with 05_WORK/ ignored.</li>
+                        <li>Creative root overrides respected before DB/default across CLI and interactive.</li>
+                        <li>NLP add-asset phrasing improved; default asset type set to ENV when missing.</li>
+                        <li>Tests fixed to include user site-packages for clean imports.</li>
+                    </ul>
+                </div>
+                <div class="changelog-card scroll-fade-left">
+                    <div class="changelog-meta">
+                        <span class="version-badge">0.1.14</span>
+                        <span class="pill hotfix">Hotfix</span>
+                    </div>
+                    <p class="changelog-date">2025-12-08</p>
+                    <ul class="changelog-list">
+                        <li>Interactive NLP: task CRUD intents and asset wizard for artists.</li>
+                        <li>Added helper test coverage for natural language workflows.</li>
+                        <li>Version rollback alignment for stable release stream.</li>
                     </ul>
                 </div>
             </div>
