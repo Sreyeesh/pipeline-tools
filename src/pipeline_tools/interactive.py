@@ -277,6 +277,33 @@ def _derive_show_root_from_asset_path(asset_path: Path) -> Path | None:
             return Path(*parts[:idx])
     return None
 
+
+def _prompt_add_asset(default_show: str | None = None, default_name: str | None = None) -> None:
+    """Lightweight wizard to add an asset when the user types 'add asset'."""
+    from pipeline_tools.cli import app
+
+    console.print()
+    console.print("[bold cyan]Add a new asset[/bold cyan]")
+    show_code = (default_show or input("Show code (e.g., DMO): ")).strip().upper()
+    if not show_code:
+        console.print("[yellow]Cancelled (no show code).[/yellow]")
+        return
+    name = (default_name or input("Asset name (e.g., Forest_BG): ")).strip()
+    if not name:
+        console.print("[yellow]Cancelled (no name).[/yellow]")
+        return
+    console.print("Type options: CH (character), ENV (environment), PR (prop), FX, DES, BLN, SND, RND, SC")
+    asset_type = input("Type: ").strip().upper()
+    if not asset_type:
+        console.print("[yellow]Cancelled (no type).[/yellow]")
+        return
+    try:
+        app(["assets", "add", "-c", show_code, "-t", asset_type, "-n", name], standalone_mode=False)
+    except SystemExit:
+        pass
+    except Exception as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+
 # All available commands and their subcommands
 COMMANDS = {
     "create": ["--interactive", "-c", "--show-code", "-n", "--name", "-t", "--template", "--git", "--git-lfs"],
@@ -972,6 +999,16 @@ def run_interactive():
                         parts = text.split()
 
                 if not text:
+                    continue
+
+                # Asset add helper when no type/name provided
+                m_add_asset = re.match(
+                    r"^(help\\s+me\\s+)?add\\s+asset(?:\\s+(?:called|named)\\s+(?P<name>[A-Za-z0-9._-]+))?(?:\\s+(?:for|in)\\s+show\\s+(?P<show>[A-Za-z0-9_-]+))?$",
+                    text,
+                    flags=re.IGNORECASE,
+                )
+                if m_add_asset:
+                    _prompt_add_asset(default_show=m_add_asset.group("show"), default_name=m_add_asset.group("name"))
                     continue
 
                 # One-shot: "work on <asset> in <dcc> [task <name>]"
