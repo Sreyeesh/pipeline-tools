@@ -518,7 +518,7 @@ def _interpret_natural_command(
 
     # Add asset
     m = re.match(
-        r"^(add|create|new)\s+(?P<type>characters?|ch|env|environment|environments|bg|props?|pr|fx|effects?)\s+asset\s+(?:called|named\s+)?(?P<name>[A-Za-z0-9._-]+)"
+        r"^(add|create|new)\s+(?P<type>characters?|ch|env|environment|environments|bg|props?|pr|fx|effects?)\s+asset\s+(?:(?:called|named)\s+)?(?P<name>[A-Za-z0-9._-]+)"
         r"(?:\s+(?:for|in)\s+show\s+(?P<show>[A-Za-z0-9_-]+))?$",
         cleaned,
         flags=re.IGNORECASE,
@@ -536,7 +536,7 @@ def _interpret_natural_command(
 
     # Explicit environment asset phrasing
     m = re.match(
-        r"^(add|create|new)\s+environment\s+asset\s+(?:called|named\s+)?(?P<name>[A-Za-z0-9._-]+)"
+        r"^(add|create|new)\s+environment\s+asset\s+(?:(?:called|named)\s+)?(?P<name>[A-Za-z0-9._-]+)"
         r"(?:\s+(?:for|in)\s+show\s+(?P<show>[A-Za-z0-9_-]+))?$",
         cleaned,
         flags=re.IGNORECASE,
@@ -551,7 +551,7 @@ def _interpret_natural_command(
 
     # Generic add asset without explicit type defaults to ENV
     m = re.match(
-        r"^(add|create|new)\s+asset\s+(?:called|named\s+)?(?P<name>[A-Za-z0-9._-]+)(?:\s+(?:for|in)\s+show\s+(?P<show>[A-Za-z0-9_-]+))?$",
+        r"^(add|create|new)\s+asset\s+(?:(?:called|named)\s+)?(?P<name>[A-Za-z0-9._-]+)(?:\s+(?:for|in)\s+show\s+(?P<show>[A-Za-z0-9_-]+))?$",
         cleaned,
         flags=re.IGNORECASE,
     )

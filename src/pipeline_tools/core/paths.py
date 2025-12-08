@@ -41,6 +41,10 @@ _PREFIX_BY_TEMPLATE = {
 
 
 def get_creative_root() -> Path:
+    # Explicit override in code/config should win first (helps tests/monkeypatch)
+    if CREATIVE_ROOT:
+        return Path(CREATIVE_ROOT)
+
     env_root = os.environ.get("PIPELINE_TOOLS_ROOT")
     if env_root:
         return Path(env_root)
@@ -54,7 +58,9 @@ def get_creative_root() -> Path:
         # If config cannot be read, keep going with defaults.
         cfg_root = None
 
-    # Stored creative_root in DB should win unless an explicit override is set
+    # Order: explicit env override -> explicit code override -> DB config -> auto/default
+    if CREATIVE_ROOT:
+        return Path(CREATIVE_ROOT)
     if cfg_root:
         return Path(cfg_root)
     if CREATIVE_ROOT:
