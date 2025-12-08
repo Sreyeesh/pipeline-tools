@@ -54,11 +54,11 @@ def get_creative_root() -> Path:
         # If config cannot be read, keep going with defaults.
         cfg_root = None
 
-    # Explicit override in code/config should win over stored config
-    if CREATIVE_ROOT:
-        return Path(CREATIVE_ROOT)
+    # Stored creative_root in DB should win unless an explicit override is set
     if cfg_root:
         return Path(cfg_root)
+    if CREATIVE_ROOT:
+        return Path(CREATIVE_ROOT)
 
     if CREATIVE_ROOT:
         return Path(CREATIVE_ROOT)
