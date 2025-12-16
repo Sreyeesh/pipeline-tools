@@ -11,6 +11,7 @@
     pipeline_tools_manage_system_packages: true  # set false to skip apt tasks when sudo is unavailable
     pipeline_tools_can_sudo: true
     pipeline_tools_pip_flags: ""
+    pipeline_tools_install_screenplain: true  # install fountain->PDF exporter
 
   pre_tasks:
     - name: Check sudo availability for system package installs
@@ -84,6 +85,18 @@
       command: >
         pipx install --force "{{ pipeline_tools_src }}"
       when: pipeline_tools_installer == "pipx"
+
+    - name: Install screenplain (Fountain -> PDF helper)
+      ansible.builtin.command: >
+        {{ pipeline_tools_python }} -m pip install --user --upgrade screenplain
+      environment: "{{ pipeline_tools_env | default({}) }}"
+      when: pipeline_tools_install_screenplain | default(true)
+
+    - name: Install screenplain dependency (reportlab)
+      ansible.builtin.command: >
+        {{ pipeline_tools_python }} -m pip install --user --upgrade reportlab
+      environment: "{{ pipeline_tools_env | default({}) }}"
+      when: pipeline_tools_install_screenplain | default(true)
 
     - name: Install pipely via pip (user site)
       ansible.builtin.command: >

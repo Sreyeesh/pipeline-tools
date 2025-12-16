@@ -59,3 +59,42 @@ def test_delete_show_removes_db_and_folder(tmp_path):
     assert all(k.startswith("PKU_") is False for k in saved.get("shots", {}))
     assert "PKU_SH010" not in saved.get("tasks", {})
     assert all(v.get("show_code") != "PKU" for v in saved.get("versions", {}).values())
+
+
+def test_delete_show_removes_secondary_creative_root(tmp_path, monkeypatch):
+    _with_temp_db(tmp_path)
+    now = datetime.utcnow().isoformat()
+    db_root = tmp_path / "temp_storage" / "AN_PKU_TestShow"
+    db_root.mkdir(parents=True, exist_ok=True)
+
+    creative_root = tmp_path / "artist_root"
+    creative_root.mkdir()
+    duplicate_folder = creative_root / "AN_PKU_TestShow"
+    duplicate_folder.mkdir()
+
+    data = {
+        "shows": {
+            "PKU": {
+                "code": "PKU",
+                "name": "TestShow",
+                "template": "animation_short",
+                "root": str(db_root),
+                "created_at": now,
+                "updated_at": now,
+            }
+        },
+        "assets": {},
+        "shots": {},
+        "tasks": {},
+        "versions": {},
+        "current_show": "PKU",
+    }
+    db.save_db(data)
+
+    monkeypatch.setenv("PIPELINE_TOOLS_ROOT", str(creative_root))
+
+    args = shows_main.parse_args(["delete", "-c", "PKU", "--delete-folders"])
+    shows_main.cmd_delete(args)
+
+    assert not db_root.exists()
+    assert not duplicate_folder.exists()

@@ -108,12 +108,12 @@ def _render_examples() -> None:
     console.print()
 
     examples = [
-        ("Create a new show", 'shows create -c PKU -n "My Show"'),
-        ("Add a character", 'assets add -c PKU -t CH -n Hero'),
-        ("Add a shot", 'shots add PKU_SH010 "Opening scene"'),
-        ("Delete a show", 'shows delete -c PKU --delete-folders'),
-        ("Delete an asset", 'assets delete PKU_CH_Hero'),
-        ("Delete a shot", 'shots delete PKU_SH010'),
+        ("Create a new show", 'shows create -c DEMO -n "My Show"'),
+        ("Add a character", 'assets add -c DEMO -t CH -n Hero'),
+        ("Add a shot", 'shots add DEMO_SH010 "Opening scene"'),
+        ("Delete a show", 'shows delete -c DEMO --delete-folders'),
+        ("Delete an asset", 'assets delete DEMO_CH_Hero'),
+        ("Delete a shot", 'shots delete DEMO_SH010'),
         ("Launch Krita", 'open krita'),
         ("List your tasks", 'tasks list'),
     ]
@@ -317,7 +317,10 @@ def project(ctx: typer.Context) -> None:
 
 @app.command()
 def open(
-    dcc_name: str = typer.Argument(..., help="DCC name (krita, blender, photoshop, etc.)"),
+    dcc_name: str | None = typer.Argument(
+        None,
+        help="DCC name (krita, blender, photoshop, godot, unreal, unity, etc.). Optional when using --list/--list-projects.",
+    ),
     background: bool = typer.Option(False, "-b", "--background", help="Launch in background"),
     list_dccs: bool = typer.Option(False, "-l", "--list", help="List supported DCCs"),
     list_projects: bool = typer.Option(False, "--list-projects", help="List available projects"),
@@ -392,7 +395,7 @@ def open(
         table.add_column("Path", style="dim")
 
         for dcc in sorted(DCC_PATHS.keys()):
-            exe = get_dcc_executable(dcc)
+            exe = get_dcc_executable(dcc, allow_deep_search=False)
             if exe:
                 table.add_row("✓", dcc.capitalize(), f"[green]{exe}[/green]")
             else:
@@ -401,6 +404,13 @@ def open(
         console.print(table)
         console.print()
         return
+
+    if not dcc_name:
+        console.print()
+        console.print("[red bold]❌ DCC name is required[/red bold]")
+        console.print("[dim]Tip: use [cyan]pipely open --list[/cyan] to see supported apps[/dim]")
+        console.print()
+        raise typer.Exit(1)
 
     # Handle project selection
     project_root = None

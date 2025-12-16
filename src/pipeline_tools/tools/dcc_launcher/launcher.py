@@ -112,21 +112,146 @@ DCC_PATHS = {
             "code",
         ],
     },
+    "godot": {
+        "Linux": [
+            "/usr/bin/godot4",
+            "/usr/local/bin/godot4",
+            "godot4",
+            "/usr/bin/godot",
+            "/usr/local/bin/godot",
+            "godot",
+        ],
+        "Windows": [
+            r"C:/Program Files/Godot/Godot4.exe",
+            r"C:/Program Files/Godot/Godot.exe",
+            r"C:/Program Files/Godot/Godot_v4.2-stable_win64.exe",
+            "godot4.exe",
+            "godot.exe",
+        ],
+        "Darwin": [
+            "/Applications/Godot.app/Contents/MacOS/Godot",
+            "/Applications/Godot_mono.app/Contents/MacOS/Godot",
+            "godot",
+        ],
+    },
+    "unity": {
+        "Linux": [
+            "/usr/bin/unity-editor",
+            "/usr/local/bin/unity-editor",
+            "/opt/Unity/Editor/Unity",
+            "unity-editor",
+            "unity",
+        ],
+        "Windows": [
+            r"C:/Program Files/Unity/Hub/Editor/2022.3.0f1/Editor/Unity.exe",
+            r"C:/Program Files/Unity/Hub/Editor/2021.3.0f1/Editor/Unity.exe",
+            r"C:/Program Files/Unity/Hub/Editor/2020.3.0f1/Editor/Unity.exe",
+            r"C:/Program Files/Unity/Editor/Unity.exe",
+            "Unity.exe",
+        ],
+        "Darwin": [
+            "/Applications/Unity/Hub/Editor/2022.3.0f1/Unity.app/Contents/MacOS/Unity",
+            "/Applications/Unity/Hub/Editor/2021.3.0f1/Unity.app/Contents/MacOS/Unity",
+            "/Applications/Unity/Hub/Editor/2020.3.0f1/Unity.app/Contents/MacOS/Unity",
+            "/Applications/Unity/Unity.app/Contents/MacOS/Unity",
+            "Unity",
+        ],
+    },
+    "unreal": {
+        "Linux": [
+            "/usr/local/bin/UnrealEditor",
+            "/opt/UnrealEngine/Engine/Binaries/Linux/UnrealEditor",
+            "/opt/UnrealEngine-4.27/Engine/Binaries/Linux/UE4Editor",
+            "UnrealEditor",
+            "UE4Editor",
+        ],
+        "Windows": [
+            r"C:/Program Files/Epic Games/UE_5.3/Engine/Binaries/Win64/UnrealEditor.exe",
+            r"C:/Program Files/Epic Games/UE_5.2/Engine/Binaries/Win64/UnrealEditor.exe",
+            r"C:/Program Files/Epic Games/UE_5.1/Engine/Binaries/Win64/UnrealEditor.exe",
+            r"C:/Program Files/Epic Games/UE_4.27/Engine/Binaries/Win64/UE4Editor.exe",
+            "UnrealEditor.exe",
+            "UE4Editor.exe",
+        ],
+        "Darwin": [
+            "/Applications/Epic Games/UE_5.3/Engine/Binaries/Mac/UnrealEditor.app/Contents/MacOS/UnrealEditor",
+            "/Applications/Epic Games/UE_5.2/Engine/Binaries/Mac/UnrealEditor.app/Contents/MacOS/UnrealEditor",
+            "/Applications/Unreal Engine/5.3/UE.app/Contents/MacOS/UnrealEditor",
+            "UnrealEditor",
+        ],
+    },
 }
 
+_DCC_EXEC_CACHE: dict[tuple[str, bool], Optional[str]] = {}
 
-def get_dcc_executable(dcc_name: str) -> Optional[str]:
+
+def _search_windows_drive(executable_names: list[str]) -> Optional[str]:
+    """
+    Light-weight search for executables on Windows/WSL in common locations.
+
+    Avoids a full C: crawl by limiting to Program Files roots and a shallow depth.
+    """
+    system = platform.system()
+    if system not in {"Windows", "Linux"}:
+        return None
+
+    # Map to Windows or WSL paths
+    if system == "Windows":
+        roots = [
+            r"C:\Program Files",
+            r"C:\Program Files (x86)",
+            r"C:\Program Files\Epic Games",
+            r"C:\Program Files\Unity",
+            r"C:\Program Files\Godot",
+        ]
+    else:
+        if not os.path.exists("/mnt/c"):
+            return None
+        roots = [
+            "/mnt/c/Program Files",
+            "/mnt/c/Program Files (x86)",
+            "/mnt/c/Program Files/Epic Games",
+            "/mnt/c/Program Files/Unity",
+            "/mnt/c/Program Files/Godot",
+        ]
+
+    # Limit depth to avoid huge walks
+    max_depth = 5
+    lower_targets = {exe.lower() for exe in executable_names}
+
+    for root in roots:
+        if not os.path.exists(root):
+            continue
+        for dirpath, dirnames, filenames in os.walk(root):
+            depth = dirpath.count(os.sep) - root.count(os.sep)
+            if depth >= max_depth:
+                dirnames[:] = []  # prune deeper traversal
+            lower_files = {f.lower() for f in filenames}
+            matches = lower_targets & lower_files
+            if matches:
+                # Return the first matched executable path
+                match = matches.pop()
+                return os.path.join(dirpath, match)
+    return None
+
+def get_dcc_executable(dcc_name: str, *, allow_deep_search: bool = True) -> Optional[str]:
     """
     Find the DCC executable path for the current platform.
 
     Args:
         dcc_name: Name of the DCC (krita, blender, photoshop, etc.)
+        allow_deep_search: If False, skip the expensive Windows drive crawl.
 
     Returns:
         Path to executable if found, None otherwise
     """
     system = platform.system()
     dcc_name_lower = dcc_name.lower()
+    linux_paths = tuple(DCC_PATHS[dcc_name_lower].get(system, []))
+    windows_paths = tuple(DCC_PATHS[dcc_name_lower].get("Windows", []))
+    cache_key = (dcc_name_lower, bool(allow_deep_search), linux_paths, windows_paths)
+    if cache_key in _DCC_EXEC_CACHE:
+        return _DCC_EXEC_CACHE[cache_key]
 
     if dcc_name_lower not in DCC_PATHS:
         return None
@@ -151,6 +276,7 @@ def get_dcc_executable(dcc_name: str) -> Optional[str]:
     for path in paths:
         # Check if it's an absolute path that exists
         if os.path.isabs(path) and os.path.exists(path):
+            _DCC_EXEC_CACHE[cache_key] = path
             return path
 
         # Try to find in PATH
@@ -161,15 +287,30 @@ def get_dcc_executable(dcc_name: str) -> Optional[str]:
                 [cmd, path],
                 capture_output=True,
                 text=True,
-                check=False
+                check=False,
+                timeout=1,
             )
             if result.returncode == 0:
                 found_path = result.stdout.strip().split('\n')[0]
                 if found_path:
+                    _DCC_EXEC_CACHE[cache_key] = found_path
                     return found_path
+        except subprocess.TimeoutExpired:
+            continue
         except Exception:
             continue
 
+    # Fallback: shallow scan of common Windows/WSL locations on C:
+    if allow_deep_search and system in {"Windows", "Linux"}:
+        executable_names = {Path(p).name for p in DCC_PATHS[dcc_name_lower].get("Windows", []) if p}
+        # Also consider simple "<name>.exe" if not already included
+        executable_names.add(f"{dcc_name_lower}.exe")
+        found = _search_windows_drive(sorted(executable_names))
+        if found:
+            _DCC_EXEC_CACHE[cache_key] = found
+            return found
+
+    _DCC_EXEC_CACHE[cache_key] = None
     return None
 
 

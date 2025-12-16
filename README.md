@@ -2,7 +2,7 @@
 
 Artist-friendly CLI for creating and managing pipeline folder structures for creative production workflows (animation, game dev, drawing projects).
 
-**Version:** 0.1.16 | **License:** MIT | **Python:** 3.8+
+**Version:** 0.1.17 | **License:** MIT | **Python:** 3.8+
 
 🌐 **[Visit the Official Website](https://sreyeesh.github.io/pipeline-tools/)** | 📦 **[Download Latest Release](https://github.com/Sreyeesh/pipeline-tools/releases/latest)**
 
@@ -65,7 +65,7 @@ Run `pipely` (no args) to open the interactive prompt with quick actions and nat
 - Type `info` to view current project details (branch, status) without opening an app
 
 #### Step 2: Pick Your App
-- Select Blender, Krita, PureRef, or other installed DCCs by number
+- Select Blender, Krita, PureRef, Godot, Unity, Unreal, or other installed DCCs by number
 - Or type the app name directly (e.g., `blender`, `krita`)
 
 #### Step 3: Pick Your File (New Interactive Picker!)
@@ -209,10 +209,14 @@ git push origin main
 
 ### Manual Release (if needed)
 ```sh
-# Bump version manually
+# Bump version manually (run from dev if you're staging a local-only build;
+# switch to main before tagging/publishing)
 make set-version VERSION=0.1.13
 
 # Create tag and push
+git checkout main
+git pull
+git cherry-pick <your-dev-commit>
 git add pyproject.toml src/pipeline_tools/__init__.py
 git commit -m "chore: bump version to 0.1.13"
 git push origin main
@@ -221,6 +225,16 @@ git push origin v0.1.13
 
 # Install locally
 make release-local
+
+# Local builds
+# Run these from dev (local release staging branch)
+git checkout dev
+make release-local
+
+# Automate dev → main release (local install, merge, tag, Ansible release)
+# VERSION must include the leading v (e.g., v0.1.17)
+git checkout dev
+make release-dev-cycle VERSION=v0.1.17
 ```
 
 ### GitHub Actions CI/CD

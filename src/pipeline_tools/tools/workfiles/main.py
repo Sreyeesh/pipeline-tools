@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 import subprocess
+import shutil
 from pathlib import Path
 from typing import Iterable
 
@@ -43,6 +44,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     c_open.add_argument("--kind", "-k", help="Kind to filter (krita, blender, etc.).")
     c_open.add_argument("--file", "-f", help="Explicit file path to open.")
     c_open.add_argument("--show-code", "-c", help="Show code (defaults to derived prefix or current show).")
+
+    c_export = sub.add_parser("export", help="Export a workfile (currently Fountain -> PDF).")
+    c_export.add_argument("--file", "-f", required=True, help="Path to the source workfile (Fountain).")
+    c_export.add_argument("--out", "-o", help="Destination PDF path (default: alongside source).")
 
     return parser.parse_args(argv)
 
@@ -276,6 +281,60 @@ def cmd_add(args: argparse.Namespace) -> None:
         _open_workfile(path, kind)
 
 
+def _export_fountain(src: Path, dst: Path) -> None:
+    if not src.exists():
+        print(f"File not found: {src}")
+        sys.exit(1)
+    dst.parent.mkdir(parents=True, exist_ok=True)
+
+    # Prefer afterwriting (Node), fallback to screenplain if installed
+    afterwriting = shutil.which("afterwriting")
+    screenplain = shutil.which("screenplain")
+
+    if afterwriting:
+        cmd = [afterwriting, "convert", "--source", str(src), "--pdf", str(dst)]
+        try:
+            subprocess.run(cmd, check=True)
+            print(f"Exported PDF: {dst}")
+            return
+        except subprocess.CalledProcessError as exc:
+            print(f"Export failed with command: {' '.join(cmd)}")
+            print(exc)
+            sys.exit(exc.returncode or 1)
+
+    if screenplain:
+        try:
+            import reportlab  # type: ignore # noqa: F401
+        except ImportError:
+            print("screenplain is installed but missing dependency 'reportlab'. Install it with: pip install reportlab")
+            sys.exit(1)
+        # screenplain writes to stdout; pipe to the target PDF and force format
+        cmd = [screenplain, "--format", "pdf", str(src)]
+        try:
+            with dst.open("wb") as fh:
+                subprocess.run(cmd, check=True, stdout=fh)
+            print(f"Exported PDF: {dst}")
+            return
+        except subprocess.CalledProcessError as exc:
+            print(f"Export failed with command: {' '.join(cmd)}")
+            print(exc)
+            sys.exit(exc.returncode or 1)
+
+    print("No exporter found. Install 'afterwriting' (npm) or 'screenplain' (pip).")
+    sys.exit(1)
+
+
+def cmd_export(args: argparse.Namespace) -> None:
+    src = Path(args.file)
+    if not args.out:
+        dst = src.with_suffix(".pdf")
+    else:
+        dst = Path(args.out)
+        if dst.is_dir():
+            dst = dst / (src.stem + ".pdf")
+    _export_fountain(src, dst)
+
+
 def _iter_workfiles(base: Path) -> Iterable[Path]:
     if not base.exists():
         return []
@@ -359,6 +418,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_list(args)
     elif args.command == "open":
         cmd_open(args)
+    elif args.command == "export":
+        cmd_export(args)
     else:
         print("Unknown command")
         sys.exit(1)
