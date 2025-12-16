@@ -89,7 +89,9 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"  # Remove 'v' prefix
-          CHANGES="${{ steps.changelog.outputs.changes }}"
+          read -r -d '' CHANGES <<'EOT'
+${{ steps.changelog.outputs.changes }}
+EOT
           SUMMARY=$(echo "$CHANGES" | head -n 3 | tail -n 1 | sed 's/^[*-] //' | cut -c 1-120)
 
           # Update docs/index.html changelog section
