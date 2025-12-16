@@ -5,7 +5,7 @@ ANSIBLE_VENV ?= .ansible-venv
 ANSIBLE_BIN := $(ANSIBLE_VENV)/bin/ansible-playbook
 PIPELINE_TOOLS_PIP_FLAGS ?=
 INSTALLER ?= pipx
-VERSION ?= v0.1.0
+VERSION ?= v0.1.17
 # Derive org/name from origin URL; override with REPO=org/name.
 REPO ?= $(shell git config --get remote.origin.url | sed -E 's#.*/([^/]+/[^/.]+)(\.git)?#\1#')
 
@@ -132,6 +132,18 @@ release-ansible:
 release-local:
 	@if [ "$$(git rev-parse --abbrev-ref HEAD)" != "main" ] && [ "$$(git rev-parse --abbrev-ref HEAD)" != "dev" ]; then echo "Release install should be run from main or dev"; exit 1; fi
 	$(ANSIBLE_PLAYBOOK) -i localhost, -c local ansible/pipely.yml -e pipeline_tools_installer=$(INSTALLER)
+
+release-dev-cycle:
+	@if [ "$$(git rev-parse --abbrev-ref HEAD)" != "dev" ]; then echo "Start the release cycle from the dev branch"; exit 1; fi
+	@if ! git diff --quiet; then echo "Working tree not clean; commit or stash first"; exit 1; fi
+	$(MAKE) release-local
+	git checkout main
+	git pull --ff-only
+	git merge --ff-only dev
+	$(MAKE) release-tag VERSION=$(VERSION)
+	$(MAKE) release-ansible VERSION=$(VERSION)
+	git checkout dev
+	git merge --ff-only main
 
 install-hooks:
 	@if [ ! -d .git/hooks ]; then echo ".git/hooks not found; run inside a git clone."; exit 1; fi
