@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.17] - 2025-12-16
+### :sparkles: New Features
+- [`bac6f86`](https://github.com/Sreyeesh/pipeline-tools/commit/bac6f8630a22ebfc7376f7eace4ed558765ab525) - add asset wizard intent for interactive *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`fd7bb5d`](https://github.com/Sreyeesh/pipeline-tools/commit/fd7bb5d141b3d645aefead1647777754fa531fcc) - refresh interactive shell and DCC launcher *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+### :bug: Bug Fixes
+- [`32b3bc2`](https://github.com/Sreyeesh/pipeline-tools/commit/32b3bc285235581c76db9fb31460439bf49155e8) - respect creative_root override before auto-setting default *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`6ae9c0c`](https://github.com/Sreyeesh/pipeline-tools/commit/6ae9c0ccc22a53196c10c57a69c95f2685d8a717) - honor creative_root override and avoid hijacking open commands *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`9c87716`](https://github.com/Sreyeesh/pipeline-tools/commit/9c87716e663ae94132c28c1af95d46bbcab3d0e1) - respect DB creative_root; default asset intent to ENV *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`78f5e88`](https://github.com/Sreyeesh/pipeline-tools/commit/78f5e88f01af4a5c9d1e90acf25868f3ba9d57ca) - prefer DB creative_root and handle environment asset phrase *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`c61f7e9`](https://github.com/Sreyeesh/pipeline-tools/commit/c61f7e9b51a0821ef3fe11c2f93d14305ab9e948) - regex for add asset intent and prioritize CREATIVE_ROOT in get_creative_root *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`e715f2c`](https://github.com/Sreyeesh/pipeline-tools/commit/e715f2cedfb3b18afbadc13129ae509d8147a2e8) - prioritize PIPELINE_TOOLS_ROOT before DB/default *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`bfac175`](https://github.com/Sreyeesh/pipeline-tools/commit/bfac175a97339d0757c7fdc4afb44e43473f083e) - use env then explicit override before DB for creative root *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`2b8c13b`](https://github.com/Sreyeesh/pipeline-tools/commit/2b8c13bbb54bbaa37f2e345df224bffc7a4fb4ac) - package templates and isolate tests from user DB *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+### :white_check_mark: Tests
+- [`9a5047c`](https://github.com/Sreyeesh/pipeline-tools/commit/9a5047cb3a5127e83622de4c436a2b17f538952b) - cover interactive NLP helpers and task intents *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`916a932`](https://github.com/Sreyeesh/pipeline-tools/commit/916a9325874d4225054a6b81efd315d0eef31edc) - make user site-packages available in pytest *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`43b6141`](https://github.com/Sreyeesh/pipeline-tools/commit/43b61412f7379b86127658dd6ca05be4c482502f) - add project root/src to sys.path for CI imports *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+### :wrench: Chores
+- [`cb361c1`](https://github.com/Sreyeesh/pipeline-tools/commit/cb361c1d330a0b91416cb1a3cfea5358a7786336) - rollback version to 0.1.14 *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`6d16823`](https://github.com/Sreyeesh/pipeline-tools/commit/6d16823080f0d952672c52a988b3671a3aa315f0) - bump version to 0.1.15 *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`df0ffbd`](https://github.com/Sreyeesh/pipeline-tools/commit/df0ffbd81081e124ce90d1ee532ea1a081341a4c) - bump version to 0.1.16 *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`7137b0d`](https://github.com/Sreyeesh/pipeline-tools/commit/7137b0dd19abf81234cb38d14175ed77e81260d5) - bump version to 0.1.17 *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`dd7dd30`](https://github.com/Sreyeesh/pipeline-tools/commit/dd7dd30bab830c50a888e89d9188cb9016686324) - document release flow and add dev cycle target *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`b7ef672`](https://github.com/Sreyeesh/pipeline-tools/commit/b7ef6727080d99382a09d610588ee42b9ac18018) - ignore Windows drive artifact *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
 ## [v0.1.16] - 2025-12-08
 ### :bug: Bug Fixes
 - [`2b8c13b`](https://github.com/Sreyeesh/pipeline-tools/commit/2b8c13b63046c3d15c9787c2abf94b6e574cb7bf) - package admin templates and isolate tests from user DB paths *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*

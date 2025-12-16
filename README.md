@@ -213,6 +213,9 @@ git push origin main
 # switch to main before tagging/publishing)
 make set-version VERSION=0.1.13
 
+# Update CHANGELOG.md with the new highlights
+$EDITOR CHANGELOG.md
+
 # Create tag and push
 git checkout main
 git pull
