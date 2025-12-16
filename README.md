@@ -238,6 +238,11 @@ make release-local
 # VERSION must include the leading v (e.g., v0.1.17)
 git checkout dev
 make release-dev-cycle VERSION=v0.1.17
+
+# Scheduling notes
+# - Hotfixes / patch releases can run any day. Set ALLOW_NON_MONDAY=true when calling make release-ansible.
+# - Minor releases (new features) should also run immediately once ready.
+# - Major releases are Monday-only unless explicitly overridden (policy safety valve).
 ```
 
 ### GitHub Actions CI/CD
