@@ -2,7 +2,7 @@
 
 Artist-friendly CLI for creating and managing pipeline folder structures for creative production workflows (animation, game dev, drawing projects).
 
-**Version:** 0.1.16 | **License:** MIT | **Python:** 3.8+
+**Version:** 0.1.17 | **License:** MIT | **Python:** 3.8+
 
 🌐 **[Visit the Official Website](https://sreyeesh.github.io/pipeline-tools/)** | 📦 **[Download Latest Release](https://github.com/Sreyeesh/pipeline-tools/releases/latest)**
 
@@ -65,7 +65,7 @@ Run `pipely` (no args) to open the interactive prompt with quick actions and nat
 - Type `info` to view current project details (branch, status) without opening an app
 
 #### Step 2: Pick Your App
-- Select Blender, Krita, PureRef, or other installed DCCs by number
+- Select Blender, Krita, PureRef, Godot, Unity, Unreal, or other installed DCCs by number
 - Or type the app name directly (e.g., `blender`, `krita`)
 
 #### Step 3: Pick Your File (New Interactive Picker!)
