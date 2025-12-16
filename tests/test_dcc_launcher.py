@@ -30,6 +30,36 @@ def test_get_dcc_executable_wsl_converts_windows_path(monkeypatch):
     assert result == "/mnt/c/Program Files/Fake/fake.exe"
 
 
+def test_get_dcc_executable_searches_extra_windows_mounts(tmp_path, monkeypatch):
+    monkeypatch.setattr(launcher.platform, "system", lambda: "Linux")
+    program_root = tmp_path / "Program Files"
+    program_root.mkdir()
+    fake_root = program_root / "Epic Games"
+    exe = fake_root / "UE_5.3" / "Engine" / "Binaries" / "Win64" / "UnrealEditor.exe"
+    exe.parent.mkdir(parents=True)
+    exe.write_text("")
+
+    monkeypatch.setattr(
+        launcher,
+        "_detect_windows_roots",
+        lambda system: [str(program_root)],
+    )
+
+    monkeypatch.setattr(
+        launcher,
+        "DCC_PATHS",
+        {
+            "unreal": {
+                "Linux": [],
+                "Windows": ["C:/Program Files/Epic Games/UE_5.3/Engine/Binaries/Win64/UnrealEditor.exe"],
+            }
+        },
+    )
+
+    result = launcher.get_dcc_executable("unreal")
+    assert result == str(exe)
+
+
 def test_get_dcc_executable_skips_deep_search_when_disabled(monkeypatch):
     monkeypatch.setattr(launcher.platform, "system", lambda: "Linux")
     monkeypatch.setattr(

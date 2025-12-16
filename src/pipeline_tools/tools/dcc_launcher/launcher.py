@@ -182,7 +182,55 @@ DCC_PATHS = {
     },
 }
 
-_DCC_EXEC_CACHE: dict[tuple[str, bool], Optional[str]] = {}
+_DCC_EXEC_CACHE: dict[tuple[str, bool, tuple[str, ...], tuple[str, ...]], Optional[str]] = {}
+
+
+def _detect_windows_roots(system: str) -> list[str]:
+    """
+    Return likely Program Files roots for Windows/WSL systems.
+    """
+    roots: list[str] = []
+    seen: set[str] = set()
+
+    def add(path: str) -> None:
+        if not path or path in seen:
+            return
+        if os.path.exists(path):
+            seen.add(path)
+            roots.append(path)
+
+    if system == "Windows":
+        base_candidates = [
+            r"C:/Program Files",
+            r"C:/Program Files (x86)",
+        ]
+        for base in base_candidates:
+            add(base)
+            add(os.path.join(base, "Epic Games"))
+            add(os.path.join(base, "Unity"))
+            add(os.path.join(base, "Godot"))
+    else:
+        import string
+
+        for letter in string.ascii_lowercase:
+            mount = f"/mnt/{letter}"
+            if not os.path.exists(mount):
+                continue
+            base = f"{mount}/Program Files"
+            base_x86 = f"{mount}/Program Files (x86)"
+            for candidate in (
+                base,
+                base_x86,
+                f"{base}/Epic Games",
+                f"{base}/Unity",
+                f"{base}/Godot",
+                f"{base_x86}/Epic Games",
+                f"{base_x86}/Unity",
+                f"{base_x86}/Godot",
+            ):
+                add(candidate)
+
+    return roots
 
 
 def _search_windows_drive(executable_names: list[str]) -> Optional[str]:
@@ -195,25 +243,9 @@ def _search_windows_drive(executable_names: list[str]) -> Optional[str]:
     if system not in {"Windows", "Linux"}:
         return None
 
-    # Map to Windows or WSL paths
-    if system == "Windows":
-        roots = [
-            r"C:\Program Files",
-            r"C:\Program Files (x86)",
-            r"C:\Program Files\Epic Games",
-            r"C:\Program Files\Unity",
-            r"C:\Program Files\Godot",
-        ]
-    else:
-        if not os.path.exists("/mnt/c"):
-            return None
-        roots = [
-            "/mnt/c/Program Files",
-            "/mnt/c/Program Files (x86)",
-            "/mnt/c/Program Files/Epic Games",
-            "/mnt/c/Program Files/Unity",
-            "/mnt/c/Program Files/Godot",
-        ]
+    roots = _detect_windows_roots(system)
+    if not roots:
+        return None
 
     # Limit depth to avoid huge walks
     max_depth = 5
@@ -226,12 +258,12 @@ def _search_windows_drive(executable_names: list[str]) -> Optional[str]:
             depth = dirpath.count(os.sep) - root.count(os.sep)
             if depth >= max_depth:
                 dirnames[:] = []  # prune deeper traversal
-            lower_files = {f.lower() for f in filenames}
-            matches = lower_targets & lower_files
+            lower_map = {f.lower(): f for f in filenames}
+            matches = lower_targets & set(lower_map.keys())
             if matches:
                 # Return the first matched executable path
                 match = matches.pop()
-                return os.path.join(dirpath, match)
+                return os.path.join(dirpath, lower_map[match])
     return None
 
 def get_dcc_executable(dcc_name: str, *, allow_deep_search: bool = True) -> Optional[str]:
