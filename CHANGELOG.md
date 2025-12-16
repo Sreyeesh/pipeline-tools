@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [`e715f2c`](https://github.com/Sreyeesh/pipeline-tools/commit/e715f2cedfb3b18afbadc13129ae509d8147a2e8) - prioritize PIPELINE_TOOLS_ROOT before DB/default *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
 - [`bfac175`](https://github.com/Sreyeesh/pipeline-tools/commit/bfac175a97339d0757c7fdc4afb44e43473f083e) - use env then explicit override before DB for creative root *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
 - [`2b8c13b`](https://github.com/Sreyeesh/pipeline-tools/commit/2b8c13bbb54bbaa37f2e345df224bffc7a4fb4ac) - package templates and isolate tests from user DB *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`97e040c`](https://github.com/Sreyeesh/pipeline-tools/commit/97e040cf923fd08e04eb89a768203b25a79e3b06) - auto-detect Unreal 5.4–5.6 installs on Windows/WSL *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
 
 ### :white_check_mark: Tests
 - [`9a5047c`](https://github.com/Sreyeesh/pipeline-tools/commit/9a5047cb3a5127e83622de4c436a2b17f538952b) - cover interactive NLP helpers and task intents *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
