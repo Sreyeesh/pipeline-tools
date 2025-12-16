@@ -281,15 +281,31 @@ def cmd_delete(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     root = Path(show["root"])
-    if root.exists():
-        if args.delete_folders:
+    alternate_root = make_show_root(
+        show["code"],
+        show.get("name", show["code"]),
+        template_key=show.get("template"),
+    )
+
+    if args.delete_folders:
+        candidates: list[Path] = []
+        seen: set[Path] = set()
+        for candidate in (root, alternate_root):
+            if candidate not in seen:
+                candidates.append(candidate)
+                seen.add(candidate)
+
+        for candidate in candidates:
+            if not candidate.exists():
+                continue
             try:
-                shutil.rmtree(root)
-                print(f"Deleted show folder: {root}")
+                shutil.rmtree(candidate)
+                print(f"Deleted show folder: {candidate}")
             except Exception as exc:
-                print(f"Failed to delete show folder '{root}': {exc}")
+                print(f"Failed to delete show folder '{candidate}': {exc}")
                 sys.exit(1)
-        elif not args.force:
+    else:
+        if root.exists() and not args.force:
             print(
                 f"Show folder exists at {root}. Delete it, use --delete-folders to remove it automatically, or pass --force to keep folders and only remove the DB record."
             )

@@ -20,7 +20,75 @@ from rich.table import Table
 
 from pipeline_tools.core import db
 from pipeline_tools.tools.project_creator.templates import TEMPLATES
-from pipeline_tools.tools.workfiles.main import KIND_EXTENSIONS
+from pipeline_tools.interactive_commands import (
+    COMMANDS,
+    COMMAND_DESCRIPTIONS,
+    ASSET_TYPE_ALIASES,
+    split_user_commands,
+    normalize_shorthand_command,
+    interpret_natural_command,
+    infer_show_code_token,
+    preferred_show_code,
+)
+from pipeline_tools.interactive_ui import (
+    workspace_summary,
+    project_structure,
+    render_quick_actions,
+    render_core_loop,
+    artist_workfile_menu,
+)
+
+_workspace_summary_data: dict | None = None
+
+
+def _set_workspace_summary_data(data: dict | None) -> None:
+    global _workspace_summary_data
+    _workspace_summary_data = data
+
+
+def _split_user_commands(raw_text: str, passthrough_cmds: set[str]) -> list[str]:
+    """Backward-compatible wrapper for tests."""
+    return split_user_commands(raw_text, passthrough_cmds, COMMANDS)
+
+
+def _normalize_shorthand_command(parts: list[str]) -> list[str]:
+    """Backward-compatible wrapper for tests."""
+    return normalize_shorthand_command(parts)
+
+
+def _interpret_natural_command(
+    text: str,
+    current_project: str | None = None,
+    current_project_path: Path | None = None,
+    current_show_code: str | None = None,
+) -> tuple[list[str], str] | None:
+    """Backward-compatible wrapper that injects the console."""
+    return interpret_natural_command(text, console, current_project, current_project_path, current_show_code)
+
+
+def _preferred_show_code(explicit: str | None = None) -> str | None:
+    """Backward-compatible wrapper for tests."""
+    return preferred_show_code(explicit)
+
+
+def _workspace_summary(show_code: str | None = None) -> None:
+    workspace_summary(console, show_code, data=_workspace_summary_data)
+
+
+def _project_structure(project_path: Path | None, max_depth: int = 2, max_entries: int = 30) -> None:
+    project_structure(console, project_path, max_depth=max_depth, max_entries=max_entries)
+
+
+def _render_quick_actions(show_code: str | None = None) -> None:
+    render_quick_actions(console, preferred_show_code, show_code)
+
+
+def _render_core_loop(show_code: str | None = None) -> None:
+    render_core_loop(console, preferred_show_code, show_code)
+
+
+def _artist_workfile_menu(project_path: Path, dcc_name: str, show_code: str | None, data: dict | None = None) -> None:
+    artist_workfile_menu(console, project_path, dcc_name, show_code, data=data)
 
 console = Console()
 
@@ -30,192 +98,6 @@ PASSTHROUGH_CMDS = {
 }
 
 PREFIX_ALIASES = {"pipely", "pipley", "piply"}
-
-
-def _split_user_commands(raw_text: str, passthrough_cmds: set[str]) -> list[str]:
-    """
-    Split pasted input into individual commands.
-
-    Rules:
-    - Normalize separators (semicolons -> newlines).
-    - Insert a newline before any subsequent top-level command token (helps when paste loses newlines) but
-      avoid splitting on tokens that are only subcommands (like 'create' after 'shows').
-    - Split on newlines (handles Windows CRLF).
-    - Within each chunk, if another known command token appears, start a new command.
-    """
-    # Keep natural phrases like "open project 1 with blender" together
-    if re.match(
-        r"^(open|select|choose|use)\s+project\s+\d+(?:\s+(?:with|using)\s+.+)?$",
-        raw_text.strip(),
-        flags=re.IGNORECASE,
-    ):
-        return [raw_text.strip()]
-    # Keep simple list phrases together (list assets/shots/tasks ...)
-    if ";" not in raw_text and "\n" not in raw_text and raw_text.strip().lower().startswith("list "):
-        return [raw_text.strip()]
-
-    # Normalize common separators
-    normalized = raw_text.replace(";", "\n")
-
-    # Only split before top-level commands (not subcommands like "create" of "shows")
-    subcommand_tokens = set()
-    for subs in COMMANDS.values():
-        subcommand_tokens.update(subs)
-    top_level_tokens = [cmd for cmd in passthrough_cmds if cmd not in subcommand_tokens]
-
-    # Force a newline before any subsequent passthrough command (when pastes collapse newlines)
-    cmd_pattern = r"(?<!^)\s+(?=(" + "|".join(re.escape(cmd) for cmd in top_level_tokens) + r")\b)"
-    normalized = re.sub(cmd_pattern, "\n", normalized)
-
-    commands: list[str] = []
-    for chunk in re.split(r"[\r\n]+", normalized):
-        chunk = chunk.strip()
-        if not chunk:
-            continue
-        try:
-            tokens = shlex.split(chunk)
-        except ValueError:
-            tokens = chunk.split()
-        if not tokens:
-            continue
-
-        current: list[str] = []
-        for tok in tokens:
-            current_main = current[0] if current else None
-            # Avoid splitting when 'tok' is actually a subcommand/flag of the current main command
-            is_sub_of_current = current_main in COMMANDS and tok in COMMANDS[current_main]
-            # Allow natural phrases like "open project 1" to stay together
-            is_open_project_phrase = current_main == "open" and tok == "project"
-            # Keep "list assets/ shots/ tasks" together for natural phrasing
-            is_list_phrase = current_main == "list"
-            if current and tok in passthrough_cmds and not is_sub_of_current and not is_open_project_phrase and not is_list_phrase:
-                commands.append(" ".join(current))
-                current = [tok]
-            else:
-                current.append(tok)
-        if current:
-            commands.append(" ".join(current))
-    return commands
-
-
-def _normalize_shorthand_command(parts: list[str]) -> list[str]:
-    """
-    Allow artist-friendly shorthand like:
-    'shows create DMO \"Demo\" animation_short' -> adds required flags.
-    """
-    if len(parts) >= 3 and parts[0] == "shows" and parts[1] == "create":
-        has_flags = any(p.startswith("-") for p in parts[2:])
-        if has_flags:
-            return parts
-
-        show_code = parts[2]
-        name_tokens = parts[3:]
-        template = None
-        if name_tokens and name_tokens[-1] in TEMPLATES:
-            template = name_tokens.pop()
-        if not name_tokens:
-            return parts
-        name = " ".join(name_tokens)
-
-        normalized = ["shows", "create", "-c", show_code, "-n", name]
-        if template:
-            normalized.extend(["-t", template])
-        return normalized
-
-    return parts
-
-
-def _workspace_summary(show_code: str | None = None) -> None:
-    """
-    Print a compact workspace summary for the current show.
-    """
-    data = db.load_db()
-    code = show_code or data.get("current_show")
-    if not code:
-        console.print("[yellow]No current show. Use 'shows use -c CODE' first.[/yellow]")
-        return
-    show = data.get("shows", {}).get(code)
-    if not show:
-        console.print(f"[yellow]Show '{code}' not found in DB.[/yellow]")
-        return
-
-    shots = [s for s in data.get("shots", {}).values() if s.get("show_code") == code]
-    assets = [a for a in data.get("assets", {}).values() if a.get("show_code") == code]
-    versions = [v for v in data.get("versions", {}).values() if v.get("show_code") == code]
-
-    tasks = []
-    for target_id, items in data.get("tasks", {}).items():
-        if target_id.startswith(code + "_"):
-            for t in items:
-                tasks.append((target_id, t))
-
-    console.print()
-    console.print(f"[bold cyan]Workspace:[/bold cyan] {code} - {show.get('name','')}")
-    console.print(f"[dim]{show.get('root','')}[/dim]")
-
-    table = Table(show_header=True, header_style="bold", box=None, padding=(0, 1))
-    table.add_column("Shots", style="cyan", no_wrap=True)
-    table.add_column("Assets", style="magenta", no_wrap=True)
-    table.add_column("Tasks", style="green")
-
-    # Prepare rows (up to 3 entries each)
-    shot_lines = [f"{s['id']} [{s['status']}]" for s in sorted(shots, key=lambda s: s["id"])[:3]]
-    asset_lines = [f"{a['id']} [{a['type']}]" for a in sorted(assets, key=lambda a: a["id"])[:3]]
-    task_lines = [f"{tid}:{t['name']} [{t['status']}]" for tid, t in tasks[:3]]
-
-    def _lines(lines: list[str], more: int) -> str:
-        extra = f"\n+{more} more" if more > 0 else ""
-        return "\n".join(lines) + extra if lines else "—"
-
-    table.add_row(
-        _lines(shot_lines, max(0, len(shots) - len(shot_lines))),
-        _lines(asset_lines, max(0, len(assets) - len(asset_lines))),
-        _lines(task_lines, max(0, len(tasks) - len(task_lines))),
-    )
-    console.print(table)
-    console.print()
-
-
-def _project_structure(project_path: Path | None, max_depth: int = 2, max_entries: int = 30) -> None:
-    """
-    Print a quick tree of the current project's folders/files (limited depth/entries).
-    """
-    if not project_path:
-        console.print("[yellow]No project selected. Type 'projects' to pick one.[/yellow]")
-        return
-    if not project_path.exists():
-        console.print(f"[red]Project path not found:[/red] {project_path}")
-        return
-
-    console.print()
-    console.print(f"[bold cyan]Project structure[/bold cyan] [dim]{project_path}[/dim]")
-
-    def walk(path: Path, depth: int) -> None:
-        if depth > max_depth:
-            return
-        try:
-            entries = sorted(path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
-        except PermissionError:
-            console.print("  " * depth + "[red]Permission denied[/red]")
-            return
-
-        if len(entries) > max_entries:
-            shown = entries[:max_entries]
-            extra = len(entries) - max_entries
-        else:
-            shown = entries
-            extra = 0
-
-        for entry in shown:
-            prefix = "📁" if entry.is_dir() else "📄"
-            console.print(f"{'  ' * depth}{prefix} {entry.name}")
-            if entry.is_dir() and depth < max_depth:
-                walk(entry, depth + 1)
-        if extra > 0:
-            console.print(f"{'  ' * (depth + 1)}… +{extra} more")
-
-    walk(project_path, 0)
-    console.print()
 
 
 def _find_asset(query: str) -> tuple[str, dict] | None:
@@ -304,130 +186,6 @@ def _prompt_add_asset(default_show: str | None = None, default_name: str | None 
     except Exception as exc:
         console.print(f"[red]Error:[/red] {exc}")
 
-# All available commands and their subcommands
-COMMANDS = {
-    "create": ["--interactive", "-c", "--show-code", "-n", "--name", "-t", "--template", "--git", "--git-lfs"],
-    "open": ["krita", "blender", "photoshop", "aftereffects", "pureref", "--list", "-l", "--list-projects", "--project", "-p", "--choose", "-c", "--background", "-b"],
-    "project": ["status", "commit", "list"],
-    "doctor": [],
-    "shows": ["create", "list", "use", "info", "delete"],
-    "assets": ["add", "list", "info", "status", "delete"],
-    "shots": ["add", "list", "info", "status", "delete"],
-    "tasks": ["list", "add", "complete", "status", "delete"],
-    "versions": ["list", "info", "latest", "delete"],
-    "admin": ["config_show", "config_set", "doctor", "files", "add", "template", "create"],
-    "workfiles": ["add", "list", "open"],
-    "workspace": ["on", "off", "show"],
-    "projects": [],
-    "status": [],
-    "commit": [],
-    "help": [],
-    "exit": [],
-    "quit": [],
-}
-
-COMMAND_DESCRIPTIONS = {
-    "create": "Create new project",
-    "open": "Launch Krita, Blender, etc.",
-    "project": "Check git status and commit changes",
-    "doctor": "Check system setup",
-    "shows": "Manage animation shows",
-    "assets": "Manage characters, props, environments",
-    "shots": "Manage shot sequences",
-    "tasks": "Track work tasks",
-    "versions": "File version history",
-    "workfiles": "Create/open workfiles",
-    "admin": "Configure settings and admin files",
-    "workspace": "Show or toggle project summary",
-    "projects": "List all available projects",
-    "info": "Show current project information",
-    "status": "Quick git status for all projects",
-    "commit": "Quick commit (prompts for project and message)",
-    "help": "Show help menu",
-    "exit": "Exit interactive mode",
-    "quit": "Exit interactive mode",
-}
-
-ASSET_TYPE_ALIASES = {
-    "ch": "CH",
-    "char": "CH",
-    "character": "CH",
-    "characters": "CH",
-    "env": "ENV",
-    "environment": "ENV",
-    "environments": "ENV",
-    "bg": "ENV",
-    "prop": "PR",
-    "props": "PR",
-    "pr": "PR",
-    "fx": "FX",
-    "effect": "FX",
-    "effects": "FX",
-}
-
-
-def _render_quick_actions() -> None:
-    """Small visual menu of common actions for artists."""
-    table = Table(show_header=False, box=None, padding=(0, 2))
-    table.add_column("Action", style="bold", width=18)
-    table.add_column("Try typing", style="cyan")
-    table.add_row("🎬 Open project", "open project 1 with blender")
-    table.add_row("🧭 Switch show", "switch to show PKU")
-    table.add_row("🌳 Add asset", "add environment asset called BG_Forest for show PKU")
-    table.add_row("🎞 Add shot", "add shot SH010 Opening scene for show PKU")
-    table.add_row("🗂 Workspace", "show workspace")
-    table.add_row("🧾 Status", "what's the status")
-    table.add_row("🕑 Recent", "show recent assets")
-    console.print(table)
-    console.print()
-
-
-def _interpret_natural_command(
-    text: str,
-    current_project: str | None = None,
-    current_project_path: Path | None = None,
-    current_show_code: str | None = None,
-) -> tuple[list[str], str] | None:
-    """
-    Map simple natural-language phrases to real pipely commands so artists can type sentences.
-    """
-    cleaned = text.strip()
-
-    # Create project (interactive)
-    m = re.match(
-        r"^(create|make|new)\s+(?:a\s+)?(?:new\s+)?project(?:\s+(?:called|named)\s+(?P<name>.+))?$",
-        cleaned,
-        flags=re.IGNORECASE,
-    )
-    if m:
-        name = (m.group("name") or "").strip()
-        args = ["create", "--interactive"]
-        if name:
-            args.extend(["-n", name])
-        return args, "Interpreting request as: pipely " + " ".join(args)
-
-    # Create show (code + optional name)
-    m = re.match(
-        r"^(create|make|new)\s+(?:a\s+)?(?:new\s+)?show\s+(?P<code>[A-Za-z0-9_-]+)"
-        r"(?:\s+(?:called|named)\s+(?P<name>.+))?$",
-        cleaned,
-        flags=re.IGNORECASE,
-    )
-    if m:
-        code = m.group("code")
-        name = (m.group("name") or "").strip()
-        args = ["shows", "create", "-c", code]
-        if name:
-            args.extend(["-n", name])
-        return args, "Interpreting request as: pipely " + " ".join(args)
-
-    # Open a DCC
-    m = re.match(
-        r"^(open|launch|start)\s+(?P<dcc>krita|blender|photoshop|aftereffects|pureref)"
-        r"(?:\s+(?:for|in|on)\s+(?P<project>[\w\.-]+))?$",
-        cleaned,
-        flags=re.IGNORECASE,
-    )
     if m:
         dcc = m.group("dcc").lower()
         project = m.group("project") or current_project
@@ -680,142 +438,6 @@ def _resolve_show_for_project_path(project_path: Path) -> tuple[str | None, dict
     return None, None
 
 
-def _iter_workfiles_for_kind(base: Path, kind: str) -> list[Path]:
-    """Return all workfiles for a given kind under 05_WORK, newest first."""
-    ext = KIND_EXTENSIONS.get(kind.lower())
-    if not ext:
-        return []
-    if not base.exists():
-        return []
-    files = [p for p in base.rglob(f"*.{ext}") if p.is_file()]
-    files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
-    return files
-
-
-def _format_mtime(path: Path) -> str:
-    ts = path.stat().st_mtime
-    return datetime.fromtimestamp(ts).strftime("%b %d %H:%M")
-
-
-def _render_workfile_table(files: list[Path], show_root: Path) -> None:
-    table = Table(show_header=True, header_style="bold cyan", box=None, padding=(0, 1))
-    table.add_column("#", style="cyan", width=4)
-    table.add_column("Target", style="magenta")
-    table.add_column("File", style="white")
-    table.add_column("Updated", style="dim")
-    for idx, f in enumerate(files, 1):
-        # target id is the parent folder name under workfiles (assets/shots/<id>/kind)
-        parts = f.relative_to(show_root).parts
-        target = parts[2] if len(parts) >= 3 else "—"
-        table.add_row(str(idx), target, f.name, _format_mtime(f))
-    console.print(table)
-
-
-def _render_target_table(target_ids: Iterable[str]) -> None:
-    table = Table(show_header=False, box=None, padding=(0, 1))
-    table.add_column("#", style="cyan", width=4)
-    table.add_column("Target ID", style="magenta")
-    for idx, tid in enumerate(target_ids, 1):
-        table.add_row(str(idx), tid)
-    console.print(table)
-
-
-def _artist_workfile_menu(project_path: Path, dcc_name: str, show_code: str | None) -> None:
-    """
-    Artist-friendly menu: pick/open existing workfile, or create + open a new one.
-    """
-    from pipeline_tools.cli import app
-
-    show_root = project_path
-    work_root = show_root / "05_WORK"
-    files = _iter_workfiles_for_kind(work_root, dcc_name)
-
-    target_ids: list[str] = []
-    if show_code:
-        data = db.load_db()
-        target_ids = sorted([
-            a["id"] for a in data.get("assets", {}).values() if a.get("show_code") == show_code
-        ] + [
-            s["id"] for s in data.get("shots", {}).values() if s.get("show_code") == show_code
-        ])
-
-    console.print()
-    console.print(f"[bold cyan]STEP 3: Pick Your File ({dcc_name.capitalize()})[/bold cyan]")
-    if files:
-        _render_workfile_table(files[:12], show_root)
-        if len(files) > 12:
-            console.print(f"[dim]+{len(files) - 12} more…[/dim]")
-    else:
-        console.print("[yellow]No workfiles yet for this app.[/yellow]")
-
-    console.print()
-    console.print("[bold]Options:[/bold]")
-    console.print("  • Type a [cyan]number[/cyan] to open that file")
-    console.print("  • Type [green]n[/green] to create + open a new version")
-    console.print("  • Type [blue]o[/blue] to open the app without a file")
-    console.print("  • Press [dim]Enter[/dim] to go back")
-    console.print()
-
-    while True:
-        choice = input("Select: ").strip().lower()
-        if not choice:
-            return
-        if choice.isdigit():
-            idx = int(choice)
-            if 1 <= idx <= len(files):
-                path = files[idx - 1]
-                try:
-                    app(["workfiles", "open", "--file", str(path), "--kind", dcc_name], standalone_mode=False)
-                except SystemExit:
-                    pass
-                except Exception as exc:
-                    console.print(f"[red]Error:[/red] {exc}")
-                return
-            console.print(f"[red]Invalid selection. Choose 1-{len(files)}[/red]")
-            continue
-        if choice == "o":
-            try:
-                app(["open", dcc_name, "--project", str(show_root)], standalone_mode=False)
-            except SystemExit:
-                pass
-            except Exception as exc:
-                console.print(f"[red]Error:[/red] {exc}")
-            return
-        if choice == "n":
-            # Show targets if available
-            console.print()
-            if target_ids:
-                console.print("[bold magenta]Pick a target for the new file[/bold magenta]")
-                _render_target_table(target_ids[:20])
-                if len(target_ids) > 20:
-                    console.print(f"[dim]+{len(target_ids) - 20} more…[/dim]")
-                target_sel = input("Target number (or id): ").strip()
-                if not target_sel:
-                    return
-                if target_sel.isdigit():
-                    t_idx = int(target_sel)
-                    if 1 <= t_idx <= len(target_ids):
-                        target_id = target_ids[t_idx - 1]
-                    else:
-                        console.print(f"[red]Invalid target. Choose 1-{len(target_ids)}[/red]")
-                        continue
-                else:
-                    target_id = target_sel
-            else:
-                target_id = input("Target id (e.g., PKU_SH010): ").strip()
-                if not target_id:
-                    return
-
-            try:
-                app(["workfiles", "add", target_id, "--kind", dcc_name, "--open"], standalone_mode=False)
-            except SystemExit:
-                pass
-            except Exception as exc:
-                console.print(f"[red]Error:[/red] {exc}")
-            return
-        console.print("[yellow]Choose a file number, 'n' for new, 'o' to open the app, or Enter to go back.[/yellow]")
-
-
 class PipelineCompleter(Completer):
     """Autocompleter for pipeline-tools commands."""
 
@@ -930,7 +552,33 @@ def run_interactive():
     console.print("│  [dim]Or just type: 'create a project named Demo'[/dim]        │")
     console.print("╰────────────────────────────────────────────────────────╯", style="cyan")
     console.print()
+    _render_core_loop()
     _render_quick_actions()
+
+    db_cache: dict | None = None
+
+    def get_db_data(force: bool = False) -> dict:
+        nonlocal db_cache
+        if force or db_cache is None:
+            db_cache = db.load_db()
+        return db_cache
+
+    def invalidate_db_cache() -> None:
+        nonlocal db_cache
+        db_cache = None
+
+    def derive_show_code(data: dict) -> str | None:
+        code = data.get("current_show")
+        if code:
+            return code
+        shows = data.get("shows") or {}
+        if shows:
+            return sorted(shows.keys())[0]
+        return None
+
+    def refresh_current_show_code(force: bool = False) -> None:
+        nonlocal current_show_code
+        current_show_code = derive_show_code(get_db_data(force=force)) or current_show_code
 
     # Track available projects and DCCs for number selection
     available_projects = []
@@ -938,9 +586,10 @@ def run_interactive():
     current_project = None
     current_project_path: Path | None = None
     current_show_entry: dict | None = None
-    current_show_code: str | None = None
+    current_show_code: str | None = derive_show_code(get_db_data()) or _preferred_show_code()
     show_dcc_menu = False
     workspace_summary_enabled = False
+    summary_dirty = False
 
     # Auto-show projects menu on startup
     from pathlib import Path
@@ -951,11 +600,13 @@ def run_interactive():
     creative_root = get_creative_root()
     creative_root.mkdir(parents=True, exist_ok=True)
 
-    project_folders = [
-        p for p in creative_root.iterdir()
-        if p.is_dir() and not p.name.startswith('.')
-    ]
+    def list_project_folders() -> list[Path]:
+        return [
+            p for p in creative_root.iterdir()
+            if p.is_dir() and not p.name.startswith('.')
+        ]
 
+    project_folders = list_project_folders()
     available_projects = project_folders
 
     # Update completer with initial project list
@@ -1069,6 +720,9 @@ def run_interactive():
                     # Set default task name if not provided
                     task_label = task_name or (dcc_name.capitalize() + " work" if dcc_name else "Work")
                     _ensure_task_for_asset(asset_id, task_label, status="in_progress")
+                    invalidate_db_cache()
+                    if workspace_summary_enabled:
+                        summary_dirty = True
 
                     # Require a DCC to proceed to workfiles menu
                     if not dcc_name:
@@ -1082,9 +736,11 @@ def run_interactive():
                         continue
 
                     console.print(f"[green]✓ Asset:[/green] {asset_id}  [dim]({show_root})[/dim]")
-                    _artist_workfile_menu(current_project_path, dcc_name, current_show_code)
+                    data_snapshot = get_db_data()
+                    _artist_workfile_menu(current_project_path, dcc_name, current_show_code, data=data_snapshot)
                     if workspace_summary_enabled:
-                        _workspace_summary()
+                        _set_workspace_summary_data(data_snapshot)
+                        _workspace_summary(current_show_code)
                     continue
 
                 # Allow phrases like "open project 1" (optionally with a DCC) to act like selecting that project
@@ -1105,6 +761,10 @@ def run_interactive():
                         from pipeline_tools.cli import app
                         try:
                             app(["create", "--interactive"], standalone_mode=False)
+                            invalidate_db_cache()
+                            refresh_current_show_code(True)
+                            if workspace_summary_enabled:
+                                summary_dirty = True
                         except SystemExit:
                             pass
                         except Exception as e:
@@ -1112,6 +772,8 @@ def run_interactive():
                         console.print()
                         console.print("[dim]Type 'projects' to see your new project[/dim]")
                         console.print()
+                        available_projects = list_project_folders()
+                        completer.update_context(projects=available_projects, dccs=[], show_dcc_menu=False)
                         continue
 
                     if 1 <= choice <= len(available_projects):
@@ -1122,17 +784,23 @@ def run_interactive():
 
                         console.print(f"[dim]Selecting project #{choice}: {current_project}[/dim]")
                         console.print(f"[green]✓ Project:[/green] [bold]{current_project}[/bold]")
+                        if workspace_summary_enabled:
+                            summary_dirty = True
                         if current_show_code:
                             console.print(f"[dim]Linked show:[/dim] {current_show_code}")
                             try:
                                 from pipeline_tools.cli import app
                                 app(["shows", "use", "-c", current_show_code], standalone_mode=False)
+                                invalidate_db_cache()
+                                refresh_current_show_code(True)
+                                if workspace_summary_enabled:
+                                    summary_dirty = True
                             except Exception:
                                 pass
                         console.print()
 
                         if chosen_dcc:
-                            _artist_workfile_menu(current_project_path or Path.cwd(), chosen_dcc, current_show_code)
+                            _artist_workfile_menu(current_project_path or Path.cwd(), chosen_dcc, current_show_code, data=get_db_data())
                             console.print()
                             console.print("[dim]Type 'projects' to work on another project[/dim]")
                             console.print()
@@ -1140,7 +808,8 @@ def run_interactive():
                             available_dccs = []
                             completer.update_context(dccs=[], show_dcc_menu=False)
                             if workspace_summary_enabled:
-                                _workspace_summary()
+                                _set_workspace_summary_data(get_db_data())
+                                _workspace_summary(current_show_code)
                             continue
 
                         from pipeline_tools.tools.dcc_launcher.launcher import DCC_PATHS, get_dcc_executable
@@ -1148,7 +817,7 @@ def run_interactive():
 
                         installed_dccs = []
                         for dcc in sorted(DCC_PATHS.keys()):
-                            if get_dcc_executable(dcc):
+                            if get_dcc_executable(dcc, allow_deep_search=False):
                                 installed_dccs.append(dcc)
 
                         if not installed_dccs:
@@ -1180,6 +849,60 @@ def run_interactive():
                         console.print()
                         continue
 
+                # Delete project/show by number or name
+                m_delete_project = re.match(
+                    r"^(delete|remove|del|delte)\s+(?:project\s+)?(?P<target>[#]?[A-Za-z0-9._-]+)$",
+                    text,
+                    flags=re.IGNORECASE,
+                )
+                if m_delete_project:
+                    token = m_delete_project.group("target").lstrip("#")
+                    selected_project = None
+                    show_code = None
+
+                    if token.isdigit() and available_projects:
+                        idx = int(token)
+                        if 1 <= idx <= len(available_projects):
+                            selected_project = available_projects[idx - 1]
+                        else:
+                            console.print(f"[red]❌ Invalid project number. Choose 1-{len(available_projects)}[/red]")
+                            continue
+                    elif available_projects:
+                        for proj in available_projects:
+                            if proj.name.lower() == token.lower():
+                                selected_project = proj
+                                break
+
+                    if selected_project:
+                        show_code, _ = _resolve_show_for_project_path(selected_project)
+                        if not show_code:
+                            show_code = infer_show_code_token(selected_project.name)
+                    if not show_code:
+                        show_code = infer_show_code_token(token, current_show_code)
+
+                    if not show_code:
+                        console.print("[yellow]Couldn't determine which show to delete. Try 'shows delete -c CODE'.[/yellow]")
+                        continue
+
+                    args = ["shows", "delete", "-c", show_code, "--delete-folders"]
+                    console.print(f"[dim]Interpreting request as: pipely {' '.join(args)}[/dim]")
+                    from pipeline_tools.cli import app
+                    try:
+                        app(args, standalone_mode=False)
+                        invalidate_db_cache()
+                        refresh_current_show_code(True)
+                        if workspace_summary_enabled:
+                            summary_dirty = True
+                        available_projects = list_project_folders()
+                        completer.update_context(projects=available_projects, show_dcc_menu=False)
+                        console.print(f"[green]✓ Deleted show {show_code}[/green]")
+                    except SystemExit:
+                        pass
+                    except Exception as exc:
+                        console.print(f"[red]Error:[/red] {exc}")
+                    console.print()
+                    continue
+
                 # Friendly natural-language intents
                 natural = _interpret_natural_command(text, current_project, current_project_path, current_show_code)
                 if natural:
@@ -1192,20 +915,49 @@ def run_interactive():
 
                 # Workspace summary toggles
                 if text == "workspace" or text == "workspace show":
-                    _workspace_summary()
+                    _set_workspace_summary_data(get_db_data())
+                    _workspace_summary(None)
+                    summary_dirty = False
                     continue
                 if text == "workspace on":
                     workspace_summary_enabled = True
                     console.print("[green]Workspace summary enabled.[/green]")
-                    _workspace_summary()
+                    _set_workspace_summary_data(get_db_data())
+                    _workspace_summary(None)
+                    summary_dirty = False
                     continue
                 if text == "workspace off":
                     workspace_summary_enabled = False
                     console.print("[yellow]Workspace summary disabled.[/yellow]")
+                    summary_dirty = False
                     continue
 
                 if text in {"structure", "project structure", "workspace structure", "show structure"}:
                     _project_structure(current_project_path)
+                    continue
+
+                # "show files" for the current project
+                if text in {"show files", "show project files", "show project structure"}:
+                    _project_structure(current_project_path)
+                    continue
+
+                # "open file <path>" (absolute or relative to current project)
+                m_open_file = re.match(r"^open file\s+(.+)$", text, flags=re.IGNORECASE)
+                if m_open_file:
+                    target = m_open_file.group(1).strip()
+                    if not target:
+                        console.print("[yellow]Please specify a file to open (e.g., open file notes.txt).[/yellow]")
+                        continue
+                    file_path = Path(target)
+                    if not file_path.is_absolute() and current_project_path:
+                        file_path = current_project_path / target
+                    try:
+                        from pipeline_tools.tools.admin.main import _open_file
+                        _open_file(file_path)
+                    except SystemExit:
+                        pass
+                    except Exception as exc:
+                        console.print(f"[red]Could not open file:[/red] {exc}")
                     continue
 
                 # Handle special commands
@@ -1282,14 +1034,26 @@ def run_interactive():
                                 if 1 <= choice <= len(available_projects):
                                     project_name = available_projects[choice - 1].name
                                     app(["project", "status", project_name], standalone_mode=False)
+                                    invalidate_db_cache()
+                                    refresh_current_show_code(True)
+                                    if workspace_summary_enabled:
+                                        summary_dirty = True
                                 else:
                                     console.print(f"[red]Invalid project number. Choose 1-{len(available_projects)}[/red]")
                             else:
                                 # It's a project name
                                 app(["project", "status", parts[1]], standalone_mode=False)
+                                invalidate_db_cache()
+                                refresh_current_show_code(True)
+                                if workspace_summary_enabled:
+                                    summary_dirty = True
                         else:
                             # Status for all projects
                             app(["project", "status"], standalone_mode=False)
+                            invalidate_db_cache()
+                            refresh_current_show_code(True)
+                            if workspace_summary_enabled:
+                                summary_dirty = True
                     except SystemExit:
                         pass
                     except Exception as e:
@@ -1325,6 +1089,10 @@ def run_interactive():
                         if 1 <= choice <= len(project_folders):
                             project_name = project_folders[choice - 1].name
                             app(["project", "commit", project_name], standalone_mode=False)
+                            invalidate_db_cache()
+                            refresh_current_show_code(True)
+                            if workspace_summary_enabled:
+                                summary_dirty = True
                         else:
                             console.print("[red]Invalid selection[/red]")
                     except (ValueError, KeyboardInterrupt):
@@ -1419,7 +1187,7 @@ def run_interactive():
                             dcc_name = available_dccs[choice - 1]
 
                             console.print()
-                            _artist_workfile_menu(current_project_path or Path.cwd(), dcc_name, current_show_code)
+                            _artist_workfile_menu(current_project_path or Path.cwd(), dcc_name, current_show_code, data=get_db_data())
                             console.print()
                             console.print("[dim]Type 'projects' to work on another project[/dim]")
                             console.print()
@@ -1451,6 +1219,10 @@ def run_interactive():
                             try:
                                 # Run the create command in interactive mode
                                 app(["create", "--interactive"], standalone_mode=False)
+                                invalidate_db_cache()
+                                refresh_current_show_code(True)
+                                if workspace_summary_enabled:
+                                    summary_dirty = True
                             except SystemExit:
                                 pass
                             except Exception as e:
@@ -1460,6 +1232,8 @@ def run_interactive():
                             console.print()
                             console.print("[dim]Type 'projects' to see your new project[/dim]")
                             console.print()
+                            available_projects = list_project_folders()
+                            completer.update_context(projects=available_projects, dccs=[], show_dcc_menu=False)
                             continue
 
                         elif 1 <= choice <= len(available_projects):
@@ -1470,11 +1244,17 @@ def run_interactive():
 
                             console.print()
                             console.print(f"[green]✓ Project:[/green] [bold]{current_project}[/bold]")
+                            if workspace_summary_enabled:
+                                summary_dirty = True
                             if current_show_code:
                                 console.print(f"[dim]Linked show:[/dim] {current_show_code}")
                                 try:
                                     from pipeline_tools.cli import app
                                     app(["shows", "use", "-c", current_show_code], standalone_mode=False)
+                                    invalidate_db_cache()
+                                    refresh_current_show_code(True)
+                                    if workspace_summary_enabled:
+                                        summary_dirty = True
                                 except Exception:
                                     pass
                             console.print()
@@ -1489,7 +1269,7 @@ def run_interactive():
                             # Build list of installed DCCs
                             installed_dccs = []
                             for dcc in sorted(DCC_PATHS.keys()):
-                                if get_dcc_executable(dcc):
+                                if get_dcc_executable(dcc, allow_deep_search=False):
                                     installed_dccs.append(dcc)
 
                             if not installed_dccs:
@@ -1528,12 +1308,25 @@ def run_interactive():
                     args = parts
 
                     # Auto-add project to 'open' commands if a project is selected
-                    if parts and parts[0] == "open" and current_project:
+                    if parts and parts[0] == "open":
+                        if not current_project:
+                            console.print()
+                            console.print("[yellow]Pick a project first so we can open the right workspace.[/yellow]")
+                            console.print("[dim]Tip: type a project number (e.g., 1) or 'open project 1 with blender'.[/dim]")
+                            console.print()
+                            _render_core_loop(current_show_code)
+                            continue
                         if "--project" not in parts and "-p" not in parts:
                             parts.extend(["--project", current_project])
 
                     try:
                         app(parts, standalone_mode=False)
+                        invalidate_db_cache()
+                        refresh_current_show_code(True)
+                        if workspace_summary_enabled:
+                            summary_dirty = True
+                        available_projects = list_project_folders()
+                        completer.update_context(projects=available_projects, dccs=available_dccs, show_dcc_menu=show_dcc_menu)
                     except SystemExit:
                         pass
                     except Exception as e:
@@ -1541,10 +1334,13 @@ def run_interactive():
                 else:
                     console.print()
                     console.print("[yellow]Not sure what to do?[/yellow]")
-                    _render_quick_actions()
+                    _render_core_loop(current_show_code)
+                    _render_quick_actions(current_show_code)
 
-                if workspace_summary_enabled:
-                    _workspace_summary()
+                if workspace_summary_enabled and summary_dirty:
+                    _set_workspace_summary_data(get_db_data())
+                    _workspace_summary(None)
+                    summary_dirty = False
 
             if exit_session:
                 break

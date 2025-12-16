@@ -45,6 +45,8 @@ def test_cli_happy_path_creates_template(monkeypatch, tmp_path: Path, capsys) ->
     monkeypatch.setattr(
         pc_main, "make_show_root", paths.make_show_root
     )  # ensure it picks up patched CREATIVE_ROOT
+    db_path = tmp_path / "db.sqlite3"
+    monkeypatch.setenv("PIPELINE_TOOLS_DB", str(db_path))
 
     argv = ["project_creator", "-c", "DMO", "-n", "Demo Short 30s"]
     monkeypatch.setattr(pc_main.sys, "argv", argv)

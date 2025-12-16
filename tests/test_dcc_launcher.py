@@ -30,6 +30,28 @@ def test_get_dcc_executable_wsl_converts_windows_path(monkeypatch):
     assert result == "/mnt/c/Program Files/Fake/fake.exe"
 
 
+def test_get_dcc_executable_skips_deep_search_when_disabled(monkeypatch):
+    monkeypatch.setattr(launcher.platform, "system", lambda: "Linux")
+    monkeypatch.setattr(
+        launcher,
+        "DCC_PATHS",
+        {"fake": {"Linux": [], "Windows": ["C:/Program Files/Fake/fake.exe"]}},
+    )
+
+    # WSL root exists but executable path does not.
+    def fake_exists(path: str) -> bool:
+        return path == "/mnt/c"
+
+    monkeypatch.setattr(launcher.os.path, "exists", fake_exists)
+
+    def fail_search(names):
+        raise AssertionError("Deep search should be skipped")
+
+    monkeypatch.setattr(launcher, "_search_windows_drive", fail_search)
+
+    assert launcher.get_dcc_executable("fake", allow_deep_search=False) is None
+
+
 def test_launch_krita_without_python_script_flag(tmp_path, monkeypatch):
     """Test that Krita launches without the --python-script flag."""
     # Create a test file

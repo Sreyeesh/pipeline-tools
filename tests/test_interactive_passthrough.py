@@ -140,3 +140,100 @@ def test_workspace_on_runs_after_commands(monkeypatch, tmp_path):
     assert app_calls == [["tasks", "list", "DMO_SH010"]]
     # Called once when enabling, once after the passthrough command
     assert summary_calls == [[None], [None]]
+
+
+def test_projects_list_updates_after_delete(monkeypatch, tmp_path):
+    project_dir = tmp_path / "AN_DMO_DemoShort30s"
+    project_dir.mkdir()
+    import shutil
+
+    class FakeApp:
+        def __init__(self):
+            self.calls: list[list[str]] = []
+
+        def __call__(self, args, standalone_mode=False):
+            self.calls.append(list(args))
+            if args[:3] == ["shows", "delete", "-c"]:
+                if project_dir.exists():
+                    shutil.rmtree(project_dir)
+
+    class FakeSession:
+        def __init__(self, *_, **__):
+            self._commands = ["projects", "delete AN_DMO_DemoShort30s", "projects", "exit"]
+
+        def prompt(self, *_, **__):
+            if not self._commands:
+                raise EOFError
+            return self._commands.pop(0)
+
+    class RecordingCompleter:
+        def __init__(self):
+            self.history: list[list[str]] = []
+
+        def update_context(self, projects=None, dccs=None, show_dcc_menu=False):
+            if projects is None:
+                names = []
+            else:
+                names = [p.name for p in projects]
+            self.history.append(names)
+
+        def get_completions(self, *_, **__):
+            return iter(())
+
+    fake_completer = RecordingCompleter()
+
+    def fake_interpret(text, *_args, **_kwargs):
+        if text.lower().startswith("delete"):
+            return (["shows", "delete", "-c", "DMO", "--delete-folders"], "note")
+        return None
+
+    monkeypatch.setattr(interactive, "PromptSession", FakeSession)
+    monkeypatch.setattr(interactive, "PipelineCompleter", lambda: fake_completer)
+    monkeypatch.setattr(core_paths, "get_creative_root", lambda: tmp_path)
+    monkeypatch.setattr(cli, "app", FakeApp())
+    monkeypatch.setattr(interactive, "_interpret_natural_command", fake_interpret)
+
+    interactive.run_interactive()
+
+    # After deletion, the completer should have been updated with no remaining projects
+    assert [] in fake_completer.history
+
+
+def test_projects_list_reflects_removed_folder(monkeypatch, tmp_path):
+    project_dir = tmp_path / "AN_DMO_DemoShort30s"
+    project_dir.mkdir()
+
+    class FakeSession:
+        def __init__(self, *_, **__):
+            self._commands = ["projects", "projects", "exit"]
+            self._count = 0
+
+        def prompt(self, *_, **__):
+            if not self._commands:
+                raise EOFError
+            cmd = self._commands.pop(0)
+            self._count += 1
+            if self._count == 2 and project_dir.exists():
+                project_dir.rmdir()
+            return cmd
+
+    class RecordingCompleter:
+        def __init__(self):
+            self.history: list[list[str]] = []
+
+        def update_context(self, projects=None, dccs=None, show_dcc_menu=False):
+            names = [p.name for p in projects] if projects else []
+            self.history.append(names)
+
+        def get_completions(self, *_, **__):
+            return iter(())
+
+    fake_completer = RecordingCompleter()
+
+    monkeypatch.setattr(interactive, "PromptSession", FakeSession)
+    monkeypatch.setattr(interactive, "PipelineCompleter", lambda: fake_completer)
+    monkeypatch.setattr(core_paths, "get_creative_root", lambda: tmp_path)
+
+    interactive.run_interactive()
+
+    assert [] in fake_completer.history

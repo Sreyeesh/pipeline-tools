@@ -11,6 +11,7 @@ from pipeline_tools.core import db, observability
 from pipeline_tools.core.cli import FriendlyArgumentParser
 from pipeline_tools.core.paths import CREATIVE_ROOT, get_creative_root
 from pipeline_tools.tools.project_creator.templates import TEMPLATES
+from pipeline_tools.core.paths import _is_wsl  # reuse existing helper
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -153,8 +154,47 @@ def _open_file(path: Path) -> None:
         print(f"File not found: {path}")
         sys.exit(1)
 
+    # Honor a custom opener (e.g., PIPELY_OPEN_COMMAND="code {path}")
+    custom_cmd = os.environ.get("PIPELY_OPEN_COMMAND") or os.environ.get("PIPELY_OPEN_CMD")
+    if custom_cmd:
+        target = str(path)
+        if _is_wsl():
+            try:
+                target = subprocess.check_output(["wslpath", "-w", str(path)], text=True).strip()
+            except Exception:
+                target = str(path)
+        try:
+            subprocess.run(custom_cmd.format(path=target), shell=True, check=True)
+            return
+        except Exception as exc:
+            print(f"Could not open with custom command '{custom_cmd}': {exc}. Falling back...")
+
     # Try native open first
     try:
+        # WSL: prefer wslview, then explorer.exe (both avoid PowerShell Start-Process issues)
+        if _is_wsl():
+            # 1) explorer.exe with Windows path (avoids PowerShell Start-Process noise)
+            try:
+                win_path = subprocess.check_output(["wslpath", "-w", str(path)], text=True).strip()
+            except Exception:
+                win_path = str(path)
+            try:
+                if os.path.exists("/mnt/c/Windows/explorer.exe"):
+                    subprocess.run(["/mnt/c/Windows/explorer.exe", win_path], check=True)
+                    return
+            except Exception:
+                pass
+
+            # 2) wslview as a fallback
+            try:
+                subprocess.run(["wslview", str(path)], check=True)
+                return
+            except FileNotFoundError:
+                pass  # fallback below if wslview isn't installed
+            except subprocess.CalledProcessError:
+                pass  # fall through to other platforms/handlers
+
+            # If WSL options fail, continue to non-WSL handlers below.
         if sys.platform.startswith("darwin"):
             subprocess.run(["open", str(path)], check=True)
             return
