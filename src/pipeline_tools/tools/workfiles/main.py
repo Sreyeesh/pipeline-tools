@@ -76,17 +76,19 @@ def _bucket(target_id: str) -> str:
     return "assets"
 
 
-def _work_root(show_root: Path) -> Path:
+def _work_root(show_root: Path, create: bool = True) -> Path:
     root = show_root / "05_WORK"
-    root.mkdir(parents=True, exist_ok=True)
+    if create:
+        root.mkdir(parents=True, exist_ok=True)
     return root
 
 
-def _target_dir(show_root: Path, target_id: str, kind: str | None = None) -> Path:
-    base = _work_root(show_root) / _bucket(target_id) / target_id
+def _target_dir(show_root: Path, target_id: str, kind: str | None = None, create: bool = True) -> Path:
+    base = _work_root(show_root, create=create) / _bucket(target_id) / target_id
     if kind:
         base = base / kind
-    base.mkdir(parents=True, exist_ok=True)
+    if create:
+        base.mkdir(parents=True, exist_ok=True)
     return base
 
 
@@ -362,7 +364,10 @@ def cmd_list(args: argparse.Namespace) -> None:
     show_root = Path(show["root"])
 
     if target_id:
-        base = _target_dir(show_root, target_id)
+        base = _target_dir(show_root, target_id, create=False)
+        if not base.exists():
+            print("No workfiles found.")
+            return
         files = _iter_workfiles(base)
         if not files:
             print("No workfiles found.")
@@ -370,7 +375,10 @@ def cmd_list(args: argparse.Namespace) -> None:
         for f in files:
             print(f.relative_to(show_root))
     else:
-        base = _work_root(show_root)
+        base = _work_root(show_root, create=False)
+        if not base.exists():
+            print("No workfiles found.")
+            return
         files = _iter_workfiles(base)
         if not files:
             print("No workfiles found.")
@@ -399,7 +407,11 @@ def cmd_open(args: argparse.Namespace) -> None:
     show_root = Path(show["root"])
     kind = args.kind.lower() if args.kind else None
 
-    base = _target_dir(show_root, target_id, kind)
+    base = _target_dir(show_root, target_id, kind, create=False)
+    if not base.exists():
+        print(f"No workfiles found for {target_id}.")
+        sys.exit(1)
+
     candidates = list(_iter_workfiles(base))
     if not candidates:
         print(f"No workfiles found for {target_id}.")
