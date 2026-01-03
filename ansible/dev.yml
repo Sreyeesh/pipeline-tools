@@ -6,29 +6,34 @@
 
   vars:
     repo_root: "{{ playbook_dir | dirname }}"
-    venv_path: "{{ repo_root }}/.venv"
+    python_bin: "{{ ansible_playbook_python | default('python3') }}"
 
   tasks:
     - name: Ensure base packages (Debian/Ubuntu)
       become: true
       apt:
         name:
-          - python3-venv
           - python3-pip
           - build-essential
         state: present
         update_cache: true
       when: ansible_os_family == "Debian"
 
-    - name: Create virtualenv for development
+    - name: Upgrade pip
       ansible.builtin.command: >
-        python3 -m venv "{{ venv_path }}"
+        {{ python_bin }} -m pip install --upgrade pip
       args:
-        creates: "{{ venv_path }}/bin/activate"
+        chdir: "{{ repo_root }}"
+
+    - name: Install package in editable mode
+      ansible.builtin.command: >
+        {{ python_bin }} -m pip install -e .
+      args:
+        chdir: "{{ repo_root }}"
 
     - name: Install dev requirements
       ansible.builtin.command: >
-        "{{ venv_path }}/bin/pip" install -r requirements-dev.txt
+        {{ python_bin }} -m pip install -r requirements-dev.txt
       args:
         chdir: "{{ repo_root }}"
 
