@@ -30,7 +30,7 @@ services:
       - ${PROJECTS_ROOT:-/mnt/c/Projects}:/mnt/c/Projects
       - ${DB_VOLUME:-pipely-db}:/root/.pipeline_tools
       - ./:/app
-    entrypoint: ["/bin/bash", "-lc", "pip install -e . && exec bash"]
+    entrypoint: ["/bin/bash", "-lc", "pip install -e . && pip install -r requirements-dev.txt && exec bash"]
 
 volumes:
   pipely-db:

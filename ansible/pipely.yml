@@ -34,8 +34,15 @@
         chdir: "{{ pipeline_tools_src }}"
       when: pipely_smoke_test | bool
 
-    - name: Install editable Pipely and dev deps in dev shell container
+    - name: Install editable Pipely + dev deps and run tests in dev shell container
+      # Build pipely-shell before running to pick up Dockerfile changes
       ansible.builtin.command: >
-        docker compose -f docker-compose.yml run --rm pipely-shell bash -lc "pip install -e . && pip install -r requirements-dev.txt"
+        docker compose -f docker-compose.yml build pipely-shell
+      args:
+        chdir: "{{ pipeline_tools_src }}"
+
+    - name: Bootstrap dev shell (pip install + pytest)
+      ansible.builtin.command: >
+        docker compose -f docker-compose.yml run --rm pipely-shell bash -lc "pip install -e . && pip install -r requirements-dev.txt && python -m pytest"
       args:
         chdir: "{{ pipeline_tools_src }}"
