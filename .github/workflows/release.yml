@@ -20,7 +20,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # needed to verify tag ancestry
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -48,10 +48,6 @@ jobs:
             exit 1
           fi
 
-      - name: Ensure release is on Monday
-        run: |
-          echo "Monday gate disabled; allowing releases any day (including hotfixes)."
-
       - name: Install build and dev deps
         run: |
           python -m pip install --upgrade pip
@@ -60,8 +56,104 @@ jobs:
       - name: Run tests
         run: python -m pytest
 
-      - name: Build artifacts
+      - name: Build sdist/wheel
         run: python -m build
+
+      - name: Upload Python dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: dist/*
+
+  build-binaries:
+    name: Build PyInstaller binary (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            binary_name: pipely-linux
+            artifact_file: pipely-linux
+          - os: macos-latest
+            platform: macos
+            binary_name: pipely-macos
+            artifact_file: pipely-macos
+          - os: windows-latest
+            platform: windows
+            binary_name: pipely-windows
+            artifact_file: pipely-windows.exe
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps + PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . pyinstaller
+
+      - name: Build binary
+        run: pyinstaller --onefile --name ${{ matrix.binary_name }} src/pipeline_tools/cli.py
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.binary_name }}
+          path: dist/${{ matrix.artifact_file }}
+
+  publish-release:
+    needs:
+      - test-build-release
+      - build-binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Determine release tag
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          if [ -z "$TAG" ]; then
+            echo "No tag provided; set workflow_dispatch input 'tag' or push a tag ref."
+            exit 1
+          fi
+          echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
+
+      - name: Ensure tag is on main
+        run: |
+          git fetch origin main
+          TAG_SHA=$(git rev-parse "$RELEASE_TAG"^{commit})
+          MAIN_SHA=$(git rev-parse origin/main)
+          BASE=$(git merge-base "$TAG_SHA" "$MAIN_SHA")
+          if [ "$BASE" != "$MAIN_SHA" ]; then
+            echo "Tag commit is not on main. Aborting release."
+            exit 1
+          fi
+
+      - name: Download Python dist
+        uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: release/dist
+
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pipely-*
+          path: release/binaries
+          merge-multiple: true
 
       - name: Generate changelog
         id: changelog
@@ -78,8 +170,9 @@ jobs:
           tag_name: ${{ env.RELEASE_TAG }}
           body: ${{ steps.changelog.outputs.changes }}
           files: |
-            dist/*.whl
-            dist/*.tar.gz
+            release/dist/*.whl
+            release/dist/*.tar.gz
+            release/binaries/*
             CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -88,33 +181,26 @@ jobs:
         if: steps.changelog.outputs.changes != ''
         run: |
           VERSION="${{ github.ref_name }}"
-          VERSION_NUM="${VERSION#v}"  # Remove 'v' prefix
+          VERSION_NUM="${VERSION#v}"
           CHANGES=$(cat <<'EOT'
-          ${{ steps.changelog.outputs.changes }}
-          EOT
-          )
+${{ steps.changelog.outputs.changes }}
+EOT
+)
           SUMMARY=$(echo "$CHANGES" | head -n 3 | tail -n 1 | sed 's/^[*-] //' | cut -c 1-120)
 
-          # Update docs/index.html changelog section
           python3 << 'EOF'
           import re
           version = "$VERSION_NUM"
           summary = "$SUMMARY"
-
           with open("docs/index.html", "r") as f:
               content = f.read()
-
-          # Find the changelog grid and add new entry at the top
           new_entry = f'''                <div class="use-case scroll-fade-left">
                       <h3>{version}</h3>
                       <p>{summary}</p>
                   </div>'''
-
-          # Insert after the first <div class="use-cases-grid">
           pattern = r'(<div class="use-cases-grid">)'
           replacement = r'\1\n' + new_entry
           content = re.sub(pattern, replacement, content, count=1)
-
           with open("docs/index.html", "w") as f:
               f.write(content)
           EOF
