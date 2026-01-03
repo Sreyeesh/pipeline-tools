@@ -33,3 +33,9 @@
       args:
         chdir: "{{ pipeline_tools_src }}"
       when: pipely_smoke_test | bool
+
+    - name: Install editable Pipely and dev deps in dev shell container
+      ansible.builtin.command: >
+        docker compose -f docker-compose.yml run --rm pipely-shell bash -lc "pip install -e . && pip install -r requirements-dev.txt"
+      args:
+        chdir: "{{ pipeline_tools_src }}"
