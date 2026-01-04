@@ -21,14 +21,16 @@ services:
     command: ["pytest"]
 
   pipely-shell:
-    image: pipely:latest
-    build: .
+    image: pipely-dev:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
     working_dir: /app
     volumes:
       - ${PROJECTS_ROOT:-/mnt/c/Projects}:/mnt/c/Projects
       - ${DB_VOLUME:-pipely-db}:/root/.pipeline_tools
       - ./:/app
-    entrypoint: ["/bin/sh"]
+    entrypoint: ["/bin/bash", "-lc", "pip install -e . && pip install -r requirements-dev.txt && exec bash"]
 
 volumes:
   pipely-db:

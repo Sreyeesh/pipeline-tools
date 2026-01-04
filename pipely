@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+IMAGE="${PIPELY_IMAGE:-pipely-loop}"
+PROJECTS_ROOT_DEFAULT="${HOME}/Projects"
+if [ -d /mnt/c/Projects ]; then
+    PROJECTS_ROOT_DEFAULT="/mnt/c/Projects"
+fi
+PROJECTS_ROOT="${PIPELY_PROJECTS_ROOT:-$PROJECTS_ROOT_DEFAULT}"
+DB_VOLUME="${PIPELY_DB_VOLUME:-pipely-db}"
+
+if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
+    echo "Building Docker image '$IMAGE'..."
+    docker build -t "$IMAGE" .
+fi
+
+docker run --rm -it \
+    -v "${PROJECTS_ROOT}":/mnt/c/Projects \
+    -v "${DB_VOLUME}":/root/.pipeline_tools \
+    "$IMAGE" python -m pipeline_tools.cli "$@"

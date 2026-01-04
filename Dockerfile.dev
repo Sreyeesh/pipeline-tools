@@ -1,0 +1,16 @@
+FROM python:3.11-slim
+
+ARG USER=dev
+ARG UID=1000
+ARG GID=1000
+
+RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/* \
+    && groupadd -g ${GID} ${USER} \
+    && useradd -m -u ${UID} -g ${GID} -s /bin/bash ${USER}
+
+WORKDIR /workspace
+USER ${USER}
+ENV PATH="/home/${USER}/.local/bin:${PATH}"
+RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/${USER}/.bashrc
+
+CMD ["bash"]
