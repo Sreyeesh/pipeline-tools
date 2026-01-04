@@ -163,29 +163,35 @@ jobs:
 
       - name: Update website changelog
         if: steps.changelog.outputs.changes != ''
+        env:
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+          RELEASE_CHANGES: ${{ steps.changelog.outputs.changes }}
         run: |
-          VERSION="${{ env.RELEASE_TAG }}"
-          VERSION_NUM="${VERSION#v}"
-          CHANGES=$(cat <<'EOT'
-${{ steps.changelog.outputs.changes }}
-          EOT
-          )
-          SUMMARY=$(echo "$CHANGES" | head -n 3 | tail -n 1 | sed 's/^[*-] //' | cut -c 1-120)
-
-          python3 << 'EOF'
+          python3 <<'EOF'
+          import os
           import re
-          version = "$VERSION_NUM"
-          summary = "$SUMMARY"
-          with open("docs/index.html", "r") as f:
-              content = f.read()
+
+          version = os.environ["RELEASE_TAG"].lstrip("v")
+          changes = os.environ["RELEASE_CHANGES"]
+          lines = [line.strip(" -*") for line in changes.splitlines() if line.strip()]
+          summary = (lines[0] if lines else f"Release {version}")[:120]
+
+          try:
+              with open("docs/index.html", "r", encoding="utf-8") as f:
+                  content = f.read()
+          except FileNotFoundError:
+              raise SystemExit("docs/index.html not found")
+
           new_entry = f'''                <div class="use-case scroll-fade-left">
                       <h3>{version}</h3>
                       <p>{summary}</p>
                   </div>'''
           pattern = r'(<div class="use-cases-grid">)'
-          replacement = r'\1\n' + new_entry
-          content = re.sub(pattern, replacement, content, count=1)
-          with open("docs/index.html", "w") as f:
+          replacement = r'\\1\n' + new_entry
+          content, count = re.subn(pattern, replacement, content, count=1)
+          if count == 0:
+              raise SystemExit("Changelog section not found in docs/index.html")
+          with open("docs/index.html", "w", encoding="utf-8") as f:
               f.write(content)
           EOF
 
