@@ -1,0 +1,198 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Determine release tag
+        run: echo "RELEASE_TAG=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+
+      - name: Ensure tag is on main
+        run: |
+          git fetch origin main
+          TAG_SHA=$(git rev-parse "$RELEASE_TAG"^{commit})
+          MAIN_SHA=$(git rev-parse origin/main)
+          BASE=$(git merge-base "$TAG_SHA" "$MAIN_SHA")
+          if [ "$BASE" != "$MAIN_SHA" ]; then
+            echo "Tag commit is not on main. Aborting release."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt build
+
+      - name: Run tests
+        run: python -m pytest
+
+      - name: Build sdist and wheel
+        run: python -m build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: dist/*
+
+  binaries:
+    name: Build PyInstaller binary (${{ matrix.platform }})
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            artifact: pipely-linux
+            output: pipely-linux
+          - os: macos-latest
+            platform: macos
+            artifact: pipely-macos
+            output: pipely-macos
+          - os: windows-latest
+            platform: windows
+            artifact: pipely-windows
+            output: pipely-windows.exe
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps + PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . pyinstaller
+
+      - name: Build binary
+        run: pyinstaller --onefile --name ${{ matrix.artifact }} src/pipeline_tools/cli.py
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.output }}
+
+  publish:
+    needs:
+      - build
+      - binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Load release tag
+        run: echo "RELEASE_TAG=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+
+      - name: Ensure tag is on main
+        run: |
+          git fetch origin main
+          TAG_SHA=$(git rev-parse "$RELEASE_TAG"^{commit})
+          MAIN_SHA=$(git rev-parse origin/main)
+          BASE=$(git merge-base "$TAG_SHA" "$MAIN_SHA")
+          if [ "$BASE" != "$MAIN_SHA" ]; then
+            echo "Tag commit is not on main. Aborting release."
+            exit 1
+          fi
+
+      - name: Download Python dist
+        uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: release/dist
+
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pipely-*
+          path: release/binaries
+          merge-multiple: true
+
+      - name: Generate changelog
+        id: changelog
+        uses: requarks/changelog-action@v1
+        with:
+          token: ${{ github.token }}
+          tag: ${{ env.RELEASE_TAG }}
+          writeToFile: true
+          includeInvalidCommits: false
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          body: ${{ steps.changelog.outputs.changes }}
+          files: |
+            release/dist/*.whl
+            release/dist/*.tar.gz
+            release/binaries/*
+            CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update website changelog
+        if: steps.changelog.outputs.changes != ''
+        run: |
+          VERSION="${{ env.RELEASE_TAG }}"
+          VERSION_NUM="${VERSION#v}"
+          CHANGES=$(cat <<'EOT'
+${{ steps.changelog.outputs.changes }}
+          EOT
+          )
+          SUMMARY=$(echo "$CHANGES" | head -n 3 | tail -n 1 | sed 's/^[*-] //' | cut -c 1-120)
+
+          python3 << 'EOF'
+          import re
+          version = "$VERSION_NUM"
+          summary = "$SUMMARY"
+          with open("docs/index.html", "r") as f:
+              content = f.read()
+          new_entry = f'''                <div class="use-case scroll-fade-left">
+                      <h3>{version}</h3>
+                      <p>{summary}</p>
+                  </div>'''
+          pattern = r'(<div class="use-cases-grid">)'
+          replacement = r'\1\n' + new_entry
+          content = re.sub(pattern, replacement, content, count=1)
+          with open("docs/index.html", "w") as f:
+              f.write(content)
+          EOF
+
+      - name: Commit CHANGELOG and docs
+        if: steps.changelog.outputs.changes != ''
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: main
+          commit_message: 'docs: update CHANGELOG.md and website for ${{ env.RELEASE_TAG }} [skip ci]'
+          file_pattern: CHANGELOG.md docs/index.html
