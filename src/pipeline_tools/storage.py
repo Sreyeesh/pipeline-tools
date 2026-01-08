@@ -34,6 +34,20 @@ MIGRATIONS: list[tuple[int, str]] = [
         INSERT INTO schema_migrations (version) VALUES (2);
         """,
     ),
+    (
+        3,
+        """
+        CREATE TABLE IF NOT EXISTS approvals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            asset_id INTEGER NOT NULL,
+            status TEXT NOT NULL,
+            note TEXT,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(asset_id) REFERENCES assets(id)
+        );
+        INSERT INTO schema_migrations (version) VALUES (3);
+        """,
+    ),
 ]
 
 
@@ -123,6 +137,53 @@ def list_assets(db_path: Path) -> list[dict[str, str]]:
             ORDER BY id
             """
         )
+        return [dict(row) for row in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
+def create_approval(
+    db_path: Path,
+    asset_id: int,
+    status: str,
+    note: str | None,
+) -> int:
+    conn = connect(db_path)
+    try:
+        cursor = conn.execute(
+            """
+            INSERT INTO approvals (asset_id, status, note, created_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (asset_id, status, note, datetime.utcnow().isoformat()),
+        )
+        conn.commit()
+        return int(cursor.lastrowid)
+    finally:
+        conn.close()
+
+
+def list_approvals(db_path: Path, asset_id: int | None = None) -> list[dict[str, str]]:
+    conn = connect(db_path)
+    try:
+        if asset_id is None:
+            cursor = conn.execute(
+                """
+                SELECT id, asset_id, status, note, created_at
+                FROM approvals
+                ORDER BY id
+                """
+            )
+        else:
+            cursor = conn.execute(
+                """
+                SELECT id, asset_id, status, note, created_at
+                FROM approvals
+                WHERE asset_id = ?
+                ORDER BY id
+                """,
+                (asset_id,),
+            )
         return [dict(row) for row in cursor.fetchall()]
     finally:
         conn.close()
