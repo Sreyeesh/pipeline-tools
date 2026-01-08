@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from datetime import datetime
 import os
 import sqlite3
 
@@ -20,6 +21,19 @@ MIGRATIONS: list[tuple[int, str]] = [
         INSERT INTO schema_migrations (version) VALUES (1);
         """,
     ),
+    (
+        2,
+        """
+        CREATE TABLE IF NOT EXISTS assets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            asset_type TEXT NOT NULL,
+            status TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        );
+        INSERT INTO schema_migrations (version) VALUES (2);
+        """,
+    ),
 ]
 
 
@@ -35,7 +49,9 @@ def resolve_db_path(db_path: Path | None) -> Path:
 
 
 def connect(db_path: Path) -> sqlite3.Connection:
-    return sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 def _has_schema_table(conn: sqlite3.Connection) -> bool:
@@ -74,3 +90,39 @@ def init_db(db_path: Path | None = None) -> tuple[Path, int]:
     finally:
         conn.close()
     return path, applied
+
+
+def create_asset(
+    db_path: Path,
+    name: str,
+    asset_type: str,
+    status: str,
+) -> int:
+    conn = connect(db_path)
+    try:
+        cursor = conn.execute(
+            """
+            INSERT INTO assets (name, asset_type, status, created_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (name, asset_type, status, datetime.utcnow().isoformat()),
+        )
+        conn.commit()
+        return int(cursor.lastrowid)
+    finally:
+        conn.close()
+
+
+def list_assets(db_path: Path) -> list[dict[str, str]]:
+    conn = connect(db_path)
+    try:
+        cursor = conn.execute(
+            """
+            SELECT id, name, asset_type, status, created_at
+            FROM assets
+            ORDER BY id
+            """
+        )
+        return [dict(row) for row in cursor.fetchall()]
+    finally:
+        conn.close()
