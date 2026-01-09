@@ -47,6 +47,24 @@ ansible-playbook -i localhost, -c local ansible/dev.yml
 
 On Windows, ensure your Python `Scripts` directory is on `PATH` so `uv` is available in Command Prompt.
 
+## Windows via SSH (local host)
+
+When running Ansible from WSL2, set your Windows SSH host/user in env vars and run:
+
+```sh
+export WIN_HOST=172.27.176.1
+export WIN_USER="GL1-I9-16\\sgari"
+make ansible-win-ssh
+```
+
+Pass a custom repo path if you cloned elsewhere:
+
+```sh
+export WIN_REPO_PARENT="C:\\Users\\sgari\\projects"
+export WIN_REPO_PATH="C:\\Users\\sgari\\projects\\pipeline-tools"
+make ansible-win-ssh
+```
+
 ## Use the image
 
 Once built, run Pipely via Docker (or the repo’s `./pipely` wrapper):
