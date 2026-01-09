@@ -1,0 +1,51 @@
+- name: Install uv (Windows)
+  ansible.windows.win_command: >
+    {{ python_bin }} -m pip install --upgrade uv
+  args:
+    chdir: "{{ repo_root }}"
+  when:
+    - use_uv | bool
+
+- name: Get Python Scripts path (Windows)
+  ansible.windows.win_command: >
+    {{ python_bin }} -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+  register: python_scripts_path
+  changed_when: false
+  when:
+    - use_uv | bool
+    - uv_add_to_path | bool
+
+- name: Ensure Python Scripts on PATH (Windows)
+  ansible.windows.win_path:
+    elements:
+      - "{{ python_scripts_path.stdout | trim }}"
+    scope: user
+  when:
+    - use_uv | bool
+    - uv_add_to_path | bool
+
+- name: Verify uv is available (Windows)
+  ansible.windows.win_command: uv --version
+  changed_when: false
+  when:
+    - use_uv | bool
+
+- name: Install package in editable mode (uv, Windows)
+  ansible.windows.win_command: >
+    {{ python_bin }} -m uv pip install
+    {{ '--system' if uv_use_system else '' }}
+    -e .
+  args:
+    chdir: "{{ repo_root }}"
+  when:
+    - use_uv | bool
+
+- name: Install dev requirements (uv, Windows)
+  ansible.windows.win_command: >
+    {{ python_bin }} -m uv pip install
+    {{ '--system' if uv_use_system else '' }}
+    -r requirements-dev.txt
+  args:
+    chdir: "{{ repo_root }}"
+  when:
+    - use_uv | bool
