@@ -15,7 +15,14 @@ from pipeline_tools.schedule_cli import app as schedule_app
 from pipeline_tools.shot_cli import app as shot_app
 from pipeline_tools.task_cli import app as task_app
 from pipeline_tools.os_utils import resolve_root, sanitize_folder_name
-from pipeline_tools.storage import create_project, init_db, resolve_db_path
+from pipeline_tools.storage import (
+    create_asset,
+    create_project,
+    create_shot,
+    create_task,
+    init_db,
+    resolve_db_path,
+)
 
 APP_HELP = (
     "Pipely - create predictable project folders for artists.\n"
@@ -160,6 +167,7 @@ def cmd_init(
     root: Path | None = typer.Option(None, "--root", help="Base folder (defaults to current directory)."),
     code: str | None = typer.Option(None, "--code", "-c", help="Project code for the local database."),
     db: str | None = typer.Option(None, "--db", help="Database path (defaults to ~/.pipely/pipely.db)."),
+    wizard: bool = typer.Option(False, "--wizard", "-w", help="Guide setup of a starter shot/asset/task."),
 ) -> None:
     """Create a clean folder structure for a new project."""
     if describe:
@@ -171,13 +179,50 @@ def cmd_init(
     project_dir = _project_dir(base_root, project_name)
     db_path = resolve_db_path(Path(db) if db else None)
     init_db(db_path)
-    create_project(db_path, name=project_name, code=code or _default_project_code(project_name))
+    project_id = create_project(db_path, name=project_name, code=code or _default_project_code(project_name))
 
     project_dir.mkdir(parents=True, exist_ok=True)
     for rel in PROJECT_TEMPLATES[chosen_type]:
         (project_dir / rel).mkdir(parents=True, exist_ok=True)
 
     typer.echo(f"→ Created {chosen_type} project at {project_dir}")
+
+    if not wizard:
+        return
+
+    if not typer.confirm("Add a starter shot?", default=True):
+        return
+    shot_code = typer.prompt("Shot code", default="S010")
+    shot_name = typer.prompt("Shot name", default="Opening")
+    shot_id = create_shot(db_path, project_id=project_id, code=shot_code, name=shot_name)
+    typer.echo(f"→ Added shot #{shot_id}: {shot_name} ({shot_code})")
+
+    if not typer.confirm("Add a starter asset?", default=True):
+        return
+    asset_name = typer.prompt("Asset name", default="Hero")
+    asset_type = typer.prompt("Asset type", default="character")
+    asset_id = create_asset(
+        db_path,
+        name=asset_name,
+        asset_type=asset_type,
+        status="todo",
+        project_id=project_id,
+        shot_id=shot_id,
+    )
+    typer.echo(f"→ Added asset #{asset_id}: {asset_name} ({asset_type})")
+
+    if not typer.confirm("Add a starter task?", default=True):
+        return
+    task_name = typer.prompt("Task name", default="Model")
+    task_id = create_task(
+        db_path,
+        asset_id=asset_id,
+        name=task_name,
+        status="todo",
+        assignee=None,
+        due_date=None,
+    )
+    typer.echo(f"→ Added task #{task_id}: {task_name} (todo)")
 
 
 @app.callback(invoke_without_command=True)
