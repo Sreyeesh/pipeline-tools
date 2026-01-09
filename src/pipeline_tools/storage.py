@@ -373,6 +373,21 @@ def list_projects(db_path: Path) -> list[dict[str, str]]:
         conn.close()
 
 
+def _update_row(
+    conn: sqlite3.Connection,
+    table: str,
+    entity_id: int,
+    updates: dict[str, object],
+) -> bool:
+    if not updates:
+        return False
+    columns = ", ".join(f"{column} = ?" for column in updates)
+    values = list(updates.values())
+    values.append(entity_id)
+    cursor = conn.execute(f"UPDATE {table} SET {columns} WHERE id = ?", values)
+    return cursor.rowcount > 0
+
+
 def get_project(db_path: Path, project_id: int) -> dict[str, str] | None:
     conn = connect(db_path)
     try:
@@ -386,6 +401,43 @@ def get_project(db_path: Path, project_id: int) -> dict[str, str] | None:
         )
         row = cursor.fetchone()
         return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def update_project(
+    db_path: Path,
+    project_id: int,
+    name: str | None = None,
+    code: str | None = None,
+    project_type: str | None = None,
+    project_path: str | None = None,
+) -> bool:
+    updates: dict[str, object] = {}
+    if name is not None:
+        updates["name"] = name
+    if code is not None:
+        updates["code"] = code
+    if project_type is not None:
+        updates["project_type"] = project_type
+    if project_path is not None:
+        updates["project_path"] = project_path
+    conn = connect(db_path)
+    try:
+        updated = _update_row(conn, "projects", project_id, updates)
+        if updated:
+            conn.commit()
+        return updated
+    finally:
+        conn.close()
+
+
+def delete_project(db_path: Path, project_id: int) -> bool:
+    conn = connect(db_path)
+    try:
+        cursor = conn.execute("DELETE FROM projects WHERE id = ?", (project_id,))
+        conn.commit()
+        return cursor.rowcount > 0
     finally:
         conn.close()
 
@@ -428,6 +480,40 @@ def list_shots(db_path: Path, project_id: int | None = None) -> list[dict[str, s
                 (project_id,),
             )
         return [dict(row) for row in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
+def update_shot(
+    db_path: Path,
+    shot_id: int,
+    project_id: int | None = None,
+    code: str | None = None,
+    name: str | None = None,
+) -> bool:
+    updates: dict[str, object] = {}
+    if project_id is not None:
+        updates["project_id"] = project_id
+    if code is not None:
+        updates["code"] = code
+    if name is not None:
+        updates["name"] = name
+    conn = connect(db_path)
+    try:
+        updated = _update_row(conn, "shots", shot_id, updates)
+        if updated:
+            conn.commit()
+        return updated
+    finally:
+        conn.close()
+
+
+def delete_shot(db_path: Path, shot_id: int) -> bool:
+    conn = connect(db_path)
+    try:
+        cursor = conn.execute("DELETE FROM shots WHERE id = ?", (shot_id,))
+        conn.commit()
+        return cursor.rowcount > 0
     finally:
         conn.close()
 
@@ -481,6 +567,46 @@ def list_tasks(db_path: Path, asset_id: int | None = None) -> list[dict[str, str
         conn.close()
 
 
+def update_task(
+    db_path: Path,
+    task_id: int,
+    asset_id: int | None = None,
+    name: str | None = None,
+    status: str | None = None,
+    assignee: str | None = None,
+    due_date: str | None = None,
+) -> bool:
+    updates: dict[str, object] = {}
+    if asset_id is not None:
+        updates["asset_id"] = asset_id
+    if name is not None:
+        updates["name"] = name
+    if status is not None:
+        updates["status"] = status
+    if assignee is not None:
+        updates["assignee"] = assignee
+    if due_date is not None:
+        updates["due_date"] = due_date
+    conn = connect(db_path)
+    try:
+        updated = _update_row(conn, "tasks", task_id, updates)
+        if updated:
+            conn.commit()
+        return updated
+    finally:
+        conn.close()
+
+
+def delete_task(db_path: Path, task_id: int) -> bool:
+    conn = connect(db_path)
+    try:
+        cursor = conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
 def _count_by_status(conn: sqlite3.Connection, table: str) -> dict[str, int]:
     cursor = conn.execute(f"SELECT status, COUNT(*) AS count FROM {table} GROUP BY status")
     return {row["status"]: int(row["count"]) for row in cursor.fetchall()}
@@ -502,6 +628,46 @@ def report_summary(db_path: Path) -> dict[str, object]:
             "asset_status": _count_by_status(conn, "assets"),
             "task_status": _count_by_status(conn, "tasks"),
         }
+    finally:
+        conn.close()
+
+
+def update_asset(
+    db_path: Path,
+    asset_id: int,
+    name: str | None = None,
+    asset_type: str | None = None,
+    status: str | None = None,
+    project_id: int | None = None,
+    shot_id: int | None = None,
+) -> bool:
+    updates: dict[str, object] = {}
+    if name is not None:
+        updates["name"] = name
+    if asset_type is not None:
+        updates["asset_type"] = asset_type
+    if status is not None:
+        updates["status"] = status
+    if project_id is not None:
+        updates["project_id"] = project_id
+    if shot_id is not None:
+        updates["shot_id"] = shot_id
+    conn = connect(db_path)
+    try:
+        updated = _update_row(conn, "assets", asset_id, updates)
+        if updated:
+            conn.commit()
+        return updated
+    finally:
+        conn.close()
+
+
+def delete_asset(db_path: Path, asset_id: int) -> bool:
+    conn = connect(db_path)
+    try:
+        cursor = conn.execute("DELETE FROM assets WHERE id = ?", (asset_id,))
+        conn.commit()
+        return cursor.rowcount > 0
     finally:
         conn.close()
 
@@ -531,5 +697,100 @@ def asset_exists(db_path: Path, asset_id: int) -> bool:
     conn = connect(db_path)
     try:
         return _id_exists(conn, "assets", asset_id)
+    finally:
+        conn.close()
+
+
+def task_exists(db_path: Path, task_id: int) -> bool:
+    conn = connect(db_path)
+    try:
+        return _id_exists(conn, "tasks", task_id)
+    finally:
+        conn.close()
+
+
+def schedule_exists(db_path: Path, schedule_id: int) -> bool:
+    conn = connect(db_path)
+    try:
+        return _id_exists(conn, "schedules", schedule_id)
+    finally:
+        conn.close()
+
+
+def approval_exists(db_path: Path, approval_id: int) -> bool:
+    conn = connect(db_path)
+    try:
+        return _id_exists(conn, "approvals", approval_id)
+    finally:
+        conn.close()
+
+
+def update_schedule(
+    db_path: Path,
+    schedule_id: int,
+    asset_id: int | None = None,
+    task: str | None = None,
+    due_date: str | None = None,
+    status: str | None = None,
+) -> bool:
+    updates: dict[str, object] = {}
+    if asset_id is not None:
+        updates["asset_id"] = asset_id
+    if task is not None:
+        updates["task"] = task
+    if due_date is not None:
+        updates["due_date"] = due_date
+    if status is not None:
+        updates["status"] = status
+    conn = connect(db_path)
+    try:
+        updated = _update_row(conn, "schedules", schedule_id, updates)
+        if updated:
+            conn.commit()
+        return updated
+    finally:
+        conn.close()
+
+
+def delete_schedule(db_path: Path, schedule_id: int) -> bool:
+    conn = connect(db_path)
+    try:
+        cursor = conn.execute("DELETE FROM schedules WHERE id = ?", (schedule_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
+def update_approval(
+    db_path: Path,
+    approval_id: int,
+    asset_id: int | None = None,
+    status: str | None = None,
+    note: str | None = None,
+) -> bool:
+    updates: dict[str, object] = {}
+    if asset_id is not None:
+        updates["asset_id"] = asset_id
+    if status is not None:
+        updates["status"] = status
+    if note is not None:
+        updates["note"] = note
+    conn = connect(db_path)
+    try:
+        updated = _update_row(conn, "approvals", approval_id, updates)
+        if updated:
+            conn.commit()
+        return updated
+    finally:
+        conn.close()
+
+
+def delete_approval(db_path: Path, approval_id: int) -> bool:
+    conn = connect(db_path)
+    try:
+        cursor = conn.execute("DELETE FROM approvals WHERE id = ?", (approval_id,))
+        conn.commit()
+        return cursor.rowcount > 0
     finally:
         conn.close()

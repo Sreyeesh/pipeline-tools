@@ -7,12 +7,15 @@ import typer
 from pipeline_tools.folders import ensure_asset_folders
 from pipeline_tools.storage import (
     create_asset,
+    delete_asset,
     get_project,
     init_db,
     list_assets,
     project_exists,
     resolve_db_path,
     shot_exists,
+    asset_exists,
+    update_asset,
 )
 from pipeline_tools.output import render_table
 
@@ -91,3 +94,56 @@ def cmd_list(
     ]
     for line in render_table(["ID", "PROJECT", "SHOT", "NAME", "TYPE", "STATUS"], rows):
         typer.echo(line)
+
+
+@app.command("update")
+def cmd_update(
+    asset_id: int = typer.Option(..., "--asset-id", "-a", help="Asset ID."),
+    name: str | None = typer.Option(None, "--name", "-n", help="Asset name."),
+    asset_type: str | None = typer.Option(None, "--type", "-t", help="Asset type."),
+    status: str | None = typer.Option(None, "--status", "-s", help="Asset status."),
+    project_id: int | None = typer.Option(None, "--project-id", "-p", help="Project ID."),
+    shot_id: int | None = typer.Option(None, "--shot-id", help="Shot ID."),
+    db: str | None = typer.Option(
+        None,
+        "--db",
+        help="Database path (defaults to ~/.pipely/pipely.db).",
+    ),
+) -> None:
+    db_path = resolve_db_path(Path(db) if db else None)
+    init_db(db_path)
+    if not asset_exists(db_path, asset_id):
+        raise typer.BadParameter(f"Asset ID not found: {asset_id}")
+    if project_id is not None and not project_exists(db_path, project_id):
+        raise typer.BadParameter(f"Project ID not found: {project_id}")
+    if shot_id is not None and not shot_exists(db_path, shot_id):
+        raise typer.BadParameter(f"Shot ID not found: {shot_id}")
+    updated = update_asset(
+        db_path,
+        asset_id,
+        name=name,
+        asset_type=asset_type,
+        status=status,
+        project_id=project_id,
+        shot_id=shot_id,
+    )
+    if not updated:
+        raise typer.BadParameter("No updates provided.")
+    typer.echo(f"Updated asset #{asset_id}.")
+
+
+@app.command("delete")
+def cmd_delete(
+    asset_id: int = typer.Option(..., "--asset-id", "-a", help="Asset ID."),
+    db: str | None = typer.Option(
+        None,
+        "--db",
+        help="Database path (defaults to ~/.pipely/pipely.db).",
+    ),
+) -> None:
+    db_path = resolve_db_path(Path(db) if db else None)
+    init_db(db_path)
+    if not asset_exists(db_path, asset_id):
+        raise typer.BadParameter(f"Asset ID not found: {asset_id}")
+    delete_asset(db_path, asset_id)
+    typer.echo(f"Deleted asset #{asset_id}.")

@@ -4,7 +4,16 @@ from pathlib import Path
 
 import typer
 
-from pipeline_tools.storage import asset_exists, create_task, init_db, list_tasks, resolve_db_path
+from pipeline_tools.storage import (
+    asset_exists,
+    create_task,
+    delete_task,
+    init_db,
+    list_tasks,
+    resolve_db_path,
+    task_exists,
+    update_task,
+)
 from pipeline_tools.output import render_table
 
 
@@ -69,3 +78,54 @@ def cmd_list(
     ]
     for line in render_table(["ID", "ASSET", "NAME", "STATUS", "ASSIGNEE", "DUE"], rows):
         typer.echo(line)
+
+
+@app.command("update")
+def cmd_update(
+    task_id: int = typer.Option(..., "--task-id", "-t", help="Task ID."),
+    asset_id: int | None = typer.Option(None, "--asset-id", "-a", help="Asset ID."),
+    name: str | None = typer.Option(None, "--name", "-n", help="Task name."),
+    status: str | None = typer.Option(None, "--status", "-s", help="Task status."),
+    assignee: str | None = typer.Option(None, "--assignee", help="Assignee name."),
+    due: str | None = typer.Option(None, "--due", help="Due date (YYYY-MM-DD)."),
+    db: str | None = typer.Option(
+        None,
+        "--db",
+        help="Database path (defaults to ~/.pipely/pipely.db).",
+    ),
+) -> None:
+    db_path = resolve_db_path(Path(db) if db else None)
+    init_db(db_path)
+    if not task_exists(db_path, task_id):
+        raise typer.BadParameter(f"Task ID not found: {task_id}")
+    if asset_id is not None and not asset_exists(db_path, asset_id):
+        raise typer.BadParameter(f"Asset ID not found: {asset_id}")
+    updated = update_task(
+        db_path,
+        task_id,
+        asset_id=asset_id,
+        name=name,
+        status=status,
+        assignee=assignee,
+        due_date=due,
+    )
+    if not updated:
+        raise typer.BadParameter("No updates provided.")
+    typer.echo(f"Updated task #{task_id}.")
+
+
+@app.command("delete")
+def cmd_delete(
+    task_id: int = typer.Option(..., "--task-id", "-t", help="Task ID."),
+    db: str | None = typer.Option(
+        None,
+        "--db",
+        help="Database path (defaults to ~/.pipely/pipely.db).",
+    ),
+) -> None:
+    db_path = resolve_db_path(Path(db) if db else None)
+    init_db(db_path)
+    if not task_exists(db_path, task_id):
+        raise typer.BadParameter(f"Task ID not found: {task_id}")
+    delete_task(db_path, task_id)
+    typer.echo(f"Deleted task #{task_id}.")
