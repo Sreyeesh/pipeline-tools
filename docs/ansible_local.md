@@ -52,7 +52,7 @@ On Windows, ensure your Python `Scripts` directory is on `PATH` so `uv` is avail
 When running Ansible from WSL2, set your Windows SSH host/user in env vars and run:
 
 ```sh
-export WIN_HOST=172.27.176.1
+export WIN_HOST=YOUR_WINDOWS_HOST
 export WIN_USER="GL1-I9-16\\sgari"
 make ansible-win-ssh
 ```
