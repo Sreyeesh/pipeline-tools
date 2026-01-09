@@ -4,7 +4,7 @@ from pathlib import Path
 
 import typer
 
-from pipeline_tools.storage import create_task, init_db, list_tasks, resolve_db_path
+from pipeline_tools.storage import asset_exists, create_task, init_db, list_tasks, resolve_db_path
 
 
 app = typer.Typer(help="Tasks linked to assets.")
@@ -21,6 +21,8 @@ def cmd_add(
 ) -> None:
     db_path = resolve_db_path(db)
     init_db(db_path)
+    if not asset_exists(db_path, asset_id):
+        raise typer.BadParameter(f"Asset ID not found: {asset_id}")
     task_id = create_task(
         db_path,
         asset_id=asset_id,

@@ -43,3 +43,13 @@ def test_approval_set_and_list(tmp_path: Path) -> None:
     listed = runner.invoke(cli.app, ["approve", "list", "--db", str(db_path)])
     assert listed.exit_code == 0
     assert "#1 asset #1 approved - Looks good" in listed.stdout
+
+
+def test_approval_requires_asset(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
+    result = runner.invoke(
+        cli.app,
+        ["approve", "set", "--db", str(db_path), "--asset-id", "42", "--status", "approved"],
+    )
+    assert result.exit_code != 0
+    assert "Asset ID not found" in result.stdout

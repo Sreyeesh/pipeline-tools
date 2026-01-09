@@ -4,7 +4,7 @@ from pathlib import Path
 
 import typer
 
-from pipeline_tools.storage import create_approval, init_db, list_approvals, resolve_db_path
+from pipeline_tools.storage import asset_exists, create_approval, init_db, list_approvals, resolve_db_path
 
 
 app = typer.Typer(help="Approvals for assets.")
@@ -19,6 +19,8 @@ def cmd_set(
 ) -> None:
     db_path = resolve_db_path(db)
     init_db(db_path)
+    if not asset_exists(db_path, asset_id):
+        raise typer.BadParameter(f"Asset ID not found: {asset_id}")
     approval_id = create_approval(db_path, asset_id=asset_id, status=status, note=note)
     typer.echo(f"Recorded approval #{approval_id} for asset #{asset_id} ({status})")
 

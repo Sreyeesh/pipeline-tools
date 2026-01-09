@@ -45,3 +45,13 @@ def test_task_add_and_list(tmp_path: Path) -> None:
     listed = runner.invoke(cli.app, ["task", "list", "--db", str(db_path)])
     assert listed.exit_code == 0
     assert "#1 asset #1 Model (todo, Sam, due 2025-02-01)" in listed.stdout
+
+
+def test_task_requires_asset(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
+    result = runner.invoke(
+        cli.app,
+        ["task", "add", "--db", str(db_path), "--asset-id", "7", "--name", "Model"],
+    )
+    assert result.exit_code != 0
+    assert "Asset ID not found" in result.stdout

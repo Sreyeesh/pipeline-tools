@@ -469,3 +469,32 @@ def report_summary(db_path: Path) -> dict[str, object]:
         }
     finally:
         conn.close()
+
+
+def _id_exists(conn: sqlite3.Connection, table: str, entity_id: int) -> bool:
+    cursor = conn.execute(f"SELECT 1 FROM {table} WHERE id = ? LIMIT 1", (entity_id,))
+    return cursor.fetchone() is not None
+
+
+def project_exists(db_path: Path, project_id: int) -> bool:
+    conn = connect(db_path)
+    try:
+        return _id_exists(conn, "projects", project_id)
+    finally:
+        conn.close()
+
+
+def shot_exists(db_path: Path, shot_id: int) -> bool:
+    conn = connect(db_path)
+    try:
+        return _id_exists(conn, "shots", shot_id)
+    finally:
+        conn.close()
+
+
+def asset_exists(db_path: Path, asset_id: int) -> bool:
+    conn = connect(db_path)
+    try:
+        return _id_exists(conn, "assets", asset_id)
+    finally:
+        conn.close()

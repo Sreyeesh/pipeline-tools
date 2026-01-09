@@ -43,3 +43,13 @@ def test_shot_add_and_list(tmp_path: Path) -> None:
     listed = runner.invoke(cli.app, ["shot", "list", "--db", str(db_path)])
     assert listed.exit_code == 0
     assert "#1 project #1 Opening (S010)" in listed.stdout
+
+
+def test_shot_add_requires_project(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
+    result = runner.invoke(
+        cli.app,
+        ["shot", "add", "--db", str(db_path), "--project-id", "99", "--code", "S010", "--name", "Opening"],
+    )
+    assert result.exit_code != 0
+    assert "Project ID not found" in result.stdout

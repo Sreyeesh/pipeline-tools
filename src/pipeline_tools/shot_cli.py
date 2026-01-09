@@ -4,7 +4,7 @@ from pathlib import Path
 
 import typer
 
-from pipeline_tools.storage import create_shot, init_db, list_shots, resolve_db_path
+from pipeline_tools.storage import create_shot, init_db, list_shots, project_exists, resolve_db_path
 
 
 app = typer.Typer(help="Manage shots within projects.")
@@ -19,6 +19,8 @@ def cmd_add(
 ) -> None:
     db_path = resolve_db_path(db)
     init_db(db_path)
+    if not project_exists(db_path, project_id):
+        raise typer.BadParameter(f"Project ID not found: {project_id}")
     shot_id = create_shot(db_path, project_id=project_id, code=code, name=name)
     typer.echo(f"Added shot #{shot_id} to project #{project_id}: {name} ({code})")
 

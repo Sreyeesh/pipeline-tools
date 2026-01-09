@@ -4,7 +4,14 @@ from pathlib import Path
 
 import typer
 
-from pipeline_tools.storage import create_asset, init_db, list_assets, resolve_db_path
+from pipeline_tools.storage import (
+    create_asset,
+    init_db,
+    list_assets,
+    project_exists,
+    resolve_db_path,
+    shot_exists,
+)
 
 
 app = typer.Typer(help="Track assets in the local database.")
@@ -21,6 +28,10 @@ def cmd_add(
 ) -> None:
     db_path = resolve_db_path(db)
     init_db(db_path)
+    if project_id is not None and not project_exists(db_path, project_id):
+        raise typer.BadParameter(f"Project ID not found: {project_id}")
+    if shot_id is not None and not shot_exists(db_path, shot_id):
+        raise typer.BadParameter(f"Shot ID not found: {shot_id}")
     asset_id = create_asset(
         db_path,
         name=name,
