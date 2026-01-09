@@ -12,9 +12,13 @@ app = typer.Typer(help="Local database setup and status.")
 
 @app.command("init")
 def cmd_init(
-    db: Path | None = typer.Option(None, "--db", help="Database path (defaults to ~/.pipely/pipely.db)."),
+    db: str | None = typer.Option(
+        None,
+        "--db",
+        help="Database path (defaults to ~/.pipely/pipely.db).",
+    ),
 ) -> None:
-    path, applied = init_db(db)
+    path, applied = init_db(Path(db) if db else None)
     if applied:
         typer.echo(f"Initialized database at {path} (applied {applied} migration(s)).")
     else:
@@ -23,6 +27,10 @@ def cmd_init(
 
 @app.command("path")
 def cmd_path(
-    db: Path | None = typer.Option(None, "--db", help="Database path (defaults to ~/.pipely/pipely.db)."),
+    db: str | None = typer.Option(
+        None,
+        "--db",
+        help="Database path (defaults to ~/.pipely/pipely.db).",
+    ),
 ) -> None:
-    typer.echo(resolve_db_path(db))
+    typer.echo(resolve_db_path(Path(db) if db else None))

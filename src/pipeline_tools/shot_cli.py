@@ -16,9 +16,13 @@ def cmd_add(
     project_id: int = typer.Option(..., "--project-id", "-p", help="Project ID."),
     code: str = typer.Option(..., "--code", "-c", help="Shot code."),
     name: str = typer.Option(..., "--name", "-n", help="Shot name."),
-    db: Path | None = typer.Option(None, "--db", help="Database path (defaults to ~/.pipely/pipely.db)."),
+    db: str | None = typer.Option(
+        None,
+        "--db",
+        help="Database path (defaults to ~/.pipely/pipely.db).",
+    ),
 ) -> None:
-    db_path = resolve_db_path(db)
+    db_path = resolve_db_path(Path(db) if db else None)
     init_db(db_path)
     if not project_exists(db_path, project_id):
         raise typer.BadParameter(f"Project ID not found: {project_id}")
@@ -29,9 +33,13 @@ def cmd_add(
 @app.command("list")
 def cmd_list(
     project_id: int | None = typer.Option(None, "--project-id", "-p", help="Filter by project ID."),
-    db: Path | None = typer.Option(None, "--db", help="Database path (defaults to ~/.pipely/pipely.db)."),
+    db: str | None = typer.Option(
+        None,
+        "--db",
+        help="Database path (defaults to ~/.pipely/pipely.db).",
+    ),
 ) -> None:
-    db_path = resolve_db_path(db)
+    db_path = resolve_db_path(Path(db) if db else None)
     init_db(db_path)
     shots = list_shots(db_path, project_id=project_id)
     if not shots:

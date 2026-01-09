@@ -16,9 +16,13 @@ def cmd_set(
     asset_id: int = typer.Option(..., "--asset-id", "-a", help="Asset ID."),
     status: str = typer.Option(..., "--status", "-s", help="Approval status (approved/rejected/needs_changes)."),
     note: str | None = typer.Option(None, "--note", "-n", help="Optional note."),
-    db: Path | None = typer.Option(None, "--db", help="Database path (defaults to ~/.pipely/pipely.db)."),
+    db: str | None = typer.Option(
+        None,
+        "--db",
+        help="Database path (defaults to ~/.pipely/pipely.db).",
+    ),
 ) -> None:
-    db_path = resolve_db_path(db)
+    db_path = resolve_db_path(Path(db) if db else None)
     init_db(db_path)
     if not asset_exists(db_path, asset_id):
         raise typer.BadParameter(f"Asset ID not found: {asset_id}")
@@ -29,9 +33,13 @@ def cmd_set(
 @app.command("list")
 def cmd_list(
     asset_id: int | None = typer.Option(None, "--asset-id", "-a", help="Filter by asset ID."),
-    db: Path | None = typer.Option(None, "--db", help="Database path (defaults to ~/.pipely/pipely.db)."),
+    db: str | None = typer.Option(
+        None,
+        "--db",
+        help="Database path (defaults to ~/.pipely/pipely.db).",
+    ),
 ) -> None:
-    db_path = resolve_db_path(db)
+    db_path = resolve_db_path(Path(db) if db else None)
     init_db(db_path)
     approvals = list_approvals(db_path, asset_id=asset_id)
     if not approvals:

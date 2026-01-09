@@ -12,9 +12,13 @@ app = typer.Typer(help="Production reports.")
 
 @app.command("summary")
 def cmd_summary(
-    db: Path | None = typer.Option(None, "--db", help="Database path (defaults to ~/.pipely/pipely.db)."),
+    db: str | None = typer.Option(
+        None,
+        "--db",
+        help="Database path (defaults to ~/.pipely/pipely.db).",
+    ),
 ) -> None:
-    db_path = resolve_db_path(db)
+    db_path = resolve_db_path(Path(db) if db else None)
     init_db(db_path)
     summary = report_summary(db_path)
     counts = summary["counts"]

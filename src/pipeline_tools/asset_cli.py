@@ -25,9 +25,13 @@ def cmd_add(
     status: str = typer.Option("todo", "--status", "-s", help="Asset status."),
     project_id: int | None = typer.Option(None, "--project-id", "-p", help="Project ID."),
     shot_id: int | None = typer.Option(None, "--shot-id", help="Shot ID."),
-    db: Path | None = typer.Option(None, "--db", help="Database path (defaults to ~/.pipely/pipely.db)."),
+    db: str | None = typer.Option(
+        None,
+        "--db",
+        help="Database path (defaults to ~/.pipely/pipely.db).",
+    ),
 ) -> None:
-    db_path = resolve_db_path(db)
+    db_path = resolve_db_path(Path(db) if db else None)
     init_db(db_path)
     if project_id is not None and not project_exists(db_path, project_id):
         raise typer.BadParameter(f"Project ID not found: {project_id}")
@@ -51,9 +55,13 @@ def cmd_add(
 def cmd_list(
     project_id: int | None = typer.Option(None, "--project-id", "-p", help="Filter by project ID."),
     shot_id: int | None = typer.Option(None, "--shot-id", help="Filter by shot ID."),
-    db: Path | None = typer.Option(None, "--db", help="Database path (defaults to ~/.pipely/pipely.db)."),
+    db: str | None = typer.Option(
+        None,
+        "--db",
+        help="Database path (defaults to ~/.pipely/pipely.db).",
+    ),
 ) -> None:
-    db_path = resolve_db_path(db)
+    db_path = resolve_db_path(Path(db) if db else None)
     init_db(db_path)
     assets = list_assets(db_path, project_id=project_id, shot_id=shot_id)
     if not assets:
