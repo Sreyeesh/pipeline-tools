@@ -8,6 +8,9 @@
     pipeline_tools_src: "{{ playbook_dir | dirname }}"
     pipely_image_name: "{{ pipely_image | default('pipely-loop') }}"
     pipely_smoke_test: true
+    pipely_install_local: false
+    pipely_install_mode: user
+    pipely_install_python: /usr/bin/python3
 
   tasks:
     - name: Ensure Docker CLI is available
@@ -46,3 +49,21 @@
         docker compose -f docker-compose.yml run --rm pipely-shell bash -lc "pip install -e . && pip install -r requirements-dev.txt && python -m pytest"
       args:
         chdir: "{{ pipeline_tools_src }}"
+
+    - name: Ensure Python is available for local install
+      ansible.builtin.command: "{{ pipely_install_python }} --version"
+      changed_when: false
+      when: pipely_install_local | bool
+
+    - name: Install Pipely locally without a venv
+      ansible.builtin.command: >
+        {{ pipely_install_python }} -m pip install
+        {{ '--user' if pipely_install_mode == 'user' else '' }}
+        {{ pipeline_tools_src }}
+      args:
+        chdir: "{{ pipeline_tools_src }}"
+      environment:
+        VIRTUAL_ENV: ""
+        PATH: "/usr/bin:/bin:/usr/sbin:/sbin"
+      when: pipely_install_local | bool
+      become: "{{ pipely_install_mode == 'system' }}"
