@@ -15,6 +15,7 @@ from pipeline_tools.schedule_cli import app as schedule_app
 from pipeline_tools.shot_cli import app as shot_app
 from pipeline_tools.task_cli import app as task_app
 from pipeline_tools.os_utils import resolve_root, sanitize_folder_name
+from pipeline_tools.storage import create_project, init_db, resolve_db_path
 
 APP_HELP = (
     "Pipely - create predictable project folders for artists.\n"
@@ -145,12 +146,20 @@ def _project_dir(root: Path, name: str) -> Path:
     return root / slug
 
 
+def _default_project_code(name: str) -> str:
+    slug = sanitize_folder_name(name, fallback="PROJ")
+    letters = "".join(ch for ch in slug if ch.isalnum()).upper()
+    return (letters or "PROJ")[:6]
+
+
 @app.command("init")
 def cmd_init(
     name: str | None = typer.Option(None, "--name", "-n", help="Project name."),
     project_type: str | None = typer.Option(None, "--type", "-t", help="Project type (animation/game/art)."),
     describe: str | None = typer.Option(None, "--describe", "-d", help="Describe the project in plain language."),
     root: Path | None = typer.Option(None, "--root", help="Base folder (defaults to current directory)."),
+    code: str | None = typer.Option(None, "--code", "-c", help="Project code for the local database."),
+    db: str | None = typer.Option(None, "--db", help="Database path (defaults to ~/.pipely/pipely.db)."),
 ) -> None:
     """Create a clean folder structure for a new project."""
     if describe:
@@ -160,6 +169,9 @@ def cmd_init(
     chosen_type = _prompt_project_type(project_type)
     base_root = resolve_root(root)
     project_dir = _project_dir(base_root, project_name)
+    db_path = resolve_db_path(Path(db) if db else None)
+    init_db(db_path)
+    create_project(db_path, name=project_name, code=code or _default_project_code(project_name))
 
     project_dir.mkdir(parents=True, exist_ok=True)
     for rel in PROJECT_TEMPLATES[chosen_type]:
