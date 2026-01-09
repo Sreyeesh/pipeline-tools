@@ -7,5 +7,4 @@ from pipeline_tools import cli
 
 def test_cli_imports_from_local_src() -> None:
     cli_path = Path(cli.__file__).resolve()
-    assert "pipeline-tools" in cli_path.parts
-    assert "src" in cli_path.parts
+    assert cli_path.parts[-3:] == ("src", "pipeline_tools", "cli.py")

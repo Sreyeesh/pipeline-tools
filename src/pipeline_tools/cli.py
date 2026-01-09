@@ -16,7 +16,23 @@ from pipeline_tools.shot_cli import app as shot_app
 from pipeline_tools.task_cli import app as task_app
 from pipeline_tools.os_utils import resolve_root, sanitize_folder_name
 
-app = typer.Typer(add_completion=False, help="Pipely - create predictable project folders for artists.")
+APP_HELP = (
+    "Pipely - create predictable project folders for artists.\n"
+    "Scaffolds a clean folder tree and stops (no tracking or databases)."
+)
+
+APP_EPILOG = (
+    "Examples:\n"
+    "  pipely init\n"
+    "  pipely init --name \"Demo Reel\" --type animation\n"
+    "  pipely init --root ~/Projects --name Demo --type art\n\n"
+    "Project types:\n"
+    "  animation: 01_ADMIN, 02_PREPRO, 03_ASSETS, 04_SHOTS, 05_WORK, 06_DELIVERY, z_TEMP\n"
+    "  game:      01_DESIGN, 02_ART, 03_TECH, 04_AUDIO, 05_QA, 06_RELEASE, z_TEMP\n"
+    "  art:       01_REFERENCE, 02_WIP, 03_EXPORTS, 04_DELIVERY, z_TEMP\n"
+)
+
+app = typer.Typer(add_completion=False, help=APP_HELP, epilog=APP_EPILOG)
 app.add_typer(db_app, name="db")
 app.add_typer(asset_app, name="asset")
 app.add_typer(approval_app, name="approve")

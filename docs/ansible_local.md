@@ -21,6 +21,12 @@ That runs:
 ansible-playbook -i localhost, -c local ansible/pipely.yml -e pipely_image=pipely-loop
 ```
 
+If you prefer the shorter target name, this is equivalent:
+
+```sh
+make ansible
+```
+
 ### What the playbook does
 
 1. Checks that `docker` is available.

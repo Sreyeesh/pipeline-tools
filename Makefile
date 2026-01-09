@@ -9,7 +9,7 @@ ANSIBLE_BIN := $(ANSIBLE_VENV)/bin/ansible-playbook
 ANSIBLE_LOCAL_TEMP ?= $(CURDIR)/.ansible-tmp
 ANSIBLE_REMOTE_TEMP ?= $(CURDIR)/.ansible-remote-tmp
 
-.PHONY: build up sh run down clean ansible ansible-dev ansible-win-ssh ansible-install-local ansible-deps
+.PHONY: build up sh run down clean ansible ansible-install ansible-dev ansible-win-ssh ansible-install-local ansible-deps
 
 # Build the dev image (docker compose build)
 build:
@@ -39,6 +39,9 @@ clean:
 ansible: $(ANSIBLE_BIN)
 	@mkdir -p $(ANSIBLE_LOCAL_TEMP) $(ANSIBLE_REMOTE_TEMP)
 	ANSIBLE_LOCAL_TEMP=$(ANSIBLE_LOCAL_TEMP) ANSIBLE_REMOTE_TEMP=$(ANSIBLE_REMOTE_TEMP) ANSIBLE_FORKS=1 $(ANSIBLE_BIN) -i localhost, -c local ansible/pipely.yml
+
+# Backwards-compatible alias for docs and muscle memory.
+ansible-install: ansible
 
 # Run the Ansible playbook to set up a local dev environment (uv + deps)
 ansible-dev: $(ANSIBLE_BIN)
