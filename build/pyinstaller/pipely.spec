@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-project_root = Path(__file__).resolve().parents[2]
+project_root = Path.cwd()
 
 block_cipher = None
 
