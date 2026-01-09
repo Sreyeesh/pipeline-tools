@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-project_root = Path.cwd()
+project_root = Path(specpath).resolve().parents[2]
 
 block_cipher = None
 
@@ -14,7 +14,7 @@ def _data_files() -> list[tuple[str, str]]:
 
 
 a = Analysis(
-    ["src/pipeline_tools/cli.py"],
+    [str(project_root / "src" / "pipeline_tools" / "cli.py")],
     pathex=[str(project_root)],
     binaries=[],
     datas=_data_files(),
