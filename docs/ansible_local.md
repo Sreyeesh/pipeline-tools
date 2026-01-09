@@ -82,3 +82,20 @@ Once built, run Pipely via Docker (or the repo’s `./pipely` wrapper):
 ./pipely loop --help
 ./pipely loop create --project Demo --target Hero
 ```
+
+## Docker dev workflow
+
+The Docker setup uses `docker-compose.yml` and the `pipely-shell` service for a repeatable dev environment.
+
+Common commands:
+
+```sh
+make build    # build the dev image
+make up       # start the container in the background
+make sh       # open an interactive shell (fresh container)
+make run ARGS="init --name Demo --type art"
+make down     # stop containers
+make clean    # remove containers and volumes
+```
+
+Use `make sh` when you want a container with the repo mounted and ready for `pip install -e .` and tests.
