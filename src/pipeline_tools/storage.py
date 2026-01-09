@@ -444,3 +444,28 @@ def list_tasks(db_path: Path, asset_id: int | None = None) -> list[dict[str, str
         return [dict(row) for row in cursor.fetchall()]
     finally:
         conn.close()
+
+
+def _count_by_status(conn: sqlite3.Connection, table: str) -> dict[str, int]:
+    cursor = conn.execute(f"SELECT status, COUNT(*) AS count FROM {table} GROUP BY status")
+    return {row["status"]: int(row["count"]) for row in cursor.fetchall()}
+
+
+def report_summary(db_path: Path) -> dict[str, object]:
+    conn = connect(db_path)
+    try:
+        counts = {
+            "projects": conn.execute("SELECT COUNT(*) FROM projects").fetchone()[0],
+            "shots": conn.execute("SELECT COUNT(*) FROM shots").fetchone()[0],
+            "assets": conn.execute("SELECT COUNT(*) FROM assets").fetchone()[0],
+            "tasks": conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0],
+            "approvals": conn.execute("SELECT COUNT(*) FROM approvals").fetchone()[0],
+            "schedules": conn.execute("SELECT COUNT(*) FROM schedules").fetchone()[0],
+        }
+        return {
+            "counts": {k: int(v) for k, v in counts.items()},
+            "asset_status": _count_by_status(conn, "assets"),
+            "task_status": _count_by_status(conn, "tasks"),
+        }
+    finally:
+        conn.close()

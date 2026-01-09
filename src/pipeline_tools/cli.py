@@ -10,6 +10,7 @@ from pipeline_tools.asset_cli import app as asset_app
 from pipeline_tools.approval_cli import app as approval_app
 from pipeline_tools.db_cli import app as db_app
 from pipeline_tools.project_cli import app as project_app
+from pipeline_tools.report_cli import app as report_app
 from pipeline_tools.schedule_cli import app as schedule_app
 from pipeline_tools.shot_cli import app as shot_app
 from pipeline_tools.task_cli import app as task_app
@@ -23,6 +24,7 @@ app.add_typer(schedule_app, name="schedule")
 app.add_typer(project_app, name="project")
 app.add_typer(shot_app, name="shot")
 app.add_typer(task_app, name="task")
+app.add_typer(report_app, name="report")
 
 PROJECT_TEMPLATES: dict[str, list[str]] = {
     "animation": [
