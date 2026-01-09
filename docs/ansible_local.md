@@ -37,6 +37,16 @@ ansible-playbook -i localhost, -c local ansible/pipely.yml -e pipely_image=pipel
 
 > The Makefile now creates a local `.ansible-venv/` automatically, pinning `ansible-core` and `Jinja2` versions so you don't run into system-level dependency issues. Run `make ansible-deps` if you just want to bootstrap that venv ahead of time.
 
+## Local dev setup (uv)
+
+To configure a local WSL2 or Windows dev environment with `uv`, use:
+
+```sh
+ansible-playbook -i localhost, -c local ansible/dev.yml
+```
+
+On Windows, ensure your Python `Scripts` directory is on `PATH` so `uv` is available in Command Prompt.
+
 ## Use the image
 
 Once built, run Pipely via Docker (or the repo’s `./pipely` wrapper):

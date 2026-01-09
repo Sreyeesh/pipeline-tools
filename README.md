@@ -6,11 +6,27 @@ Artist-first CLI that does one thing well: scaffold project folders with predict
 - **Three templates** – animation, game development, and generic art.
 - **Identical prompts everywhere** – works the same on Windows, macOS, and Linux.
 
-## Install
+## Install (end users)
+
+WSL2 (Linux):
 
 ```sh
-python3 -m pip install pipely
-# or from source
+python3 -m pip install --upgrade uv
+python3 -m uv pip install pipely
+```
+
+Windows (Command Prompt):
+
+```bat
+python -m pip install --upgrade uv
+python -m uv pip install pipely
+```
+
+Note: on Windows, ensure your Python `Scripts` directory is on `PATH` so `uv` is available in Command Prompt.
+
+### Install from source (developers)
+
+```sh
 python3 -m pip install -e .
 ```
 
@@ -27,6 +43,7 @@ pipely init
 
 - `--name` / `-n` – skip the project-name prompt.
 - `--type` / `-t` – `animation`, `game`, or `art`.
+- `--describe` / `-d` – describe the project in plain language to infer name/type.
 - `--root` – base folder for the project (defaults to current directory / `PIPELY_ROOT`).
 
 ### Templates
