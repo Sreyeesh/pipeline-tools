@@ -190,17 +190,23 @@ def cmd_init(
     if not wizard:
         return
 
-    if not typer.confirm("Add a starter shot?", default=True):
+    is_game = chosen_type == "game"
+    shot_label = "level" if is_game else "shot"
+    if not typer.confirm(f"Add a starter {shot_label}?", default=True):
         return
-    shot_code = typer.prompt("Shot code", default="S010")
-    shot_name = typer.prompt("Shot name", default="Opening")
+    shot_code_default = "L001" if is_game else "S010"
+    shot_name_default = "Prototype" if is_game else "Opening"
+    shot_code = typer.prompt(f"{shot_label.capitalize()} code", default=shot_code_default)
+    shot_name = typer.prompt(f"{shot_label.capitalize()} name", default=shot_name_default)
     shot_id = create_shot(db_path, project_id=project_id, code=shot_code, name=shot_name)
-    typer.echo(f"→ Added shot #{shot_id}: {shot_name} ({shot_code})")
+    typer.echo(f"→ Added {shot_label} #{shot_id}: {shot_name} ({shot_code})")
 
     if not typer.confirm("Add a starter asset?", default=True):
         return
-    asset_name = typer.prompt("Asset name", default="Hero")
-    asset_type = typer.prompt("Asset type", default="character")
+    asset_name_default = "Player" if is_game else "Hero"
+    asset_type_default = "character"
+    asset_name = typer.prompt("Asset name", default=asset_name_default)
+    asset_type = typer.prompt("Asset type", default=asset_type_default)
     asset_id = create_asset(
         db_path,
         name=asset_name,
@@ -213,7 +219,8 @@ def cmd_init(
 
     if not typer.confirm("Add a starter task?", default=True):
         return
-    task_name = typer.prompt("Task name", default="Model")
+    task_name_default = "Blockout" if is_game else "Model"
+    task_name = typer.prompt("Task name", default=task_name_default)
     task_id = create_task(
         db_path,
         asset_id=asset_id,
