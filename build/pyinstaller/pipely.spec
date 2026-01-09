@@ -14,7 +14,7 @@ def _data_files() -> list[tuple[str, str]]:
 
 
 a = Analysis(
-    [str(project_root / "src" / "pipeline_tools" / "cli.py")],
+    [str(project_root / "src" / "pipeline_tools" / "__main__.py")],
     pathex=[str(project_root)],
     binaries=[],
     datas=_data_files(),
