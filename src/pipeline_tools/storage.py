@@ -442,6 +442,22 @@ def delete_project(db_path: Path, project_id: int) -> bool:
         conn.close()
 
 
+def purge_projects(db_path: Path, include_related: bool = False) -> int:
+    conn = connect(db_path)
+    try:
+        if include_related:
+            conn.execute("DELETE FROM approvals")
+            conn.execute("DELETE FROM schedules")
+            conn.execute("DELETE FROM tasks")
+            conn.execute("DELETE FROM assets")
+            conn.execute("DELETE FROM shots")
+        cursor = conn.execute("DELETE FROM projects")
+        conn.commit()
+        return cursor.rowcount
+    finally:
+        conn.close()
+
+
 def create_shot(db_path: Path, project_id: int, code: str, name: str) -> int:
     conn = connect(db_path)
     try:

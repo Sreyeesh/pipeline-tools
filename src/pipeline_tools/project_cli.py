@@ -6,12 +6,13 @@ import typer
 
 from pipeline_tools.storage import (
     create_project,
+    delete_project,
     init_db,
     list_projects,
     project_exists,
+    purge_projects,
     resolve_db_path,
     update_project,
-    delete_project,
 )
 from pipeline_tools.output import render_table
 
@@ -90,3 +91,29 @@ def cmd_delete(
         raise typer.BadParameter(f"Project ID not found: {project_id}")
     delete_project(db_path, project_id)
     typer.echo(f"Deleted project #{project_id}.")
+
+
+@app.command("purge")
+def cmd_purge(
+    include_related: bool = typer.Option(
+        False,
+        "--all",
+        help="Also delete shots, assets, tasks, schedules, and approvals.",
+    ),
+    db: str | None = typer.Option(
+        None,
+        "--db",
+        help="Database path (defaults to ~/.pipely/pipely.db).",
+    ),
+) -> None:
+    db_path = resolve_db_path(Path(db) if db else None)
+    init_db(db_path)
+    warning = "Delete ALL projects"
+    if include_related:
+        warning += " and related shots/assets/tasks/schedules/approvals"
+    confirm = typer.confirm(f"{warning} from the database?", default=False)
+    if not confirm:
+        typer.echo("Purge cancelled.")
+        raise typer.Exit()
+    deleted = purge_projects(db_path, include_related=include_related)
+    typer.echo(f"Deleted {deleted} project(s).")

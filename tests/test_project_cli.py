@@ -52,3 +52,23 @@ def test_project_update_and_delete(tmp_path: Path) -> None:
         ["project", "delete", "--db", str(db_path), "--project-id", "1"],
     )
     assert delete.exit_code == 0
+
+
+def test_project_purge(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
+    runner.invoke(
+        cli.app,
+        ["project", "add", "--db", str(db_path), "--name", "Film", "--code", "FILM"],
+    )
+    runner.invoke(
+        cli.app,
+        ["project", "add", "--db", str(db_path), "--name", "Show", "--code", "SHOW"],
+    )
+
+    purge = runner.invoke(
+        cli.app,
+        ["project", "purge", "--db", str(db_path)],
+        input="y\n",
+    )
+    assert purge.exit_code == 0
+    assert "Deleted 2 project" in purge.stdout
