@@ -75,6 +75,20 @@ MIGRATIONS: list[tuple[int, str]] = [
         INSERT INTO schema_migrations (version) VALUES (5);
         """,
     ),
+    (
+        6,
+        """
+        CREATE TABLE IF NOT EXISTS shots (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id INTEGER NOT NULL,
+            code TEXT NOT NULL,
+            name TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(project_id) REFERENCES projects(id)
+        );
+        INSERT INTO schema_migrations (version) VALUES (6);
+        """,
+    ),
 ]
 
 
@@ -290,6 +304,48 @@ def list_projects(db_path: Path) -> list[dict[str, str]]:
             ORDER BY id
             """
         )
+        return [dict(row) for row in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
+def create_shot(db_path: Path, project_id: int, code: str, name: str) -> int:
+    conn = connect(db_path)
+    try:
+        cursor = conn.execute(
+            """
+            INSERT INTO shots (project_id, code, name, created_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (project_id, code, name, datetime.utcnow().isoformat()),
+        )
+        conn.commit()
+        return int(cursor.lastrowid)
+    finally:
+        conn.close()
+
+
+def list_shots(db_path: Path, project_id: int | None = None) -> list[dict[str, str]]:
+    conn = connect(db_path)
+    try:
+        if project_id is None:
+            cursor = conn.execute(
+                """
+                SELECT id, project_id, code, name, created_at
+                FROM shots
+                ORDER BY id
+                """
+            )
+        else:
+            cursor = conn.execute(
+                """
+                SELECT id, project_id, code, name, created_at
+                FROM shots
+                WHERE project_id = ?
+                ORDER BY id
+                """,
+                (project_id,),
+            )
         return [dict(row) for row in cursor.fetchall()]
     finally:
         conn.close()
