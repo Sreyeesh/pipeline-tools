@@ -9,12 +9,14 @@ from pipeline_tools import __version__
 from pipeline_tools.asset_cli import app as asset_app
 from pipeline_tools.approval_cli import app as approval_app
 from pipeline_tools.db_cli import app as db_app
+from pipeline_tools.schedule_cli import app as schedule_app
 from pipeline_tools.os_utils import resolve_root, sanitize_folder_name
 
 app = typer.Typer(add_completion=False, help="Pipely - create predictable project folders for artists.")
 app.add_typer(db_app, name="db")
 app.add_typer(asset_app, name="asset")
 app.add_typer(approval_app, name="approve")
+app.add_typer(schedule_app, name="schedule")
 
 PROJECT_TEMPLATES: dict[str, list[str]] = {
     "animation": [

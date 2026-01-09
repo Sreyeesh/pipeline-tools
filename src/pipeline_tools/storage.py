@@ -48,6 +48,21 @@ MIGRATIONS: list[tuple[int, str]] = [
         INSERT INTO schema_migrations (version) VALUES (3);
         """,
     ),
+    (
+        4,
+        """
+        CREATE TABLE IF NOT EXISTS schedules (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            asset_id INTEGER NOT NULL,
+            task TEXT NOT NULL,
+            due_date TEXT NOT NULL,
+            status TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(asset_id) REFERENCES assets(id)
+        );
+        INSERT INTO schema_migrations (version) VALUES (4);
+        """,
+    ),
 ]
 
 
@@ -181,6 +196,54 @@ def list_approvals(db_path: Path, asset_id: int | None = None) -> list[dict[str,
                 FROM approvals
                 WHERE asset_id = ?
                 ORDER BY id
+                """,
+                (asset_id,),
+            )
+        return [dict(row) for row in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
+def create_schedule(
+    db_path: Path,
+    asset_id: int,
+    task: str,
+    due_date: str,
+    status: str,
+) -> int:
+    conn = connect(db_path)
+    try:
+        cursor = conn.execute(
+            """
+            INSERT INTO schedules (asset_id, task, due_date, status, created_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (asset_id, task, due_date, status, datetime.utcnow().isoformat()),
+        )
+        conn.commit()
+        return int(cursor.lastrowid)
+    finally:
+        conn.close()
+
+
+def list_schedules(db_path: Path, asset_id: int | None = None) -> list[dict[str, str]]:
+    conn = connect(db_path)
+    try:
+        if asset_id is None:
+            cursor = conn.execute(
+                """
+                SELECT id, asset_id, task, due_date, status, created_at
+                FROM schedules
+                ORDER BY due_date, id
+                """
+            )
+        else:
+            cursor = conn.execute(
+                """
+                SELECT id, asset_id, task, due_date, status, created_at
+                FROM schedules
+                WHERE asset_id = ?
+                ORDER BY due_date, id
                 """,
                 (asset_id,),
             )
