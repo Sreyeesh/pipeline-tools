@@ -4,8 +4,10 @@ from pathlib import Path
 
 import typer
 
+from pipeline_tools.folders import ensure_asset_folders
 from pipeline_tools.storage import (
     create_asset,
+    get_project,
     init_db,
     list_assets,
     project_exists,
@@ -45,6 +47,15 @@ def cmd_add(
         project_id=project_id,
         shot_id=shot_id,
     )
+    if project_id is not None:
+        project = get_project(db_path, project_id)
+        if project and project.get("project_type") and project.get("project_path"):
+            ensure_asset_folders(
+                Path(project["project_path"]),
+                project["project_type"],
+                asset_type,
+                name,
+            )
     location = ""
     if project_id or shot_id:
         location = f" [project {project_id or '-'}, shot {shot_id or '-'}]"

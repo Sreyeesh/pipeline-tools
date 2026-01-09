@@ -15,6 +15,7 @@ from pipeline_tools.schedule_cli import app as schedule_app
 from pipeline_tools.shot_cli import app as shot_app
 from pipeline_tools.task_cli import app as task_app
 from pipeline_tools.os_utils import resolve_root, sanitize_folder_name
+from pipeline_tools.folders import ensure_asset_folders, ensure_shot_folders
 from pipeline_tools.storage import (
     create_asset,
     create_project,
@@ -179,7 +180,13 @@ def cmd_init(
     project_dir = _project_dir(base_root, project_name)
     db_path = resolve_db_path(Path(db) if db else None)
     init_db(db_path)
-    project_id = create_project(db_path, name=project_name, code=code or _default_project_code(project_name))
+    project_id = create_project(
+        db_path,
+        name=project_name,
+        code=code or _default_project_code(project_name),
+        project_type=chosen_type,
+        project_path=str(project_dir),
+    )
 
     project_dir.mkdir(parents=True, exist_ok=True)
     for rel in PROJECT_TEMPLATES[chosen_type]:
@@ -200,6 +207,7 @@ def cmd_init(
     shot_name = typer.prompt(f"{shot_label.capitalize()} name", default=shot_name_default)
     shot_id = create_shot(db_path, project_id=project_id, code=shot_code, name=shot_name)
     typer.echo(f"→ Added {shot_label} #{shot_id}: {shot_name} ({shot_code})")
+    ensure_shot_folders(project_dir, chosen_type, shot_code)
 
     if not typer.confirm("Add a starter asset?", default=True):
         return
@@ -216,6 +224,7 @@ def cmd_init(
         shot_id=shot_id,
     )
     typer.echo(f"→ Added asset #{asset_id}: {asset_name} ({asset_type})")
+    ensure_asset_folders(project_dir, chosen_type, asset_type, asset_name)
 
     if not typer.confirm("Add a starter task?", default=True):
         return

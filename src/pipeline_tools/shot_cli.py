@@ -4,7 +4,15 @@ from pathlib import Path
 
 import typer
 
-from pipeline_tools.storage import create_shot, init_db, list_shots, project_exists, resolve_db_path
+from pipeline_tools.folders import ensure_shot_folders
+from pipeline_tools.storage import (
+    create_shot,
+    get_project,
+    init_db,
+    list_shots,
+    project_exists,
+    resolve_db_path,
+)
 from pipeline_tools.output import render_table
 
 
@@ -27,6 +35,9 @@ def cmd_add(
     if not project_exists(db_path, project_id):
         raise typer.BadParameter(f"Project ID not found: {project_id}")
     shot_id = create_shot(db_path, project_id=project_id, code=code, name=name)
+    project = get_project(db_path, project_id)
+    if project and project.get("project_type") and project.get("project_path"):
+        ensure_shot_folders(Path(project["project_path"]), project["project_type"], code)
     typer.echo(f"Added shot #{shot_id} to project #{project_id}: {name} ({code})")
 
 

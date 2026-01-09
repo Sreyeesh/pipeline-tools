@@ -113,6 +113,14 @@ MIGRATIONS: list[tuple[int, str]] = [
         INSERT INTO schema_migrations (version) VALUES (8);
         """,
     ),
+    (
+        9,
+        """
+        ALTER TABLE projects ADD COLUMN project_type TEXT;
+        ALTER TABLE projects ADD COLUMN project_path TEXT;
+        INSERT INTO schema_migrations (version) VALUES (9);
+        """,
+    ),
 ]
 
 
@@ -158,7 +166,11 @@ def _apply_migrations(conn: sqlite3.Connection) -> int:
             conn.executescript(script)
         except sqlite3.OperationalError:
             # Allow idempotent column additions on older SQLite files.
-            if "ALTER TABLE assets ADD COLUMN" in script:
+            if (
+                "ALTER TABLE assets ADD COLUMN" in script
+                or "ALTER TABLE projects ADD COLUMN project_type" in script
+                or "ALTER TABLE projects ADD COLUMN project_path" in script
+            ):
                 pass
             else:
                 raise
@@ -324,15 +336,21 @@ def list_schedules(db_path: Path, asset_id: int | None = None) -> list[dict[str,
         conn.close()
 
 
-def create_project(db_path: Path, name: str, code: str) -> int:
+def create_project(
+    db_path: Path,
+    name: str,
+    code: str,
+    project_type: str | None = None,
+    project_path: str | None = None,
+) -> int:
     conn = connect(db_path)
     try:
         cursor = conn.execute(
             """
-            INSERT INTO projects (name, code, created_at)
-            VALUES (?, ?, ?)
+            INSERT INTO projects (name, code, created_at, project_type, project_path)
+            VALUES (?, ?, ?, ?, ?)
             """,
-            (name, code, datetime.utcnow().isoformat()),
+            (name, code, datetime.utcnow().isoformat(), project_type, project_path),
         )
         conn.commit()
         return int(cursor.lastrowid)
@@ -351,6 +369,23 @@ def list_projects(db_path: Path) -> list[dict[str, str]]:
             """
         )
         return [dict(row) for row in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
+def get_project(db_path: Path, project_id: int) -> dict[str, str] | None:
+    conn = connect(db_path)
+    try:
+        cursor = conn.execute(
+            """
+            SELECT id, name, code, project_type, project_path, created_at
+            FROM projects
+            WHERE id = ?
+            """,
+            (project_id,),
+        )
+        row = cursor.fetchone()
+        return dict(row) if row else None
     finally:
         conn.close()
 
