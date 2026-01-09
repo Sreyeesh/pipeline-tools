@@ -53,7 +53,7 @@ When running Ansible from WSL2, set your Windows SSH host/user in env vars and r
 
 ```sh
 export WIN_HOST=YOUR_WINDOWS_HOST
-export WIN_USER="GL1-I9-16\\sgari"
+export WIN_USER="YOUR_WINDOWS_USER"
 make ansible-win-ssh
 ```
 
