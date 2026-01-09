@@ -22,7 +22,7 @@ def test_asset_list_empty(tmp_path: Path) -> None:
     result = runner.invoke(cli.app, ["asset", "list", "--db", str(db_path)])
     assert result.exit_code == 0
     assert "No assets yet." in result.stdout
-    assert _schema_version(db_path) == 8
+    assert _schema_version(db_path) == 9
 
 
 def test_asset_add_and_list(tmp_path: Path) -> None:

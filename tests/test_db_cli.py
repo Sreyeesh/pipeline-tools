@@ -22,7 +22,7 @@ def test_db_init_creates_schema(tmp_path: Path) -> None:
     result = runner.invoke(cli.app, ["db", "init", "--db", str(db_path)])
     assert result.exit_code == 0
     assert db_path.exists()
-    assert _schema_version(db_path) == 8
+    assert _schema_version(db_path) == 9
 
 
 def test_db_init_is_idempotent(tmp_path: Path) -> None:
