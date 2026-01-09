@@ -94,6 +94,12 @@
       register: uv_install
       changed_when: "'Successfully installed' in uv_install.stdout"
 
+    - name: Install PyInstaller via pip
+      ansible.builtin.raw: |
+        cmd.exe /c {{ python_cmd }} -m pip install --upgrade pyinstaller
+      register: pyinstaller_install
+      changed_when: "'Successfully installed' in pyinstaller_install.stdout"
+
     - name: Get Python Scripts path
       ansible.builtin.raw: |
         cmd.exe /c {{ python_cmd }} -c "import sysconfig; print(sysconfig.get_path('scripts'))"
