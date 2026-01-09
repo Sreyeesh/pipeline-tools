@@ -39,6 +39,8 @@ pipely init
 # → Created animation project at /path/to/Demo_Reel
 ```
 
+TODO: Expand the artist-facing help menu tomorrow.
+
 ### Flags
 
 - `--name` / `-n` – skip the project-name prompt.
