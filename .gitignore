@@ -13,6 +13,8 @@ ENV/
 
 # Build / packaging
 build/
+!build/pyinstaller/
+!build/pyinstaller/pipely.spec
 dist/
 *.egg-info/
 .eggs/
