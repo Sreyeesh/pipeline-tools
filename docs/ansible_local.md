@@ -64,6 +64,8 @@ ipconfig | findstr /R /C:"IPv4 Address"
 echo %USERNAME%
 ```
 
+Note: if you move networks or reboot, the Windows host IP can change. Re-run the command above before setting `WIN_HOST`.
+
 Pass a custom repo path if you cloned elsewhere:
 
 ```sh
