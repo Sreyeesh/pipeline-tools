@@ -97,6 +97,22 @@ MIGRATIONS: list[tuple[int, str]] = [
         INSERT INTO schema_migrations (version) VALUES (7);
         """,
     ),
+    (
+        8,
+        """
+        CREATE TABLE IF NOT EXISTS tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            asset_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            status TEXT NOT NULL,
+            assignee TEXT,
+            due_date TEXT,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(asset_id) REFERENCES assets(id)
+        );
+        INSERT INTO schema_migrations (version) VALUES (8);
+        """,
+    ),
 ]
 
 
@@ -375,6 +391,55 @@ def list_shots(db_path: Path, project_id: int | None = None) -> list[dict[str, s
                 ORDER BY id
                 """,
                 (project_id,),
+            )
+        return [dict(row) for row in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
+def create_task(
+    db_path: Path,
+    asset_id: int,
+    name: str,
+    status: str,
+    assignee: str | None,
+    due_date: str | None,
+) -> int:
+    conn = connect(db_path)
+    try:
+        cursor = conn.execute(
+            """
+            INSERT INTO tasks (asset_id, name, status, assignee, due_date, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (asset_id, name, status, assignee, due_date, datetime.utcnow().isoformat()),
+        )
+        conn.commit()
+        return int(cursor.lastrowid)
+    finally:
+        conn.close()
+
+
+def list_tasks(db_path: Path, asset_id: int | None = None) -> list[dict[str, str]]:
+    conn = connect(db_path)
+    try:
+        if asset_id is None:
+            cursor = conn.execute(
+                """
+                SELECT id, asset_id, name, status, assignee, due_date, created_at
+                FROM tasks
+                ORDER BY id
+                """
+            )
+        else:
+            cursor = conn.execute(
+                """
+                SELECT id, asset_id, name, status, assignee, due_date, created_at
+                FROM tasks
+                WHERE asset_id = ?
+                ORDER BY id
+                """,
+                (asset_id,),
             )
         return [dict(row) for row in cursor.fetchall()]
     finally:
