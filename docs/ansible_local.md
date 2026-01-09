@@ -57,6 +57,13 @@ export WIN_USER="YOUR_WINDOWS_USER"
 make ansible-win-ssh
 ```
 
+Find your Windows host IP and username:
+
+```bat
+ipconfig | findstr /R /C:"IPv4 Address"
+echo %USERNAME%
+```
+
 Pass a custom repo path if you cloned elsewhere:
 
 ```sh
