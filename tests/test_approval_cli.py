@@ -47,6 +47,31 @@ def test_approval_set_and_list(tmp_path: Path) -> None:
     assert "Looks good" in listed.stdout
 
 
+def test_approval_update_and_delete(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
+    runner.invoke(
+        cli.app,
+        ["asset", "add", "--db", str(db_path), "--name", "Hero", "--type", "character"],
+    )
+    set_result = runner.invoke(
+        cli.app,
+        ["approve", "set", "--db", str(db_path), "--asset-id", "1", "--status", "approved"],
+    )
+    assert set_result.exit_code == 0
+
+    update = runner.invoke(
+        cli.app,
+        ["approve", "update", "--db", str(db_path), "--approval-id", "1", "--status", "rejected"],
+    )
+    assert update.exit_code == 0
+
+    delete = runner.invoke(
+        cli.app,
+        ["approve", "delete", "--db", str(db_path), "--approval-id", "1"],
+    )
+    assert delete.exit_code == 0
+
+
 def test_approval_requires_asset(tmp_path: Path) -> None:
     db_path = tmp_path / "pipely.db"
     result = runner.invoke(

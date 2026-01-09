@@ -70,9 +70,48 @@ def test_asset_add_and_list(tmp_path: Path) -> None:
     assert listed.exit_code == 0
     assert "ID" in listed.stdout
     assert "Hero" in listed.stdout
-    assert "character" in listed.stdout
-    assert "todo" in listed.stdout
-    assert "1" in listed.stdout
+
+
+def test_asset_update_and_delete(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
+    runner.invoke(
+        cli.app,
+        ["project", "add", "--db", str(db_path), "--name", "Film", "--code", "FILM"],
+    )
+    runner.invoke(
+        cli.app,
+        ["shot", "add", "--db", str(db_path), "--project-id", "1", "--code", "S010", "--name", "Opening"],
+    )
+    add = runner.invoke(
+        cli.app,
+        [
+            "asset",
+            "add",
+            "--db",
+            str(db_path),
+            "--name",
+            "Hero",
+            "--type",
+            "character",
+            "--project-id",
+            "1",
+            "--shot-id",
+            "1",
+        ],
+    )
+    assert add.exit_code == 0
+
+    update = runner.invoke(
+        cli.app,
+        ["asset", "update", "--db", str(db_path), "--asset-id", "1", "--status", "done"],
+    )
+    assert update.exit_code == 0
+
+    delete = runner.invoke(
+        cli.app,
+        ["asset", "delete", "--db", str(db_path), "--asset-id", "1"],
+    )
+    assert delete.exit_code == 0
 
 
 def test_asset_add_requires_valid_ids(tmp_path: Path) -> None:

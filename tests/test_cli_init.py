@@ -10,6 +10,7 @@ runner = CliRunner()
 
 
 def test_init_animation_creates_template(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
     result = runner.invoke(
         cli.app,
         [
@@ -21,6 +22,7 @@ def test_init_animation_creates_template(tmp_path: Path) -> None:
             "--root",
             str(tmp_path),
         ],
+        env={"PIPELY_DB": str(db_path)},
     )
     assert result.exit_code == 0
 
@@ -32,6 +34,7 @@ def test_init_animation_creates_template(tmp_path: Path) -> None:
 
 
 def test_init_prompts_for_missing_values(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
     result = runner.invoke(
         cli.app,
         [
@@ -40,6 +43,7 @@ def test_init_prompts_for_missing_values(tmp_path: Path) -> None:
             str(tmp_path),
         ],
         input="Gallery Piece\nart\n",
+        env={"PIPELY_DB": str(db_path)},
     )
     assert result.exit_code == 0
 
@@ -51,6 +55,7 @@ def test_init_prompts_for_missing_values(tmp_path: Path) -> None:
 
 
 def test_init_uses_description_for_name_and_type(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
     result = runner.invoke(
         cli.app,
         [
@@ -60,6 +65,7 @@ def test_init_uses_description_for_name_and_type(tmp_path: Path) -> None:
             "--root",
             str(tmp_path),
         ],
+        env={"PIPELY_DB": str(db_path)},
     )
     assert result.exit_code == 0
 
@@ -71,6 +77,7 @@ def test_init_uses_description_for_name_and_type(tmp_path: Path) -> None:
 
 
 def test_init_description_allows_overrides(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
     result = runner.invoke(
         cli.app,
         [
@@ -84,6 +91,7 @@ def test_init_description_allows_overrides(tmp_path: Path) -> None:
             "--root",
             str(tmp_path),
         ],
+        env={"PIPELY_DB": str(db_path)},
     )
     assert result.exit_code == 0
 

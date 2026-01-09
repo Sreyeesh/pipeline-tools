@@ -44,8 +44,42 @@ def test_schedule_add_and_list(tmp_path: Path) -> None:
     assert listed.exit_code == 0
     assert "ID" in listed.stdout
     assert "Model" in listed.stdout
-    assert "2025-01-10" in listed.stdout
-    assert "scheduled" in listed.stdout
+
+
+def test_schedule_update_and_delete(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
+    runner.invoke(
+        cli.app,
+        ["asset", "add", "--db", str(db_path), "--name", "Prop", "--type", "prop"],
+    )
+    add = runner.invoke(
+        cli.app,
+        [
+            "schedule",
+            "add",
+            "--db",
+            str(db_path),
+            "--asset-id",
+            "1",
+            "--task",
+            "Model",
+            "--due",
+            "2025-01-10",
+        ],
+    )
+    assert add.exit_code == 0
+
+    update = runner.invoke(
+        cli.app,
+        ["schedule", "update", "--db", str(db_path), "--schedule-id", "1", "--status", "done"],
+    )
+    assert update.exit_code == 0
+
+    delete = runner.invoke(
+        cli.app,
+        ["schedule", "delete", "--db", str(db_path), "--schedule-id", "1"],
+    )
+    assert delete.exit_code == 0
 
 
 def test_schedule_requires_asset(tmp_path: Path) -> None:

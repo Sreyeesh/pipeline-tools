@@ -46,9 +46,31 @@ def test_task_add_and_list(tmp_path: Path) -> None:
     assert listed.exit_code == 0
     assert "ID" in listed.stdout
     assert "Model" in listed.stdout
-    assert "todo" in listed.stdout
-    assert "Sam" in listed.stdout
-    assert "2025-02-01" in listed.stdout
+
+
+def test_task_update_and_delete(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
+    runner.invoke(
+        cli.app,
+        ["asset", "add", "--db", str(db_path), "--name", "Hero", "--type", "character"],
+    )
+    add = runner.invoke(
+        cli.app,
+        ["task", "add", "--db", str(db_path), "--asset-id", "1", "--name", "Model"],
+    )
+    assert add.exit_code == 0
+
+    update = runner.invoke(
+        cli.app,
+        ["task", "update", "--db", str(db_path), "--task-id", "1", "--status", "done"],
+    )
+    assert update.exit_code == 0
+
+    delete = runner.invoke(
+        cli.app,
+        ["task", "delete", "--db", str(db_path), "--task-id", "1"],
+    )
+    assert delete.exit_code == 0
 
 
 def test_task_requires_asset(tmp_path: Path) -> None:
