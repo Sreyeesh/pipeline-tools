@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-project_root = Path(specpath).resolve().parents[2]
+project_root = Path(SPECPATH).resolve().parents[2]
 
 block_cipher = None
 
