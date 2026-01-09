@@ -27,4 +27,7 @@ def test_project_add_and_list(tmp_path: Path) -> None:
 
     listed = runner.invoke(cli.app, ["project", "list", "--db", str(db_path)])
     assert listed.exit_code == 0
-    assert "#1 Film (FILM)" in listed.stdout
+    assert "ID" in listed.stdout
+    assert "1" in listed.stdout
+    assert "Film" in listed.stdout
+    assert "FILM" in listed.stdout

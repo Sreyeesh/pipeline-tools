@@ -5,6 +5,7 @@ from pathlib import Path
 import typer
 
 from pipeline_tools.storage import asset_exists, create_task, init_db, list_tasks, resolve_db_path
+from pipeline_tools.output import render_table
 
 
 app = typer.Typer(help="Tasks linked to assets.")
@@ -47,10 +48,16 @@ def cmd_list(
     if not tasks:
         typer.echo("No tasks yet.")
         raise typer.Exit()
-    for task in tasks:
-        assignee = f", {task['assignee']}" if task.get("assignee") else ""
-        due = f", due {task['due_date']}" if task.get("due_date") else ""
-        typer.echo(
-            f"#{task['id']} asset #{task['asset_id']} "
-            f"{task['name']} ({task['status']}{assignee}{due})"
-        )
+    rows = [
+        [
+            str(t["id"]),
+            str(t["asset_id"]),
+            t["name"],
+            t["status"],
+            t.get("assignee") or "-",
+            t.get("due_date") or "-",
+        ]
+        for t in tasks
+    ]
+    for line in render_table(["ID", "ASSET", "NAME", "STATUS", "ASSIGNEE", "DUE"], rows):
+        typer.echo(line)

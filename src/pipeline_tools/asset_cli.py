@@ -12,6 +12,7 @@ from pipeline_tools.storage import (
     resolve_db_path,
     shot_exists,
 )
+from pipeline_tools.output import render_table
 
 
 app = typer.Typer(help="Track assets in the local database.")
@@ -58,11 +59,16 @@ def cmd_list(
     if not assets:
         typer.echo("No assets yet.")
         raise typer.Exit()
-    for asset in assets:
-        location = ""
-        if asset.get("project_id") or asset.get("shot_id"):
-            location = f" [project {asset.get('project_id') or '-'}, shot {asset.get('shot_id') or '-'}]"
-        typer.echo(
-            f"#{asset['id']} {asset['name']} "
-            f"({asset['asset_type']}, {asset['status']}){location}"
-        )
+    rows = [
+        [
+            str(a["id"]),
+            str(a.get("project_id") or "-"),
+            str(a.get("shot_id") or "-"),
+            a["name"],
+            a["asset_type"],
+            a["status"],
+        ]
+        for a in assets
+    ]
+    for line in render_table(["ID", "PROJECT", "SHOT", "NAME", "TYPE", "STATUS"], rows):
+        typer.echo(line)

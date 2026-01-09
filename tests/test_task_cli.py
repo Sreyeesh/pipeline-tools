@@ -44,7 +44,11 @@ def test_task_add_and_list(tmp_path: Path) -> None:
 
     listed = runner.invoke(cli.app, ["task", "list", "--db", str(db_path)])
     assert listed.exit_code == 0
-    assert "#1 asset #1 Model (todo, Sam, due 2025-02-01)" in listed.stdout
+    assert "ID" in listed.stdout
+    assert "Model" in listed.stdout
+    assert "todo" in listed.stdout
+    assert "Sam" in listed.stdout
+    assert "2025-02-01" in listed.stdout
 
 
 def test_task_requires_asset(tmp_path: Path) -> None:

@@ -42,7 +42,9 @@ def test_approval_set_and_list(tmp_path: Path) -> None:
 
     listed = runner.invoke(cli.app, ["approve", "list", "--db", str(db_path)])
     assert listed.exit_code == 0
-    assert "#1 asset #1 approved - Looks good" in listed.stdout
+    assert "ID" in listed.stdout
+    assert "approved" in listed.stdout
+    assert "Looks good" in listed.stdout
 
 
 def test_approval_requires_asset(tmp_path: Path) -> None:

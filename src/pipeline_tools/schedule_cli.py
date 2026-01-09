@@ -5,6 +5,7 @@ from pathlib import Path
 import typer
 
 from pipeline_tools.storage import asset_exists, create_schedule, init_db, list_schedules, resolve_db_path
+from pipeline_tools.output import render_table
 
 
 app = typer.Typer(help="Simple scheduling for assets.")
@@ -37,8 +38,15 @@ def cmd_list(
     if not schedules:
         typer.echo("No schedule items yet.")
         raise typer.Exit()
-    for item in schedules:
-        typer.echo(
-            f"#{item['id']} asset #{item['asset_id']} "
-            f"{item['task']} due {item['due_date']} ({item['status']})"
-        )
+    rows = [
+        [
+            str(s["id"]),
+            str(s["asset_id"]),
+            s["task"],
+            s["due_date"],
+            s["status"],
+        ]
+        for s in schedules
+    ]
+    for line in render_table(["ID", "ASSET", "TASK", "DUE", "STATUS"], rows):
+        typer.echo(line)

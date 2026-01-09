@@ -68,7 +68,11 @@ def test_asset_add_and_list(tmp_path: Path) -> None:
 
     listed = runner.invoke(cli.app, ["asset", "list", "--db", str(db_path)])
     assert listed.exit_code == 0
-    assert "#1 Hero (character, todo) [project 1, shot 1]" in listed.stdout
+    assert "ID" in listed.stdout
+    assert "Hero" in listed.stdout
+    assert "character" in listed.stdout
+    assert "todo" in listed.stdout
+    assert "1" in listed.stdout
 
 
 def test_asset_add_requires_valid_ids(tmp_path: Path) -> None:

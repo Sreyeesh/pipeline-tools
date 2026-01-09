@@ -5,6 +5,7 @@ from pathlib import Path
 import typer
 
 from pipeline_tools.storage import asset_exists, create_approval, init_db, list_approvals, resolve_db_path
+from pipeline_tools.output import render_table
 
 
 app = typer.Typer(help="Approvals for assets.")
@@ -36,9 +37,14 @@ def cmd_list(
     if not approvals:
         typer.echo("No approvals yet.")
         raise typer.Exit()
-    for approval in approvals:
-        note = f" - {approval['note']}" if approval.get("note") else ""
-        typer.echo(
-            f"#{approval['id']} asset #{approval['asset_id']} "
-            f"{approval['status']}{note}"
-        )
+    rows = [
+        [
+            str(a["id"]),
+            str(a["asset_id"]),
+            a["status"],
+            a.get("note") or "",
+        ]
+        for a in approvals
+    ]
+    for line in render_table(["ID", "ASSET", "STATUS", "NOTE"], rows):
+        typer.echo(line)

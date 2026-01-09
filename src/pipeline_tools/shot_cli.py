@@ -5,6 +5,7 @@ from pathlib import Path
 import typer
 
 from pipeline_tools.storage import create_shot, init_db, list_shots, project_exists, resolve_db_path
+from pipeline_tools.output import render_table
 
 
 app = typer.Typer(help="Manage shots within projects.")
@@ -36,5 +37,6 @@ def cmd_list(
     if not shots:
         typer.echo("No shots yet.")
         raise typer.Exit()
-    for shot in shots:
-        typer.echo(f"#{shot['id']} project #{shot['project_id']} {shot['name']} ({shot['code']})")
+    rows = [[str(s["id"]), str(s["project_id"]), s["code"], s["name"]] for s in shots]
+    for line in render_table(["ID", "PROJECT", "CODE", "NAME"], rows):
+        typer.echo(line)

@@ -5,6 +5,7 @@ from pathlib import Path
 import typer
 
 from pipeline_tools.storage import create_project, init_db, list_projects, resolve_db_path
+from pipeline_tools.output import render_table
 
 
 app = typer.Typer(help="Manage projects.")
@@ -32,5 +33,6 @@ def cmd_list(
     if not projects:
         typer.echo("No projects yet.")
         raise typer.Exit()
-    for project in projects:
-        typer.echo(f"#{project['id']} {project['name']} ({project['code']})")
+    rows = [[str(p["id"]), p["name"], p["code"]] for p in projects]
+    for line in render_table(["ID", "NAME", "CODE"], rows):
+        typer.echo(line)

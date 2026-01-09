@@ -42,7 +42,10 @@ def test_shot_add_and_list(tmp_path: Path) -> None:
 
     listed = runner.invoke(cli.app, ["shot", "list", "--db", str(db_path)])
     assert listed.exit_code == 0
-    assert "#1 project #1 Opening (S010)" in listed.stdout
+    assert "ID" in listed.stdout
+    assert "1" in listed.stdout
+    assert "S010" in listed.stdout
+    assert "Opening" in listed.stdout
 
 
 def test_shot_add_requires_project(tmp_path: Path) -> None:
