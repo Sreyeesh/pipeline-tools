@@ -72,3 +72,82 @@ def test_project_purge(tmp_path: Path) -> None:
     )
     assert purge.exit_code == 0
     assert "Deleted 2 project" in purge.stdout
+
+
+def test_project_purge_cancelled(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
+    runner.invoke(
+        cli.app,
+        ["project", "add", "--db", str(db_path), "--name", "Film", "--code", "FILM"],
+    )
+    purge = runner.invoke(
+        cli.app,
+        ["project", "purge", "--db", str(db_path)],
+        input="n\n",
+    )
+    assert purge.exit_code == 0
+    assert "Purge cancelled" in purge.stdout
+
+    listed = runner.invoke(cli.app, ["project", "list", "--db", str(db_path)])
+    assert listed.exit_code == 0
+    assert "Film" in listed.stdout
+
+
+def test_project_purge_all_cascades(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
+    runner.invoke(
+        cli.app,
+        ["project", "add", "--db", str(db_path), "--name", "Film", "--code", "FILM"],
+    )
+    runner.invoke(
+        cli.app,
+        ["shot", "add", "--db", str(db_path), "--project-id", "1", "--code", "S010", "--name", "Opening"],
+    )
+    runner.invoke(
+        cli.app,
+        [
+            "asset",
+            "add",
+            "--db",
+            str(db_path),
+            "--name",
+            "Hero",
+            "--type",
+            "character",
+            "--project-id",
+            "1",
+            "--shot-id",
+            "1",
+        ],
+    )
+    runner.invoke(
+        cli.app,
+        ["task", "add", "--db", str(db_path), "--asset-id", "1", "--name", "Model"],
+    )
+    runner.invoke(
+        cli.app,
+        ["approve", "set", "--db", str(db_path), "--asset-id", "1", "--status", "approved"],
+    )
+    runner.invoke(
+        cli.app,
+        ["schedule", "add", "--db", str(db_path), "--asset-id", "1", "--task", "Model", "--due", "2025-01-10"],
+    )
+
+    purge = runner.invoke(
+        cli.app,
+        ["project", "purge", "--db", str(db_path), "--all"],
+        input="y\n",
+    )
+    assert purge.exit_code == 0
+    assert "Deleted 1 project" in purge.stdout
+
+    for command in (
+        ["project", "list"],
+        ["shot", "list"],
+        ["asset", "list"],
+        ["task", "list"],
+        ["approve", "list"],
+        ["schedule", "list"],
+    ):
+        result = runner.invoke(cli.app, [*command, "--db", str(db_path)])
+        assert result.exit_code == 0
