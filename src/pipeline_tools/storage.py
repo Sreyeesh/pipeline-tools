@@ -89,6 +89,14 @@ MIGRATIONS: list[tuple[int, str]] = [
         INSERT INTO schema_migrations (version) VALUES (6);
         """,
     ),
+    (
+        7,
+        """
+        ALTER TABLE assets ADD COLUMN project_id INTEGER REFERENCES projects(id);
+        ALTER TABLE assets ADD COLUMN shot_id INTEGER REFERENCES shots(id);
+        INSERT INTO schema_migrations (version) VALUES (7);
+        """,
+    ),
 ]
 
 
@@ -130,7 +138,14 @@ def _apply_migrations(conn: sqlite3.Connection) -> int:
     for version, script in MIGRATIONS:
         if version <= current:
             continue
-        conn.executescript(script)
+        try:
+            conn.executescript(script)
+        except sqlite3.OperationalError:
+            # Allow idempotent column additions on older SQLite files.
+            if "ALTER TABLE assets ADD COLUMN" in script:
+                pass
+            else:
+                raise
         applied += 1
     conn.commit()
     return applied
@@ -152,15 +167,17 @@ def create_asset(
     name: str,
     asset_type: str,
     status: str,
+    project_id: int | None,
+    shot_id: int | None,
 ) -> int:
     conn = connect(db_path)
     try:
         cursor = conn.execute(
             """
-            INSERT INTO assets (name, asset_type, status, created_at)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO assets (name, asset_type, status, created_at, project_id, shot_id)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (name, asset_type, status, datetime.utcnow().isoformat()),
+            (name, asset_type, status, datetime.utcnow().isoformat(), project_id, shot_id),
         )
         conn.commit()
         return int(cursor.lastrowid)
@@ -168,16 +185,29 @@ def create_asset(
         conn.close()
 
 
-def list_assets(db_path: Path) -> list[dict[str, str]]:
+def list_assets(
+    db_path: Path,
+    project_id: int | None = None,
+    shot_id: int | None = None,
+) -> list[dict[str, str]]:
     conn = connect(db_path)
     try:
-        cursor = conn.execute(
-            """
-            SELECT id, name, asset_type, status, created_at
+        query = """
+            SELECT id, name, asset_type, status, created_at, project_id, shot_id
             FROM assets
-            ORDER BY id
-            """
-        )
+        """
+        params: list[int] = []
+        conditions: list[str] = []
+        if project_id is not None:
+            conditions.append("project_id = ?")
+            params.append(project_id)
+        if shot_id is not None:
+            conditions.append("shot_id = ?")
+            params.append(shot_id)
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+        query += " ORDER BY id"
+        cursor = conn.execute(query, params)
         return [dict(row) for row in cursor.fetchall()]
     finally:
         conn.close()
