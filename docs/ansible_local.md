@@ -99,3 +99,7 @@ make clean    # remove containers and volumes
 ```
 
 Use `make sh` when you want a container with the repo mounted and ready for `pip install -e .` and tests.
+
+## Docker vs Ansible local setup
+
+Use Docker when you want isolation and repeatability without touching host Python. Use Ansible when you want `uv` and `pipely` installed natively on WSL2/Windows with PATH configured for local shells.
