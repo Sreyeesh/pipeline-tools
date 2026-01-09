@@ -55,4 +55,4 @@ def test_schedule_requires_asset(tmp_path: Path) -> None:
         ["schedule", "add", "--db", str(db_path), "--asset-id", "3", "--task", "Model", "--due", "2025-01-10"],
     )
     assert result.exit_code != 0
-    assert "Asset ID not found" in result.stdout
+    assert "Asset ID not found" in result.stderr

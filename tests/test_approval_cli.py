@@ -54,4 +54,4 @@ def test_approval_requires_asset(tmp_path: Path) -> None:
         ["approve", "set", "--db", str(db_path), "--asset-id", "42", "--status", "approved"],
     )
     assert result.exit_code != 0
-    assert "Asset ID not found" in result.stdout
+    assert "Asset ID not found" in result.stderr

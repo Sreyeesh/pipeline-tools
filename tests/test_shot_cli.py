@@ -55,4 +55,4 @@ def test_shot_add_requires_project(tmp_path: Path) -> None:
         ["shot", "add", "--db", str(db_path), "--project-id", "99", "--code", "S010", "--name", "Opening"],
     )
     assert result.exit_code != 0
-    assert "Project ID not found" in result.stdout
+    assert "Project ID not found" in result.stderr

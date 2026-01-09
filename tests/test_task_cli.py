@@ -58,4 +58,4 @@ def test_task_requires_asset(tmp_path: Path) -> None:
         ["task", "add", "--db", str(db_path), "--asset-id", "7", "--name", "Model"],
     )
     assert result.exit_code != 0
-    assert "Asset ID not found" in result.stdout
+    assert "Asset ID not found" in result.stderr

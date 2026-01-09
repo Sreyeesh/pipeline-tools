@@ -22,7 +22,7 @@ def test_asset_list_empty(tmp_path: Path) -> None:
     result = runner.invoke(cli.app, ["asset", "list", "--db", str(db_path)])
     assert result.exit_code == 0
     assert "No assets yet." in result.stdout
-    assert _schema_version(db_path) == 7
+    assert _schema_version(db_path) == 8
 
 
 def test_asset_add_and_list(tmp_path: Path) -> None:
@@ -82,4 +82,4 @@ def test_asset_add_requires_valid_ids(tmp_path: Path) -> None:
         ["asset", "add", "--db", str(db_path), "--name", "Hero", "--type", "character", "--project-id", "9"],
     )
     assert result.exit_code != 0
-    assert "Project ID not found" in result.stdout
+    assert "Project ID not found" in result.stderr
