@@ -54,7 +54,7 @@ ansible-win-ssh: $(ANSIBLE_BIN)
 	@test -n "$(WIN_USER)" || (echo "Set WIN_USER (e.g. GL1-I9-16\\sgari)"; exit 1)
 	@mkdir -p $(ANSIBLE_LOCAL_TEMP) $(ANSIBLE_REMOTE_TEMP)
 	ANSIBLE_LOCAL_TEMP=$(ANSIBLE_LOCAL_TEMP) ANSIBLE_REMOTE_TEMP=$(ANSIBLE_REMOTE_TEMP) ANSIBLE_FORKS=1 \
-	$(ANSIBLE_BIN) -i ansible/inventory/windows_ssh.ini ansible/windows_ssh.yml \
+	$(ANSIBLE_BIN) -k -i ansible/inventory/windows_ssh.ini ansible/windows_ssh.yml \
 	-e "ansible_host=$(WIN_HOST) ansible_user=$(WIN_USER) pipely_repo_parent=$(WIN_REPO_PARENT) pipely_repo_path=$(WIN_REPO_PATH)"
 
 # Run the Ansible playbook and install Pipely locally without a venv
