@@ -5,6 +5,12 @@
   gather_facts: no
 
   tasks:
+    - name: Ensure WIN_HOST and WIN_USER are set
+      ansible.builtin.fail:
+        msg: "Set WIN_HOST and WIN_USER in your environment before running this playbook."
+      when:
+        - lookup('env', 'WIN_HOST') | length == 0 or lookup('env', 'WIN_USER') | length == 0
+
     - name: Ensure sshpass is available for password-based SSH
       ansible.builtin.command: sshpass -V
       register: sshpass_check
