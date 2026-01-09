@@ -54,5 +54,7 @@ Thumbs.db
 *.tmp
 .ansible-venv/
 .ansible/
+.ansible-tmp/
+.ansible-remote-tmp/
 CLAUDE.md
 C:/
