@@ -75,6 +75,12 @@
         cmd.exe /c if not exist "{{ pipely_repo_path }}" git clone "{{ pipely_repo_url }}" "{{ pipely_repo_path }}"
       changed_when: true
 
+    - name: Pull latest Pipely repo
+      ansible.builtin.raw: |
+        cmd.exe /c if exist "{{ pipely_repo_path }}" git -C "{{ pipely_repo_path }}" pull
+      register: git_pull
+      changed_when: "'Already up to date' not in git_pull.stdout"
+
     - name: Install uv via pip
       ansible.builtin.raw: |
         cmd.exe /c {{ python_cmd }} -m pip install --upgrade uv
