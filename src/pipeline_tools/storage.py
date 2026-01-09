@@ -63,6 +63,18 @@ MIGRATIONS: list[tuple[int, str]] = [
         INSERT INTO schema_migrations (version) VALUES (4);
         """,
     ),
+    (
+        5,
+        """
+        CREATE TABLE IF NOT EXISTS projects (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            code TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        );
+        INSERT INTO schema_migrations (version) VALUES (5);
+        """,
+    ),
 ]
 
 
@@ -247,6 +259,37 @@ def list_schedules(db_path: Path, asset_id: int | None = None) -> list[dict[str,
                 """,
                 (asset_id,),
             )
+        return [dict(row) for row in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
+def create_project(db_path: Path, name: str, code: str) -> int:
+    conn = connect(db_path)
+    try:
+        cursor = conn.execute(
+            """
+            INSERT INTO projects (name, code, created_at)
+            VALUES (?, ?, ?)
+            """,
+            (name, code, datetime.utcnow().isoformat()),
+        )
+        conn.commit()
+        return int(cursor.lastrowid)
+    finally:
+        conn.close()
+
+
+def list_projects(db_path: Path) -> list[dict[str, str]]:
+    conn = connect(db_path)
+    try:
+        cursor = conn.execute(
+            """
+            SELECT id, name, code, created_at
+            FROM projects
+            ORDER BY id
+            """
+        )
         return [dict(row) for row in cursor.fetchall()]
     finally:
         conn.close()
