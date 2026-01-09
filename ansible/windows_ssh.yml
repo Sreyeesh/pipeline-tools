@@ -24,6 +24,7 @@
     pipely_repo_path: "C:\\Users\\sgari\\projects\\pipeline-tools"
     pipely_repo_url: "https://github.com/Sreyeesh/pipeline-tools.git"
     pipely_repo_parent: "C:\\Users\\sgari\\projects"
+    pipely_repo_ref: "dev"
 
   tasks:
     - name: Check for python on PATH
@@ -80,6 +81,12 @@
         cmd.exe /c if exist "{{ pipely_repo_path }}" git -C "{{ pipely_repo_path }}" pull
       register: git_pull
       changed_when: "'Already up to date' not in git_pull.stdout"
+
+    - name: Checkout desired Pipely repo ref
+      ansible.builtin.raw: |
+        cmd.exe /c if exist "{{ pipely_repo_path }}" git -C "{{ pipely_repo_path }}" checkout {{ pipely_repo_ref }}
+      register: git_checkout
+      changed_when: "'Switched to branch' in git_checkout.stdout or 'Switched to a new branch' in git_checkout.stdout"
 
     - name: Install uv via pip
       ansible.builtin.raw: |
