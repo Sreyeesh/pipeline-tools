@@ -1,0 +1,70 @@
+---
+- name: Configure uv + pipely on Windows via SSH
+  hosts: windows
+  gather_facts: no
+
+  tasks:
+    - name: Ensure Python is available on PATH
+      ansible.builtin.shell: |
+        python --version
+      args:
+        executable: powershell.exe
+      changed_when: false
+
+    - name: Install uv via pip
+      ansible.builtin.shell: |
+        python -m pip install --upgrade uv
+      args:
+        executable: powershell.exe
+      register: uv_install
+      changed_when: "'Successfully installed' in uv_install.stdout"
+
+    - name: Get Python Scripts path
+      ansible.builtin.shell: |
+        python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+      args:
+        executable: powershell.exe
+      register: python_scripts_path
+      changed_when: false
+
+    - name: Ensure Python Scripts on PATH (user scope)
+      ansible.builtin.shell: |
+        $scripts = "{{ python_scripts_path.stdout | trim }}"
+        $path = [Environment]::GetEnvironmentVariable('Path', 'User')
+        if (-not ($path -split ';' | Where-Object { $_ -eq $scripts })) {
+          [Environment]::SetEnvironmentVariable('Path', ($path + ';' + $scripts), 'User')
+          Write-Output "Added to PATH: $scripts"
+        }
+      args:
+        executable: powershell.exe
+      register: path_update
+      changed_when: "'Added to PATH' in path_update.stdout"
+
+    - name: Verify uv is available
+      ansible.builtin.shell: |
+        uv --version
+      args:
+        executable: powershell.exe
+      changed_when: false
+
+    - name: Install pipely via uv
+      ansible.builtin.shell: |
+        python -m uv pip install --upgrade pipely
+      args:
+        executable: powershell.exe
+      register: pipely_install
+      changed_when: "'Successfully installed' in pipely_install.stdout"
+
+    - name: Verify pipely works in cmd.exe
+      ansible.builtin.shell: |
+        cmd.exe /c pipely --version
+      args:
+        executable: powershell.exe
+      changed_when: false
+
+    - name: Verify pipely works in PowerShell
+      ansible.builtin.shell: |
+        pipely --version
+      args:
+        executable: powershell.exe
+      changed_when: false
