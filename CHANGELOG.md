@@ -3,6 +3,13 @@
 
 ## [Unreleased] - 2026-01-10
 ### :sparkles: Changes
+ - fix: fetch tags before release validation
+ - chore: update changelog (main)
+
+
+
+## [Unreleased] - 2026-01-10
+### :sparkles: Changes
  - fix: build linux artifacts on ubuntu-22.04
  - docs: update CHANGELOG.md and website for v0.1.18 [skip ci]
 
