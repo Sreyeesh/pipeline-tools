@@ -16,19 +16,6 @@ pipx install https://github.com/Sreyeesh/pipeline-tools/releases/download/v0.1.1
 pipely --help
 ```
 
-Use Docker and the repo wrapper script for local development.
-
-Prerequisite: install Docker Desktop (Windows/macOS) or Docker Engine (Linux).
-
-From the repo root:
-
-```sh
-./pipely --help
-./pipely init --name Demo --type animation
-```
-
-This builds the Docker image on first run and executes Pipely inside the container.
-
 ### Install from source (developers)
 
 ```sh
@@ -143,15 +130,3 @@ make ansible        # rebuild Docker image + preinstall dev deps
 make ansible-install-local  # install Pipely locally on WSL2/Linux
 make ansible-win-ssh        # deploy to Windows via SSH (prompts for password)
 ```
-
-## Build Windows .exe (PyInstaller)
-
-From a Windows shell in the repo root:
-
-```bat
-python -m pip install --upgrade pip pyinstaller
-py -3 -m pip install -e .
-py -3 -m PyInstaller build\pyinstaller\pipely.spec
-```
-
-The executable will be in `dist\pipely\pipely.exe`.
