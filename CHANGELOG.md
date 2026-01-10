@@ -3,6 +3,15 @@
 
 ## [Unreleased] - 2026-01-10
 ### :sparkles: Changes
+ - fix: refresh changelog page for v0.1.18
+ - chore: update changelog (main)
+ - fix: refresh site for v0.1.18
+ - docs: update CHANGELOG.md and website for v0.1.18 [skip ci]
+
+
+
+## [Unreleased] - 2026-01-10
+### :sparkles: Changes
  - fix: refresh site for v0.1.18
  - docs: update CHANGELOG.md and website for v0.1.18 [skip ci]
 
