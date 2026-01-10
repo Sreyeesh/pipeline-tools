@@ -1,6 +1,13 @@
 # Changelog
 
 
+## [Unreleased] - 2026-01-10
+### :sparkles: Changes
+ - fix: build linux artifacts on ubuntu-22.04
+ - docs: update CHANGELOG.md and website for v0.1.18 [skip ci]
+
+
+
 ## [v0.1.18] - 2026-01-10
 ### :bug: Bug Fixes
 - [`1b7c7af`](https://github.com/Sreyeesh/pipeline-tools/commit/1b7c7afa3bd54b740d1a407cc7d7609b0e00649b) - handle release asset copy on windows *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
