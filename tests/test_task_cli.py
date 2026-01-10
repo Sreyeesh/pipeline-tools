@@ -1,0 +1,83 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+from typer.testing import CliRunner
+
+from pipeline_tools import cli
+
+runner = CliRunner()
+
+
+def test_task_list_empty(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
+    result = runner.invoke(cli.app, ["task", "list", "--db", str(db_path)])
+    assert result.exit_code == 0
+    assert "No tasks yet." in result.stdout
+
+
+def test_task_add_and_list(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
+    runner.invoke(
+        cli.app,
+        ["asset", "add", "--db", str(db_path), "--name", "Hero", "--type", "character"],
+    )
+    add = runner.invoke(
+        cli.app,
+        [
+            "task",
+            "add",
+            "--db",
+            str(db_path),
+            "--asset-id",
+            "1",
+            "--name",
+            "Model",
+            "--assignee",
+            "Sam",
+            "--due",
+            "2025-02-01",
+        ],
+    )
+    assert add.exit_code == 0
+    assert "Added task #1 for asset #1" in add.stdout
+
+    listed = runner.invoke(cli.app, ["task", "list", "--db", str(db_path)])
+    assert listed.exit_code == 0
+    assert "ID" in listed.stdout
+    assert "Model" in listed.stdout
+
+
+def test_task_update_and_delete(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
+    runner.invoke(
+        cli.app,
+        ["asset", "add", "--db", str(db_path), "--name", "Hero", "--type", "character"],
+    )
+    add = runner.invoke(
+        cli.app,
+        ["task", "add", "--db", str(db_path), "--asset-id", "1", "--name", "Model"],
+    )
+    assert add.exit_code == 0
+
+    update = runner.invoke(
+        cli.app,
+        ["task", "update", "--db", str(db_path), "--task-id", "1", "--status", "done"],
+    )
+    assert update.exit_code == 0
+
+    delete = runner.invoke(
+        cli.app,
+        ["task", "delete", "--db", str(db_path), "--task-id", "1"],
+    )
+    assert delete.exit_code == 0
+
+
+def test_task_requires_asset(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
+    result = runner.invoke(
+        cli.app,
+        ["task", "add", "--db", str(db_path), "--asset-id", "7", "--name", "Model"],
+    )
+    assert result.exit_code != 0
+    assert "Asset ID not found" in result.stderr

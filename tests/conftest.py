@@ -6,17 +6,19 @@ Ensure dependencies and project imports resolve in CI and offline venvs:
 - add project root and src/ to sys.path so `import pipeline_tools` works without install
 """
 
-import site
+import importlib
 import sys
 from pathlib import Path
 
-USER_SITE = site.getusersitepackages()
-if USER_SITE not in sys.path:
-    sys.path.append(USER_SITE)
-
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
-# Prefer local sources over any globally installed package.
-for path in (SRC, ROOT):
-    if str(path) not in sys.path:
-        sys.path.insert(0, str(path))
+
+# Force local sources to avoid site-packages shadowing the workspace code.
+preferred_paths = [str(SRC), str(ROOT)]
+sys.path[:] = [*preferred_paths, *[p for p in sys.path if p not in set(preferred_paths)]]
+importlib.invalidate_caches()
+
+# Ensure local sources are imported even if a site-packages install was loaded early.
+for module_name in list(sys.modules):
+    if module_name == "pipeline_tools" or module_name.startswith("pipeline_tools."):
+        del sys.modules[module_name]

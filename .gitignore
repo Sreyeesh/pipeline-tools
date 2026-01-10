@@ -13,6 +13,8 @@ ENV/
 
 # Build / packaging
 build/
+!build/pyinstaller/
+!build/pyinstaller/pipely.spec
 dist/
 *.egg-info/
 .eggs/
@@ -54,5 +56,7 @@ Thumbs.db
 *.tmp
 .ansible-venv/
 .ansible/
+.ansible-tmp/
+.ansible-remote-tmp/
 CLAUDE.md
 C:/

@@ -10,6 +10,7 @@ runner = CliRunner()
 
 
 def test_init_animation_creates_template(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
     result = runner.invoke(
         cli.app,
         [
@@ -21,6 +22,7 @@ def test_init_animation_creates_template(tmp_path: Path) -> None:
             "--root",
             str(tmp_path),
         ],
+        env={"PIPELY_DB": str(db_path)},
     )
     assert result.exit_code == 0
 
@@ -32,6 +34,7 @@ def test_init_animation_creates_template(tmp_path: Path) -> None:
 
 
 def test_init_prompts_for_missing_values(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
     result = runner.invoke(
         cli.app,
         [
@@ -40,6 +43,7 @@ def test_init_prompts_for_missing_values(tmp_path: Path) -> None:
             str(tmp_path),
         ],
         input="Gallery Piece\nart\n",
+        env={"PIPELY_DB": str(db_path)},
     )
     assert result.exit_code == 0
 
@@ -47,4 +51,52 @@ def test_init_prompts_for_missing_values(tmp_path: Path) -> None:
     assert project_dir.exists()
     art_dirs = ["01_REFERENCE", "02_WIP", "03_EXPORTS", "04_DELIVERY", "z_TEMP"]
     for rel in art_dirs:
+        assert (project_dir / rel).is_dir()
+
+
+def test_init_uses_description_for_name_and_type(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
+    result = runner.invoke(
+        cli.app,
+        [
+            "init",
+            "--describe",
+            "Create an animation project called Demo Reel",
+            "--root",
+            str(tmp_path),
+        ],
+        env={"PIPELY_DB": str(db_path)},
+    )
+    assert result.exit_code == 0
+
+    project_dir = tmp_path / "Demo_Reel"
+    assert project_dir.exists()
+    expected = ["01_ADMIN", "02_PREPRO", "03_ASSETS", "04_SHOTS", "05_WORK", "06_DELIVERY", "z_TEMP"]
+    for rel in expected:
+        assert (project_dir / rel).is_dir()
+
+
+def test_init_description_allows_overrides(tmp_path: Path) -> None:
+    db_path = tmp_path / "pipely.db"
+    result = runner.invoke(
+        cli.app,
+        [
+            "init",
+            "--describe",
+            "Make an art project called Alpha",
+            "--name",
+            "Beta",
+            "--type",
+            "game",
+            "--root",
+            str(tmp_path),
+        ],
+        env={"PIPELY_DB": str(db_path)},
+    )
+    assert result.exit_code == 0
+
+    project_dir = tmp_path / "Beta"
+    assert project_dir.exists()
+    expected = ["01_DESIGN", "02_ART", "03_TECH", "04_AUDIO", "05_QA", "06_RELEASE", "z_TEMP"]
+    for rel in expected:
         assert (project_dir / rel).is_dir()

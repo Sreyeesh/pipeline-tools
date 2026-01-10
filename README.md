@@ -1,16 +1,44 @@
 # Pipely
 
-Artist-first CLI that does one thing well: scaffold project folders with predictable layouts. No databases, no tracking systems—just real directories you can open in Finder/Explorer.
+Artist-first CLI that scaffolds predictable project folders and optionally tracks production data in a local SQLite database. You get real directories you can open in Finder/Explorer plus lightweight tracking when you want it.
 
-- **Filesystem only** – creates folders inside the root you choose (current directory by default, override with `PIPELY_ROOT` or `--root`).
+- **Filesystem first** – creates folders inside the root you choose (current directory by default, override with `PIPELY_ROOT` or `--root`).
 - **Three templates** – animation, game development, and generic art.
+- **Local DB** – `pipely init` initializes the DB and records the project.
 - **Identical prompts everywhere** – works the same on Windows, macOS, and Linux.
 
-## Install
+## Install (end users)
+
+Artists should use the standalone Windows executable (no Python or Docker required).
+
+1) Download the latest binary for your OS.
+2) Run from a terminal:
+
+```bat
+pipely.exe --help
+```
+
+Latest downloads (auto-updated by CI on release):
+- Windows: `https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-windows.exe`
+- macOS: `https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-macos`
+- Linux: `https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-linux`
+
+Artists do not need Python or uv installed. Use Docker and the repo wrapper script instead.
+
+Prerequisite: install Docker Desktop (Windows/macOS) or Docker Engine (Linux).
+
+From the repo root:
 
 ```sh
-python3 -m pip install pipely
-# or from source
+./pipely --help
+./pipely init --name Demo --type animation
+```
+
+This builds the Docker image on first run and executes Pipely inside the container.
+
+### Install from source (developers)
+
+```sh
 python3 -m pip install -e .
 ```
 
@@ -23,11 +51,21 @@ pipely init
 # → Created animation project at /path/to/Demo_Reel
 ```
 
+Optional guided setup:
+
+```sh
+pipely init --wizard
+```
+
 ### Flags
 
 - `--name` / `-n` – skip the project-name prompt.
 - `--type` / `-t` – `animation`, `game`, or `art`.
+- `--describe` / `-d` – describe the project in plain language to infer name/type.
 - `--root` – base folder for the project (defaults to current directory / `PIPELY_ROOT`).
+- `--code` / `-c` – project code stored in the local DB.
+- `--db` – database path (defaults to `~/.pipely/pipely.db`).
+- `--wizard` / `-w` – prompt for a starter shot/asset/task.
 
 ### Templates
 
@@ -39,6 +77,51 @@ pipely init
 
 No files are created—just the directories above under `PROJECT_NAME/`.
 
+### Shot & asset subfolders
+
+When you add a shot or asset for a project, Pipely creates standard subfolders based on the project type:
+
+- **Animation shots**: `plates`, `layout`, `anim`, `fx`, `lighting`, `comp`, `renders`
+- **Animation assets**: `model`, `rig`, `surfacing`, `textures`, `lookdev`, `publish`
+- **Game levels**: `blockout`, `lighting`, `setdress`, `gameplay`, `fx`, `build`
+- **Game assets**: `model`, `rig`, `textures`, `materials`, `prefab`, `export`
+- **Art assets**: `refs`, `wip`, `final` (under `02_WIP/<asset>`)
+
+### Tracking commands (CRUD)
+
+```sh
+pipely project add|list|update|delete|purge
+pipely shot add|list|update|delete
+pipely asset add|list|update|delete
+pipely task add|list|update|delete
+pipely approve set|list|update|delete
+pipely schedule add|list|update|delete
+pipely report summary
+```
+
+`pipely project purge --all` removes projects plus related shots/assets/tasks/schedules/approvals (with confirmation).
+
+### Project structure (repo)
+
+```
+.
+├── .github/
+├── CHANGELOG.md
+├── Dockerfile
+├── Dockerfile.dev
+├── Makefile
+├── README.md
+├── ansible/
+├── docs/
+├── pipely
+├── pyproject.toml
+├── requirements-dev.txt
+├── requirements.txt
+├── src/
+│   └── pipeline_tools/
+└── tests/
+```
+
 ## Development
 
 ```sh
@@ -49,9 +132,9 @@ python3 -m pip install -r requirements-dev.txt
 pytest
 ```
 
-### Docker (optional)
+### Docker (required for developers)
 
-Use the helper targets:
+Use the helper targets (Docker is required for development workflows):
 
 ```sh
 make build      # docker compose build
@@ -64,4 +147,18 @@ make run ARGS="init --name Demo --type art --root /home/dev/projects"
 ```sh
 make ansible-deps   # one-time venv bootstrap
 make ansible        # rebuild Docker image + preinstall dev deps
+make ansible-install-local  # install Pipely locally on WSL2/Linux
+make ansible-win-ssh        # deploy to Windows via SSH (prompts for password)
 ```
+
+## Build Windows .exe (PyInstaller)
+
+From a Windows shell in the repo root:
+
+```bat
+python -m pip install --upgrade pip pyinstaller
+py -3 -m pip install -e .
+py -3 -m PyInstaller build\pyinstaller\pipely.spec
+```
+
+The executable will be in `dist\pipely\pipely.exe`.

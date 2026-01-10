@@ -7,5 +7,7 @@ __pycache__
 .idea
 dist
 build
+!build/pyinstaller
+!build/pyinstaller/pipely.spec
 *.egg-info
 .DS_Store

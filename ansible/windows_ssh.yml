@@ -1,0 +1,139 @@
+---
+- name: Preflight checks on control host
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  tasks:
+    - name: Ensure WIN_HOST and WIN_USER are set
+      ansible.builtin.fail:
+        msg: "Set WIN_HOST and WIN_USER in your environment before running this playbook."
+      when:
+        - lookup('env', 'WIN_HOST') | length == 0 or lookup('env', 'WIN_USER') | length == 0
+
+    - name: Ensure sshpass is available for password-based SSH
+      ansible.builtin.command: sshpass -V
+      register: sshpass_check
+      changed_when: false
+      failed_when: sshpass_check.rc != 0
+
+- name: Configure uv + pipely on Windows via SSH
+  hosts: windows
+  gather_facts: no
+  vars:
+    pipely_repo_path: "C:\\Users\\sgari\\projects\\pipeline-tools"
+    pipely_repo_url: "https://github.com/Sreyeesh/pipeline-tools.git"
+    pipely_repo_parent: "C:\\Users\\sgari\\projects"
+    pipely_repo_ref: "dev"
+
+  tasks:
+    - name: Check for python on PATH
+      ansible.builtin.raw: |
+        cmd.exe /c python --version
+      register: python_check
+      changed_when: false
+      failed_when: false
+
+    - name: Check for py launcher
+      ansible.builtin.raw: |
+        cmd.exe /c py -3 --version
+      register: py_check
+      changed_when: false
+      failed_when: false
+
+    - name: Install Python via winget when missing
+      ansible.builtin.raw: |
+        cmd.exe /c winget install -e --id Python.Python.3.11 --silent
+      when:
+        - python_check.rc != 0
+        - py_check.rc != 0
+      changed_when: true
+
+    - name: Select python command
+      ansible.builtin.set_fact:
+        python_cmd: "{{ 'python' if python_check.rc == 0 else 'py -3' }}"
+
+    - name: Check for git on PATH
+      ansible.builtin.raw: |
+        cmd.exe /c git --version
+      register: git_check
+      changed_when: false
+      failed_when: false
+
+    - name: Install Git via winget when missing
+      ansible.builtin.raw: |
+        cmd.exe /c winget install -e --id Git.Git --silent
+      when: git_check.rc != 0
+      changed_when: true
+
+    - name: Ensure repo parent directory exists
+      ansible.builtin.raw: |
+        cmd.exe /c if not exist "{{ pipely_repo_parent }}" mkdir "{{ pipely_repo_parent }}"
+      changed_when: false
+
+    - name: Clone Pipely repo when missing
+      ansible.builtin.raw: |
+        cmd.exe /c if not exist "{{ pipely_repo_path }}" git clone "{{ pipely_repo_url }}" "{{ pipely_repo_path }}"
+      changed_when: true
+
+    - name: Pull latest Pipely repo
+      ansible.builtin.raw: |
+        cmd.exe /c if exist "{{ pipely_repo_path }}" git -C "{{ pipely_repo_path }}" pull
+      register: git_pull
+      changed_when: "'Already up to date' not in git_pull.stdout"
+
+    - name: Checkout desired Pipely repo ref
+      ansible.builtin.raw: |
+        cmd.exe /c if exist "{{ pipely_repo_path }}" git -C "{{ pipely_repo_path }}" checkout {{ pipely_repo_ref }}
+      register: git_checkout
+      changed_when: "'Switched to branch' in git_checkout.stdout or 'Switched to a new branch' in git_checkout.stdout"
+
+    - name: Install uv via pip
+      ansible.builtin.raw: |
+        cmd.exe /c {{ python_cmd }} -m pip install --upgrade uv
+      register: uv_install
+      changed_when: "'Successfully installed' in uv_install.stdout"
+
+    - name: Install PyInstaller via pip
+      ansible.builtin.raw: |
+        cmd.exe /c {{ python_cmd }} -m pip install --upgrade pyinstaller
+      register: pyinstaller_install
+      changed_when: "'Successfully installed' in pyinstaller_install.stdout"
+
+    - name: Get Python Scripts path
+      ansible.builtin.raw: |
+        cmd.exe /c {{ python_cmd }} -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+      register: python_scripts_path
+      changed_when: false
+
+    - name: Ensure Python Scripts on PATH (user scope)
+      ansible.builtin.raw: |
+        cmd.exe /c setx PATH "{{ python_scripts_path.stdout | trim }}"
+      register: path_update
+      changed_when: true
+
+    - name: Refresh PATH for current PowerShell session
+      ansible.builtin.raw: |
+        powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$env:Path = [Environment]::GetEnvironmentVariable('Path','User'); Write-Output 'PATH refreshed'"
+      changed_when: false
+
+    - name: Verify uv is available
+      ansible.builtin.raw: |
+        cmd.exe /c {{ python_cmd }} -m uv --version
+      changed_when: false
+
+    - name: Install pipely from local repo via uv
+      ansible.builtin.raw: |
+        cmd.exe /c {{ python_cmd }} -m uv pip install -e "{{ pipely_repo_path }}"
+      register: pipely_install
+      changed_when: "'Successfully installed' in pipely_install.stdout or 'Obtaining file' in pipely_install.stdout"
+
+    - name: Verify pipely works in cmd.exe
+      ansible.builtin.raw: |
+        cmd.exe /c {{ python_cmd }} -m pipeline_tools --version
+      changed_when: false
+
+    - name: Verify pipely works in PowerShell
+      ansible.builtin.raw: |
+        cmd.exe /c {{ python_cmd }} -m pipeline_tools --version
+      changed_when: false

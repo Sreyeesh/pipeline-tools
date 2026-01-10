@@ -7,8 +7,16 @@
   vars:
     repo_root: "{{ playbook_dir | dirname }}"
     python_bin: "{{ ansible_playbook_python | default('python3') }}"
+    use_uv: true
+    uv_use_system: true
+    uv_add_to_path: true
 
   tasks:
+    - name: Use Windows Python binary
+      ansible.builtin.set_fact:
+        python_bin: "python"
+      when: ansible_os_family == "Windows"
+
     - name: Ensure base packages (Debian/Ubuntu)
       become: true
       apt:
@@ -25,17 +33,67 @@
       args:
         chdir: "{{ repo_root }}"
 
-    - name: Install package in editable mode
+    - name: Install uv (non-Windows)
+      ansible.builtin.command: >
+        {{ python_bin }} -m pip install --upgrade uv
+      args:
+        chdir: "{{ repo_root }}"
+      when:
+        - use_uv | bool
+        - ansible_os_family != "Windows"
+
+    - name: Ensure ~/.local/bin on PATH (WSL2/Linux)
+      ansible.builtin.lineinfile:
+        path: "{{ ansible_env.HOME }}/.bashrc"
+        line: 'export PATH="$HOME/.local/bin:$PATH"'
+        create: true
+        mode: "0644"
+      when:
+        - use_uv | bool
+        - uv_add_to_path | bool
+        - ansible_os_family != "Windows"
+
+    - name: Install package in editable mode (uv)
+      ansible.builtin.command: >
+        {{ python_bin }} -m uv pip install
+        {{ '--system' if uv_use_system else '' }}
+        -e .
+      args:
+        chdir: "{{ repo_root }}"
+      become: "{{ uv_use_system | bool }}"
+      when:
+        - use_uv | bool
+        - ansible_os_family != "Windows"
+
+    - name: Install package in editable mode (pip)
       ansible.builtin.command: >
         {{ python_bin }} -m pip install -e .
       args:
         chdir: "{{ repo_root }}"
+      when: not use_uv | bool
 
-    - name: Install dev requirements
+    - name: Install dev requirements (uv)
+      ansible.builtin.command: >
+        {{ python_bin }} -m uv pip install
+        {{ '--system' if uv_use_system else '' }}
+        -r requirements-dev.txt
+      args:
+        chdir: "{{ repo_root }}"
+      become: "{{ uv_use_system | bool }}"
+      when:
+        - use_uv | bool
+        - ansible_os_family != "Windows"
+
+    - name: Install dev requirements (pip)
       ansible.builtin.command: >
         {{ python_bin }} -m pip install -r requirements-dev.txt
       args:
         chdir: "{{ repo_root }}"
+      when: not use_uv | bool
+
+    - name: Configure uv and installs on Windows hosts
+      ansible.builtin.include_tasks: tasks/windows_dev.yml
+      when: ansible_os_family == "Windows"
 
     - name: Write sample .env for observability
       ansible.builtin.copy:
