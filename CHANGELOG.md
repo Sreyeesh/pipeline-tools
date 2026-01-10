@@ -3,6 +3,15 @@
 
 ## [Unreleased] - 2026-01-10
 ### :sparkles: Changes
+ - chore: allow manual releases without token
+ - chore: auto-tag releases on main
+ - chore: add pages workflow with concurrency
+ - fix: handle release asset copy on windows
+
+
+
+## [Unreleased] - 2026-01-10
+### :sparkles: Changes
  - chore: add pages workflow with concurrency
  - chore: update changelog (main)
  - fix: handle release asset copy on windows
