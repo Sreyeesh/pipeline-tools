@@ -1,5 +1,99 @@
 # Changelog
 
+
+## [Unreleased] - 2026-01-10
+### :sparkles: Changes
+ - chore: include pyinstaller spec in docker build
+ - test: loosen pyinstaller spec assertion
+ - chore: publish cross-platform binaries
+ - chore: build and publish desktop binaries for all platforms
+ - chore: automate changelog and release delivery
+ - fix: use __main__ for pyinstaller entrypoint
+ - fix: correct pyinstaller repo root
+ - fix: use SPECPATH in pyinstaller spec
+ - fix: resolve pyinstaller spec root
+ - fix: make pyinstaller spec cwd-based
+ - chore: add pyinstaller spec
+ - chore: add windows exe build workflow and docs
+ - chore: install pyinstaller on windows deploy
+ - test: cover project purge cancellation and cascade
+ - feat: add project purge command
+ - test: cover update and delete commands
+ - feat: add update and delete commands
+ - test: bump schema version expectations
+ - feat: create shot and asset subfolders by type
+ - feat: use game defaults in init wizard
+ - chore: ignore ansible temp folders
+ - chore: prompt for ssh password in windows deploy
+ - chore: checkout dev branch on windows deploy
+ - chore: update windows deploy to pull latest
+ - feat: add init wizard for starter data
+ - chore: bump version to 0.1.18
+ - fix: hide db command from help
+ - feat: hide db command from main cli
+ - feat: create db project on init
+ - docs: improve help output and ansible targets
+ - fix: allow db paths and prefer local imports
+ - docs: contrast docker vs ansible setup
+ - docs: describe docker dev workflow
+ - docs: note Windows IP can change
+ - docs: add help menu todo
+ - docs: add Windows host lookup
+ - docs: remove hardcoded Windows user
+ - docs: remove hardcoded Windows host
+ - docs: add Windows SSH env setup
+ - chore: validate Windows SSH env vars
+ - chore: require WIN_HOST/WIN_USER for Windows SSH
+ - chore: scrub Windows SSH inventory
+ - feat: add Windows SSH setup playbook
+ - feat: configure uv in dev playbook
+ - feat: add optional local install to pipely playbook
+ - docs: add uv install guidance
+ - test: cover describe flag in init
+ - feat: add Windows SSH playbook for uv setup
+ - test: fix schema version and stderr assertions
+ - feat: format list output as tables
+ - feat: validate IDs for related records
+ - feat: add production report summary
+ - feat: add task commands
+ - feat: link assets to projects and shots
+ - feat: add shot commands
+ - feat: add project commands
+ - feat: add scheduling commands
+ - feat: add asset approval commands
+ - feat: add asset tracking commands
+ - test: cover db init and path commands
+ - feat: add local database initialization
+ - ci: limit CI workflow to main
+ - ci: fix release changelog update
+ - ci: add release workflow for main tags
+ - ci: drop release workflow
+ - ci: drop PyPI workflows
+ - ci: reintroduce workflow suite
+ - ci: remove remaining workflows
+ - ci: remove release workflow
+ - ci: remove commitlint workflow
+ - ci: limit commit lint push trigger to main
+ - ci: restrict release workflow to main
+ - ci: only run release workflow for tags
+ - ci: run release workflow only from main
+ - ci: gate release workflow to tags or manual
+ - chore: remove pipely log
+ - chore: remove release-please manifest
+ - chore: remove release-please workflow
+ - chore: remove release-please config
+ - chore: remove manual PyPI publish workflow
+ - fix: indent heredoc in release workflow
+ - ci: build pyinstaller binaries for releases
+ - chore: rebuild dev shell during ansible run
+ - feat: introduce template-based init command
+ - fix: repair release workflow heredoc
+ - chore: capture latest loop-only updates
+ - fix: avoid creating workfile paths on list/open
+ - Add Plausible analytics snippet
+ - ci: safely capture changelog text
+
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
