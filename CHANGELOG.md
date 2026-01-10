@@ -1,6 +1,22 @@
 # Changelog
 
 
+## [v0.1.18] - 2026-01-10
+### :bug: Bug Fixes
+- [`1b7c7af`](https://github.com/Sreyeesh/pipeline-tools/commit/1b7c7afa3bd54b740d1a407cc7d7609b0e00649b) - handle release asset copy on windows *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`86e9869`](https://github.com/Sreyeesh/pipeline-tools/commit/86e9869acccf2a4af3c81fdae449ac43baaa671d) - handle release asset copy on windows *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+### :wrench: Chores
+- [`f42395c`](https://github.com/Sreyeesh/pipeline-tools/commit/f42395c7a22e057cdb4353061c52c33dbf8a8c1c) - update changelog (main) *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`eb992b4`](https://github.com/Sreyeesh/pipeline-tools/commit/eb992b409e5c1dd7825e4cb88adf01e02536b57b) - add pages workflow with concurrency *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`676216d`](https://github.com/Sreyeesh/pipeline-tools/commit/676216d43c3731d8704d284233375488c43a139f) - add pages workflow with concurrency *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`28ab7ea`](https://github.com/Sreyeesh/pipeline-tools/commit/28ab7ea228574108d3a2c61049d20ec83e54c602) - update changelog (main) *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`828ef7c`](https://github.com/Sreyeesh/pipeline-tools/commit/828ef7c43411f77400ac215c18ee6f1b4cca25eb) - auto-tag releases on main *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`b1364a8`](https://github.com/Sreyeesh/pipeline-tools/commit/b1364a8e1666df3445a494f2d42e76709972ae61) - auto-tag releases on main *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`883fec7`](https://github.com/Sreyeesh/pipeline-tools/commit/883fec7bb6e3940fdca7490ed1363c96f1e87afc) - allow manual releases without token *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+- [`9425847`](https://github.com/Sreyeesh/pipeline-tools/commit/9425847922c997119abeb018190cac02e5bfdb4b) - update changelog (main) *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
+
+
 ## [Unreleased] - 2026-01-10
 ### :sparkles: Changes
  - chore: allow manual releases without token
@@ -450,3 +466,4 @@ This changelog is generated automatically by GitHub Actions when a release tag i
 [v0.1.8]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.7...v0.1.8
 [v0.1.8.1]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.8...v0.1.8.1
 [v0.1.13]: https://github.com/Sreyeesh/pipeline-tools/compare/v0.1.12...v0.1.13
+[v0.1.18]: https://github.com/Sreyeesh/pipeline-tools/compare/main-latest...v0.1.18
