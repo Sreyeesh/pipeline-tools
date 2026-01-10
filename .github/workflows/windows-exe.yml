@@ -22,7 +22,7 @@ jobs:
             artifact: pipely-macos
             output: dist/pipely/pipely
             release_name: pipely-macos
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             artifact: pipely-linux
             output: dist/pipely/pipely
             release_name: pipely-linux
