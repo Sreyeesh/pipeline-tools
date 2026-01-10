@@ -3,6 +3,12 @@
 
 ## [Unreleased] - 2026-01-10
 ### :sparkles: Changes
+ - fix: handle release asset copy on windows
+
+
+
+## [Unreleased] - 2026-01-10
+### :sparkles: Changes
  - chore: include pyinstaller spec in docker build
  - test: loosen pyinstaller spec assertion
  - chore: publish cross-platform binaries
