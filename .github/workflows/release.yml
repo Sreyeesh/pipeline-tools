@@ -107,53 +107,10 @@ jobs:
           name: python-dist
           path: dist/*
 
-  binaries:
-    name: Build PyInstaller binary (${{ matrix.platform }})
-    needs: build
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-22.04
-            platform: linux
-            artifact: pipely-linux
-            output: pipely-linux
-          - os: macos-latest
-            platform: macos
-            artifact: pipely-macos
-            output: pipely-macos
-          - os: windows-latest
-            platform: windows
-            artifact: pipely-windows
-            output: pipely-windows.exe
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install deps + PyInstaller
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install . pyinstaller
-
-      - name: Build binary
-        run: pyinstaller --onefile --name ${{ matrix.artifact }} src/pipeline_tools/cli.py
-
-      - name: Upload binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.artifact }}
-          path: dist/${{ matrix.output }}
-
   publish:
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     needs:
       - build
-      - binaries
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -192,13 +149,6 @@ jobs:
           name: python-dist
           path: release/dist
 
-      - name: Download binaries
-        uses: actions/download-artifact@v4
-        with:
-          pattern: pipely-*
-          path: release/binaries
-          merge-multiple: true
-
       - name: Generate changelog
         id: changelog
         uses: requarks/changelog-action@v1
@@ -216,7 +166,6 @@ jobs:
           files: |
             release/dist/*.whl
             release/dist/*.tar.gz
-            release/binaries/*
             CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
