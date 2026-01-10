@@ -2,6 +2,8 @@
 
 Artist-first CLI that scaffolds predictable project folders and optionally tracks production data in a local SQLite database. You get real directories you can open in Finder/Explorer plus lightweight tracking when you want it.
 
+- Website: https://sreyeesh.github.io/pipeline-tools/
+
 - **Filesystem first** – creates folders inside the root you choose (current directory by default, override with `PIPELY_ROOT` or `--root`).
 - **Three templates** – animation, game development, and generic art.
 - **Local DB** – `pipely init` initializes the DB and records the project.
