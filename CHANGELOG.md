@@ -3,6 +3,14 @@
 
 ## [Unreleased] - 2026-01-10
 ### :sparkles: Changes
+ - chore: add pages workflow with concurrency
+ - chore: update changelog (main)
+ - fix: handle release asset copy on windows
+
+
+
+## [Unreleased] - 2026-01-10
+### :sparkles: Changes
  - fix: handle release asset copy on windows
 
 
