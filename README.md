@@ -18,6 +18,9 @@ Artists should use the standalone Windows executable (no Python or Docker requir
 pipely.exe --help
 ```
 
+Windows exe download (latest):
+`https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-windows.exe`
+
 Artists do not need Python or uv installed. Use Docker and the repo wrapper script instead.
 
 Prerequisite: install Docker Desktop (Windows/macOS) or Docker Engine (Linux).

@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+This changelog is generated automatically by GitHub Actions when a release tag is pushed.
+
 ## [v0.1.17] - 2025-12-16
 ### :sparkles: New Features
 - [`bac6f86`](https://github.com/Sreyeesh/pipeline-tools/commit/bac6f8630a22ebfc7376f7eace4ed558765ab525) - add asset wizard intent for interactive *(commit by [@Sreyeesh](https://github.com/Sreyeesh))*
