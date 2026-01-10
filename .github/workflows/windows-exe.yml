@@ -1,4 +1,4 @@
-name: Build Windows EXE
+name: Build Desktop Binaries
 
 on:
   workflow_dispatch:
@@ -9,8 +9,23 @@ on:
       - "v*"
 
 jobs:
-  build-windows-exe:
-    runs-on: windows-latest
+  build-binaries:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: pipely-windows
+            output: dist\pipely\pipely.exe
+            release_name: pipely-windows.exe
+          - os: macos-latest
+            artifact: pipely-macos
+            output: dist/pipely/pipely
+            release_name: pipely-macos
+          - os: ubuntu-latest
+            artifact: pipely-linux
+            output: dist/pipely/pipely
+            release_name: pipely-linux
     permissions:
       contents: write
     steps:
@@ -29,19 +44,29 @@ jobs:
 
       - name: Build exe
         run: |
-          python -m PyInstaller build\pyinstaller\pipely.spec
+          python -m PyInstaller build/pyinstaller/pipely.spec
+
+      - name: Prepare release asset
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          src = Path(r"${{ matrix.output }}")
+          dest = Path("release") / "${{ matrix.release_name }}"
+          dest.parent.mkdir(parents=True, exist_ok=True)
+          dest.write_bytes(src.read_bytes())
+          PY
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pipely-windows-exe
-          path: dist\pipely\pipely.exe
+          name: ${{ matrix.artifact }}
+          path: release/${{ matrix.release_name }}
 
       - name: Upload release asset
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist\pipely\pipely.exe
+          files: release/${{ matrix.release_name }}
 
       - name: Upload main-latest release asset
         if: github.ref == 'refs/heads/main'
@@ -50,4 +75,4 @@ jobs:
           tag_name: main-latest
           name: "Main Latest"
           prerelease: true
-          files: dist\pipely\pipely.exe
+          files: release/${{ matrix.release_name }}
