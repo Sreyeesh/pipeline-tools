@@ -11,6 +11,12 @@ Artist-first CLI that scaffolds predictable project folders and optionally track
 
 Install Pipely with pipx in this order:
 
+### If you don't have Python yet
+
+- **Windows:** install Python 3 from https://www.python.org/downloads/windows/ (check "Add python.exe to PATH" during install).
+- **macOS:** install Python 3 from https://www.python.org/downloads/macos/ (or `brew install python` if you already use Homebrew).
+- **Linux/WSL2:** `sudo apt-get update && sudo apt-get install -y python3 python3-pip`.
+
 ### Windows (Command Prompt)
 
 ```bat

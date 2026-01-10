@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pipely — Artist-First Pipeline CLI</title>
+  <meta name="description" content="Pipely is an artist-first CLI that scaffolds studio-grade folders and tracks production locally with a simple pipx install." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="logo" href="#top">Pipely</a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#install">Install</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#docs">Docs</a>
+      </div>
+      <div class="nav-actions">
+        <button class="theme-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false">
+          <span class="theme-icon" aria-hidden="true"></span>
+        </button>
+        <a class="btn btn-ghost" href="https://github.com/Sreyeesh/pipeline-tools" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="pill">Artist-first pipeline</p>
+          <h1>Ship clean folders, track work, skip the chaos.</h1>
+          <p class="lead">Pipely scaffolds studio-grade project structure and keeps assets, shots, and tasks organized in a local database — no cloud, no SaaS.</p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="#install">Install with pipx</a>
+            <a class="btn btn-secondary" href="#workflow">See the flow</a>
+          </div>
+          <div class="tagline">Latest: <strong>v0.1.18</strong> • Local DB on init • Wizard setup • CRUD + purge</div>
+        </div>
+        <div class="hero-card">
+          <div class="card-title">pipely init --wizard</div>
+          <pre><code># Project name: Demo Reel
+# Project type: animation
+# → Created animation project
+# Add starter shot? y
+# Add starter asset? y
+# Add starter task? y
+          </code></pre>
+          <div class="card-foot">Instant folders + tracking</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="section-head">
+        <h2>Why creative teams use Pipely</h2>
+        <p>Everything needed for clean pipelines without extra overhead.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature">
+          <h3>Guided setup</h3>
+          <p>Wizard creates a project plus starter shot, asset, and task in minutes.</p>
+        </article>
+        <article class="feature">
+          <h3>Industry templates</h3>
+          <p>Animation, game, and art folder structures that match real studio workflows.</p>
+        </article>
+        <article class="feature">
+          <h3>Local production DB</h3>
+          <p>Projects, shots, assets, approvals, and schedules tracked locally on init.</p>
+        </article>
+        <article class="feature">
+          <h3>CRUD + purge</h3>
+          <p>Update or delete anything, plus purge full projects when done.</p>
+        </article>
+        <article class="feature">
+          <h3>Reports</h3>
+          <p>Instant summaries for tasks, approvals, and schedules right from the CLI.</p>
+        </article>
+        <article class="feature">
+          <h3>Cross-platform</h3>
+          <p>Works on Windows, macOS, Linux, and WSL2 with one pipx flow.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="install" class="section install">
+      <div class="section-head">
+        <h2>Install with pipx</h2>
+        <p>Artists install once, then use <code>pipely</code> everywhere.</p>
+      </div>
+      <div class="install-grid">
+        <div class="install-card">
+          <h3>Windows (Command Prompt)</h3>
+          <pre><code>py -3 -m pip install --user pipx
+py -3 -m pipx ensurepath
+
+pipx install https://github.com/Sreyeesh/pipeline-tools/releases/download/v0.1.18/pipely-0.1.18-py3-none-any.whl
+pipely --help</code></pre>
+        </div>
+        <div class="install-card">
+          <h3>macOS</h3>
+          <pre><code>python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+
+pipx install https://github.com/Sreyeesh/pipeline-tools/releases/download/v0.1.18/pipely-0.1.18-py3-none-any.whl
+pipely --help</code></pre>
+        </div>
+        <div class="install-card">
+          <h3>Linux / WSL2</h3>
+          <pre><code>python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+
+pipx install https://github.com/Sreyeesh/pipeline-tools/releases/download/v0.1.18/pipely-0.1.18-py3-none-any.whl
+pipely --help</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="workflow" class="section">
+      <div class="section-head">
+        <h2>Daily workflow</h2>
+        <p>Define the project, create assets, schedule work, and report status.</p>
+      </div>
+      <div class="flow">
+        <div class="flow-step">
+          <span>01</span>
+          <h3>Init</h3>
+          <p>Creates folders + DB row instantly.</p>
+          <code>pipely init --wizard</code>
+        </div>
+        <div class="flow-step">
+          <span>02</span>
+          <h3>Build structure</h3>
+          <p>Projects, shots, assets, tasks.</p>
+          <code>pipely shot add</code>
+        </div>
+        <div class="flow-step">
+          <span>03</span>
+          <h3>Approve + schedule</h3>
+          <p>Track readiness and due dates.</p>
+          <code>pipely schedule add</code>
+        </div>
+        <div class="flow-step">
+          <span>04</span>
+          <h3>Report</h3>
+          <p>Summaries for teams and leads.</p>
+          <code>pipely report summary</code>
+        </div>
+      </div>
+    </section>
+
+    <section id="docs" class="section docs">
+      <div class="section-head">
+        <h2>Docs & references</h2>
+        <p>Keep the team aligned with simple CLI guidance.</p>
+      </div>
+      <div class="docs-grid">
+        <a class="doc-card" href="https://github.com/Sreyeesh/pipeline-tools/blob/main/README.md" target="_blank" rel="noopener">
+          <h3>README</h3>
+          <p>Install, usage, templates, CRUD commands.</p>
+        </a>
+        <a class="doc-card" href="https://github.com/Sreyeesh/pipeline-tools/blob/main/docs/artist_cli.md" target="_blank" rel="noopener">
+          <h3>Artist CLI</h3>
+          <p>Quick workflow guide for artists.</p>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div>Pipely • Artist-first pipeline CLI</div>
+    <div>Made by Sreyeesh</div>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+name: Site Docker Build
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+      - "Dockerfile.site"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "Dockerfile.site"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build site image
+        run: docker build -f Dockerfile.site -t pipely-site:local .

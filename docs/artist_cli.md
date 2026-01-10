@@ -1,14 +1,15 @@
 # Pipely Init CLI
 
-Simple, predictable scaffolder for individual artists. It creates a clean folder tree and stops—no versioning, databases, or tracking systems.
+Simple, predictable scaffolder for individual artists. It creates a clean folder tree and records the project in a local SQLite database for lightweight tracking.
 
 ## Workflow
 
-1. Run `pipely init`
+1. Run `pipely init` (or `pipely init --wizard` for guided setup).
 2. Answer two prompts:
    - Project name
    - Project type (`animation`, `game`, or `art`)
-3. Open the generated folders in Finder/Explorer and start working.
+3. Optional: the wizard can add a starter shot, asset, and task.
+4. Open the generated folders in Finder/Explorer and start working.
 
 ## Templates
 
@@ -22,9 +23,37 @@ Simple, predictable scaffolder for individual artists. It creates a clean folder
 
 - `pipely init --name "Demo Reel" --type animation`
 - `pipely init --root ~/Projects --name Demo --type art`
+- `pipely init --wizard` (prompts for starter shot/asset/task)
+- `pipely init --code DMO` (stores project code in the DB)
+- `pipely init --db ~/custom/pipely.db` (use a custom DB path)
 
 ## Design Principles
 
-- Filesystem only; no files are created, just folders.
+- Filesystem first; no files are created, just folders.
+- Local DB created on init for optional tracking.
 - Same prompts on Windows, macOS, and Linux.
 - Defaults to the current directory (override with `PIPELY_ROOT` or `--root`).
+
+## Shot & asset folders
+
+When you add a shot or asset, Pipely also creates standard subfolders based on project type.
+
+- **Animation shots:** `plates`, `layout`, `anim`, `fx`, `lighting`, `comp`, `renders`
+- **Animation assets:** `model`, `rig`, `surfacing`, `textures`, `lookdev`, `publish`
+- **Game levels:** `blockout`, `lighting`, `setdress`, `gameplay`, `fx`, `build`
+- **Game assets:** `model`, `rig`, `textures`, `materials`, `prefab`, `export`
+- **Art assets:** `refs`, `wip`, `final` (under `02_WIP/<asset>`)
+
+## Tracking commands (CRUD)
+
+```
+pipely project add|list|update|delete|purge
+pipely shot add|list|update|delete
+pipely asset add|list|update|delete
+pipely task add|list|update|delete
+pipely approve set|list|update|delete
+pipely schedule add|list|update|delete
+pipely report summary
+```
+
+`pipely project purge --all` removes projects plus related shots/assets/tasks/schedules/approvals (with confirmation).
