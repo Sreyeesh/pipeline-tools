@@ -9,7 +9,44 @@ Artist-first CLI that scaffolds predictable project folders and optionally track
 
 ## Install (end users)
 
-Install Pipely with pipx:
+Install Pipely with pipx in this order:
+
+### Windows (Command Prompt)
+
+```bat
+py -3 -m pip install --user pipx
+py -3 -m pipx ensurepath
+```
+
+Close and reopen the terminal, then:
+
+```bat
+pipx install https://github.com/Sreyeesh/pipeline-tools/releases/download/v0.1.18/pipely-0.1.18-py3-none-any.whl
+pipely --help
+```
+
+### macOS
+
+```sh
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+```
+
+Close and reopen the terminal, then:
+
+```sh
+pipx install https://github.com/Sreyeesh/pipeline-tools/releases/download/v0.1.18/pipely-0.1.18-py3-none-any.whl
+pipely --help
+```
+
+### Linux / WSL2
+
+```sh
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+```
+
+Close and reopen the terminal, then:
 
 ```sh
 pipx install https://github.com/Sreyeesh/pipeline-tools/releases/download/v0.1.18/pipely-0.1.18-py3-none-any.whl
