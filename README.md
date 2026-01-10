@@ -9,21 +9,14 @@ Artist-first CLI that scaffolds predictable project folders and optionally track
 
 ## Install (end users)
 
-Artists should use the standalone Windows executable (no Python or Docker required).
+Install Pipely with pipx:
 
-1) Download the latest binary for your OS.
-2) Run from a terminal:
-
-```bat
-pipely.exe --help
+```sh
+pipx install https://github.com/Sreyeesh/pipeline-tools/releases/download/v0.1.18/pipely-0.1.18-py3-none-any.whl
+pipely --help
 ```
 
-Latest downloads (auto-updated by CI on release):
-- Windows: `https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-windows.exe`
-- macOS: `https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-macos`
-- Linux: `https://github.com/Sreyeesh/pipeline-tools/releases/latest/download/pipely-linux`
-
-Artists do not need Python or uv installed. Use Docker and the repo wrapper script instead.
+Use Docker and the repo wrapper script for local development.
 
 Prerequisite: install Docker Desktop (Windows/macOS) or Docker Engine (Linux).
 
