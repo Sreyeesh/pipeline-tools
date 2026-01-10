@@ -17,6 +17,7 @@ COPY requirements.txt requirements-dev.txt pyproject.toml README.md /app/
 # Copy source and tests ahead of editable install.
 COPY src /app/src
 COPY tests /app/tests
+COPY build/pyinstaller /app/build/pyinstaller
 
 # Install dev deps and the package (editable) for testing.
 RUN pip install --upgrade pip \
