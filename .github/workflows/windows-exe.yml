@@ -46,11 +46,22 @@ jobs:
         run: |
           python -m PyInstaller build/pyinstaller/pipely.spec
 
-      - name: Prepare release asset
+      - name: Prepare release asset (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $src = "${{ matrix.output }}"
+          $dest = "release\${{ matrix.release_name }}"
+          New-Item -ItemType Directory -Force -Path (Split-Path $dest) | Out-Null
+          Copy-Item -Force $src $dest
+
+      - name: Prepare release asset (macOS/Linux)
+        if: matrix.os != 'windows-latest'
+        shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          src = Path(r"${{ matrix.output }}")
+          src = Path("${{ matrix.output }}")
           dest = Path("release") / "${{ matrix.release_name }}"
           dest.parent.mkdir(parents=True, exist_ok=True)
           dest.write_bytes(src.read_bytes())
